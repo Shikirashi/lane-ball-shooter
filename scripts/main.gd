@@ -5,6 +5,7 @@ const SHOOT_COOLDOWN := 0.4
 var _background: ColorRect
 var _battlefield_container: SubViewportContainer
 var _battlefield_viewport: SubViewport
+var _battlefield: Battlefield
 var _chain_view: BallChainView
 var _shooter_view: ShooterView
 var _magazine_view: MagazineView
@@ -98,6 +99,7 @@ func _on_progression_state_changed(score: int, combo_count: int, tier: int, feve
 
 func _on_match_resolved(result: Dictionary) -> void:
 	_chain_view.show_progression_feedback(result)
+	_battlefield.fire_for_match(result)
 
 func _build_scene() -> void:
 	_background = ColorRect.new()
@@ -117,7 +119,9 @@ func _build_scene() -> void:
 	_battlefield_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	_battlefield_viewport.msaa_3d = Viewport.MSAA_2X
 	_battlefield_container.add_child(_battlefield_viewport)
-	_battlefield_viewport.add_child(Battlefield.new())
+	_battlefield = Battlefield.new()
+	_battlefield.name = "Battlefield"
+	_battlefield_viewport.add_child(_battlefield)
 
 	_chain_view = BallChainView.new()
 	_chain_view.name = "BallChain"

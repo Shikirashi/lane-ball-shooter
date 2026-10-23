@@ -29,4 +29,6 @@ Controls:
 
 The top lane is a functional ordered chain: a shot must horizontally overlap a visible ball to insert beside it, contiguous physical groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. Returned groups visibly catch up before becoming adjacent to a distant train.
 
-Matches now award score and advance the three-second combo window through tiers 1–3; the fourth consecutive timely match activates FEVER. The HUD meter drains in real time, while score persists through timeout. Magazine colors come from a fair four-color shuffle bag. Combat damage, defender knockdown, and game-over logic remain assigned to P004–P005, and the hopping enemies continue to loop as a battlefield presentation placeholder.
+Matches award score and advance the three-second combo window through tiers 1–3; the fourth consecutive timely match activates FEVER. The HUD meter drains in real time, while score persists through timeout. Magazine colors come from a fair four-color shuffle bag.
+
+Each match also makes its matching 3D defender fire a one-, two-, or three-projectile burst according to the locked combo tier. Primitive enemies spawn independently, hop left, display HP pips, take same-lane projectile damage, and burst apart at zero HP. During P004, enemies that reach the left boundary are simply despawned with no penalty; defender knockdown, emergency discharge, revival, and game-over behavior remain assigned to P005.

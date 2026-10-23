@@ -1,6 +1,9 @@
 class_name Battlefield
 extends Node3D
 
+var lanes: Array[LaneActor] = []
+var attack_history: Array[Dictionary] = []
+
 func _ready() -> void:
 	_build_environment()
 	_build_camera()
@@ -10,6 +13,22 @@ func _ready() -> void:
 		lane.setup(lane_index, lane_index)
 		lane.position.z = -3.0 + lane_index * 2.0
 		add_child(lane)
+		lanes.append(lane)
+
+func fire_for_match(result: Dictionary) -> Dictionary:
+	var identity := int(result.get("identity", -1))
+	if identity < 0 or identity >= lanes.size():
+		return {}
+	var locked_result := result.duplicate(true)
+	var attack := lanes[identity].fire_for_match(locked_result)
+	if not attack.is_empty():
+		attack_history.append(attack.duplicate(true))
+	return attack
+
+func get_lane(identity: int) -> LaneActor:
+	if identity < 0 or identity >= lanes.size():
+		return null
+	return lanes[identity]
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()
