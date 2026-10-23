@@ -1,49 +1,56 @@
-# ACTIVE TASK: LBS-P003 — Score, combo progression, fever, and live HUD
+# ACTIVE TASK: LBS-P004 — 3D defender attacks, hopping enemies, and projectile combat
 
 **State:** READY FOR CODEX
 **Branch:** `master`
-**Prerequisite:** P001 accepted; P002 accepted after revision commit `1fe4d5b` and handoff `b3cf5ed`.
-**First read:** `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, then this task.
+**Prerequisite:** P001–P003 accepted; P003 implementation `aa65950`, handoff `1ce5ce6`. Preserve P002's physical hit insertion, connected-segment matching and FIFO cache and P003's match progression and magazine.
+**Read first:** `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, this `.ai/TASK.md`.
 
 ## Objective
-Turn P002's successful match events into **score and consecutive-match combo/fever progression**, visible in a clean responsive HUD. Preserve the correct shot-contact, spatial adjacency and ordered recycling fixes from P002. Keep real 3D damage/combat for P004.
+Make colored ball matches cause the **corresponding defender in the central 3D battlefield** to fire actual primitive 3D projectiles **to the right across its own lane**, damaging/killing hopping enemies. Add proper enemy spawning, independent movement and HP. Maintain the hybrid Godot scene, mouse/touch shooting, magazine, score, combo/fever and recycling. Keep knockdown/emergency/revival/game-over mechanics **out of this task** (P005).
 
-## Required rules (authoritative)
-1. **Valid match:** each separate `ChainModel.match_completed(identity, group_size)` emission represents one successful match. Normal and cascade matches count identically; multiple cascade events from one fired shot count as consecutive matches in the order emitted. A group of 4, 5, 7 etc. balls is **one match**, not multiple combos.
-2. **Combo timing:** first match begins a chain at combo 1, attack tier 1. The next match **within 3.0 seconds of the previous successful match** advances to combo 2 / tier 2, then combo 3 / tier 3. The **fourth match** within the successive 3-second windows activates FEVER; every later timely match stays in FEVER and at **tier 3** until the chain times out. A longer gap resets to combo 1 on the next successful match. Exactly elapsed 3.0 s can be treated as expired; document and test boundary.
-3. **Fever bar:** a 3-second visual decay window that refreshes on **every valid match**, including before fever. Display current combo/tier state legibly; FEVER is distinct (text/highlight/bar visual) from ordinary tier 3. When time expires, bar empties, combo resets to 0 and fever turns off. Score must persist. Do not require the player to shoot rapidly without actually matching.
-4. **Score:** larger matching groups grant **only additional score**, never extra tier advances. Start with configurable score formula **100 points for 3 balls + 50 for each ball beyond 3** (3=100, 4=150, 5=200, 7=300); no score penalty for missed shots, rollover/cached balls, empty lanes or fever expiration. Do not add a score multiplier for combo/fever without an explicit later task; scoreboard should still rise as normal in FEVER.
-5. **Future combat interface:** emit or provide one well-defined structured result for each match (identity, group size, combo count, tier 1/2/3, fever boolean, points awarded) for P004 combat and P005 revival. The tier/fever must be locked **at match time**, not when future 3D projectiles land. Favor central small independent `RefCounted` progression/scoring module; pure deterministic data, no dependence on render frame when handling same-frame cascades.
-6. **Current visuals:** score, combo count, current tier/fever status, and ticking meter should update live and be legible on 16:9 and wider landscape sizes. Do not let title, score, combo, and bar overlap. The top-ball P002 debug overlay can be retained for diagnostics but should not clutter normal gameplay; preferably hide behind a documented debug toggle (e.g. F3) or reposition unobtrusively. Add light short-lived match/FEVER feedback using 2D primitives/text; no sound or external assets.
-7. **Magazine ball generation:** replace P001's fixed-seed arbitrary per-shot choice/avoid-duplicate workaround with a transparent configurable **4-color shuffle bag** (one of each identity per bag, reshuffled when empty; deterministic seed permitted for test). Swapping LOADED and NEXT must not change the remaining bag or consume another generated ball. Firing advances NEXT to LOADED and draws exactly one new NEXT, even on a miss; color + symbol remain synced on shooter and magazine. Across bag boundaries, duplicate colors may occur; do not force anti-duplicates at cost of fairness. This generator change is specifically authorized by P003.
-8. **Keep placeholder 3D lanes:** no real defender firing, enemy HP, knockdown, win/loss or gameplay-changing fever bonus in P003. Match outcomes are captured for next task; character/projectile work starts P004.
+## Canonical rules
+1. Four lanes mapped 1:1 to `TeamData.Identity` (RED, BLUE, YELLOW, GREEN). Defenders always stand on the **left** of each lane, and do not autonomously attack.
+2. Subscribe directly to P003's structured `MatchProgression.match_resolved(result)` event. For every result, read and **lock** identity, combo tier and fever state immediately. A match of a color calls only that color's defender to attack. Do not calculate tier later using mutable current combo state. A match of color with no current enemies still fires (shots may be wasted).
+3. Initial tier mapping for combat: tier 1 = **one projectile**, tier 2 = **two projectiles**, tier 3 = **three projectiles**. FEVER at fourth match and onward uses tier 3 for now; **no extra fever combat effect** until playtest. Groups >3 still only grant extra score, not additional projectiles. A cascade generates separate attacks in event order.
+4. All projectiles are visible **3D primitives** (small spheres/capsules) launched from the defender and traveling toward screen-right along the **same 3D lane**. An attack of N projectiles should be visually distinguishable (short sequential burst or spacing); do not instantiate N projectiles at an identical position/time causing indecipherable stacking. Shooter's upward 2D projectile remains separate and unchanged.
+5. Enemies are **3D primitives**, hop left from the right while logical movement and collision remain independent of their jump-height animation. No 3D navigation/pathfinding or rigid-body physics required. Spawn multiple enemies, with tunable per-lane spawn times / overall spawn interval, speed, HP, and projectile damage. Initial difficulty should be relaxed enough to playtest and see attacks. Use a seeded PRNG if randomness is introduced.
+6. A projectile damages **the first enemy it reaches in its own lane** (not enemies in neighboring lanes). When an enemy HP reaches 0, remove it with brief simple readable impact/death feedback (squash, flash or burst of primitive nodes, without assets). Otherwise it survives and continues advancing. Projectiles despawn upon hitting, reaching world right boundary, or timing out. A projectile can't hit twice; reliably handle targets being killed mid-burst.
+7. Avoid tunneling from fast projectiles: implement logical swept/interval collision against moving enemies or bounded update that handles large delta. Distinguish enemy logical X from model hop Y; jumping is cosmetic, not invulnerability.
+8. **Temporary P004 boundary rule:** When enemies reach or pass the defender/left edge, do not permanently kill anyone or end the game. They may be recycled/despawned **only as a clearly documented placeholder** until P005. No surprise damage or game-over logic in P004. Keep state easy to transition to P005.
+9. Display attack feedback on defender (brief lunge, tilt, color flash, muzzle effect) and damage/hit feedback on enemy, preferably procedural and cheap. Keep colored/symbol-coded defenders recognizable with existing primitives, avoid elaborate graphics, audio, or external assets.
+10. Central battlefield must fit within its allocated `SubViewportContainer` at standard and wider landscape sizes; camera fixed orthographic with four visually separated lanes. Do not position meshes offscreen or place long-lived dynamic nodes in unrelated viewports.
 
-## Implementation / integration
-- Wire P002 `match_completed` signal into the match-progression module in `scripts/main.gd`; do not poll or use the debug `event_log` as authoritative integration.
-- Expose a simple update(delta) for remaining window, or equivalent deterministic simulation-friendly API; avoid system wall clock and multi-threaded timers.
-- Update `HudView` through explicit setters/signals. Keep clean separation between game state and display rendering.
-- Keep shooter and magazine UI behavior identical between desktop and touch, respecting input consumption and shot cooldown.
-- Do not change P002's collision tolerance, FIFO ordering or gap-closure behavior except to fix a verified regression.
-- Consider UI controls at 1280x720, 1600x720 and narrower 960x540 landscape; use dynamic positioning/clamping rather than fixed overlapping labels.
-- Simple state/event API should make it straightforward in P004 to map color->defender and tier->number of projectiles.
+## Implementation guidance
+- Refactor `scripts/world/lane_actor.gd` from its P001 single looping demo enemy to support **multiple independently simulated enemies**, projectile instances, per-lane combat methods and VFX. Keep `Battlefield` as coordinator/lookup for 4 lane actors and provide a clean method e.g. `fire_for_match(result: Dictionary)`.
+- For code clarity, consider a small pure logical `EnemyState/ProjectileState` script (or compact typed dictionaries) plus a visual primitive factory. Keep collision logic and visuals separate enough to test without rendered frames.
+- Use P003 result signal in `scripts/main.gd`; other subscribers (HUD/chain feedback) remain connected. Match result handling should not be duplicated or advanced twice.
+- Expose a way to reset/seed enemies in tests, count active enemies/projectiles, inspect HP and attack history, and inject known target positions. Favor deterministic tests not dependent on chance or many seconds of runtime.
+- Enemies can spawn at one lane at a time or in staggered per-lane intervals; avoid synchronized dense floods obscuring 3D readability. Make spawn cadence configurable and document it.
+- Separate *attack burst timing* from current match tier: any queued burst must retain tier/identity even if the player's combo expires during the burst. A second match can trigger another independent burst without cancelling the first.
+- Existing state/UI remains legible and responsive on landscape Web/Android target; no export setup yet.
 
-## Automated tests (required)
-Add `tests/p003_logic_test.gd` or equivalent deterministic headless test and run existing P001/P002 suites.
-- One 3-ball match awards 100, combo 1, tier 1; another timely match yields combo 2 tier 2, third yields tier 3, fourth yields FEVER; fifth and later timely matches remain fever with tier 3.
-- Separate cascades in the same update tick each increment combo once; one larger group increments combo once while awarding its larger size score.
-- Timeout 3s resets combo/fever and bar but preserves score; next match after timeout is tier 1; verify near/boundary timing.
-- At least one genuine P002 chain insertion/clear event updates the central combo system and HUD; missed shot and cache rollover do **not** award points or alter progression.
-- Shuffle-bag draw covers all four identities once per full bag; swaps do not draw; shots draw exactly one next ball, including misses.
-- No double-counting from UI repaint, signaling or gap closure.
-- Project scene launches headlessly without parse/runtime errors; 1280x720 and 1600x720 P001 layout tests still pass, add 960x540 smoke if feasible.
+## Headless validation (required)
+Create `tests/p004_combat_test.gd` or equivalent, and rerun P001/P002/P003 suites.
+- One RED tier-1 result triggers 1 RED-lane projectile and zero other-lane shots.
+- Tier 2 emits 2 and tier 3/FEVER emits 3, even if global progression subsequently times out; attacks lock match-time tier. Group size 5/7 does not add projectiles beyond tier.
+- Empty lane still emits and projectiles eventually despawn.
+- Explicitly spawn one enemy: projectile advances right, hits, damages, and kills appropriately; remove dead enemy once, no duplicate hit.
+- Two enemies in same lane: first takes first impact and remaining projectile can reach second after first dies; projectiles stop on their actual first collision.
+- Enemy jumping does not change logical hit probability; a large delta does not tunnel past a target.
+- Other lanes are unaffected by attacks, including at nearby visual Z coordinates.
+- Multiple enemies can coexist, travel left at frame-independent speed, and spawn cadence is tunable/bounded (no uncontrolled unbounded projectile or visual node growth).
+- One genuine 3-ball clear flows through `ChainModel -> MatchProgression -> Battlefield -> corresponding LaneActor` (not only test-injected attack methods).
+- Existing gameplay/magazine/collision/cascade/fever/headless startup tests pass. Run bounded runtime startup 1280×720 and if possible 1600×720.
 
-## Acceptance / handoff
-- In a live window, arrange/trigger 3+ color matches: score increments and the timer visibly refills.
-- Four consecutive successful matches, each within 3 seconds, produce distinct FEVER state; a delay of over 3 seconds resets to ordinary tier-1.
-- A 5-ball group awards more points but doesn't skip attack tiers.
-- Match events contain identities/tiers ready for P004; top chain still correctly handles misses, cascades, physical gaps and cached FIFO return.
-- Use only Godot built-ins and placeholder art, GDScript/Compatibility.
-- Update `.ai/CODEX_HANDOFF.md` (task ID, status, commits, implementation, tests, manual scenario, known caveats); commit and push. **Stop** without self-advancing to P004.
+## Player-facing manual playtest
+- Load/run scene: four colored primitive defenders and several independently hopping enemies are present.
+- Make a 3-ball match; corresponding defender instantly reacts and fires a projectile to the right.
+- Make consecutive matches within 3 seconds to see bursts of 2 then 3 projectiles; FEVER uses tier 3.
+- Projectiles hit the first enemy in their lane and enemies visibly disappear at zero HP; other lanes remain untouched.
+- Match in an empty lane still fires; letting enemies reach left currently produces *no loss*, explicitly reserved for P005.
+- Scores, symbols, top matching and magazine work throughout.
 
-## Out of scope
-Any real 3D combat, knockdown, revival, base breach, Android/Web export setup, music, dramatic effects and complex progression systems. Future task P004 will connect matches to primitive defenders.
+## Scope / completion
+- Do **not** implement defender knockdown/revival, one-time emergency discharge, lane breach, permanent death, game over/restart (P005).
+- Do **not** add external models, music/SFX, advanced shaders, special unit types, hero powers, upgrades, exports or changes to score/fever rules.
+- Update `.ai/CODEX_HANDOFF.md` with P004 status, changed files, tests and commands, manual reproduction, tuning defaults, limitations; commit/push normally and **STOP** without advancing to P005. ChatGPT handles the mailbox progression.
