@@ -13,6 +13,9 @@ const DEFAULT_EMPTY_RETURN_COUNT := 8
 const DEFAULT_MAX_AUTO_POPULATION := 24
 const MATCH_SIZE := 3
 const GAP_CLOSE_SPEED := 420.0
+const DEFAULT_SHOT_RADIUS := 12.0
+const RETURN_CATCHUP_SPEED := 120.0
+const ADJACENCY_GAP_FACTOR := 1.25
 const SEED_PATTERN: Array[int] = [
 	TeamData.Identity.RED,
 	TeamData.Identity.BLUE,
@@ -58,6 +61,10 @@ func advance(delta: float) -> void:
 		var ball := balls[index]
 		ball.x -= travel
 		ball.display_x -= travel
+		balls[index] = ball
+	_close_disconnected_gaps(maxf(delta, 0.0))
+	for index in range(balls.size()):
+		var ball := balls[index]
 		ball.display_x = move_toward(float(ball.display_x), float(ball.x), GAP_CLOSE_SPEED * maxf(delta, 0.0))
 		balls[index] = ball
 
@@ -71,29 +78,15 @@ func advance(delta: float) -> void:
 	if travel > 0.0 or rolled_off:
 		state_changed.emit()
 
-func insert_shot(identity: int, impact_x: float) -> int:
-	if balls.is_empty():
-		var empty_ball := _make_ball(identity, clampf(impact_x, radius, lane_width - radius))
-		balls.append(empty_ball)
-		state_changed.emit()
-		_resolve_inserted_match(0)
-		return int(empty_ball.uid)
-
-	var insert_index := _nearest_gap_index(impact_x)
-	var logical_x: float
-	if insert_index == 0:
-		logical_x = float(balls[0].x) - spacing
-	elif insert_index == balls.size():
-		logical_x = float(balls[-1].x) + spacing
-	else:
-		logical_x = float(balls[insert_index - 1].x) + spacing
-		_shift_logical_positions(insert_index, spacing)
-
-	var inserted := _make_ball(identity, logical_x, impact_x)
-	balls.insert(insert_index, inserted)
-	state_changed.emit()
-	_resolve_inserted_match(insert_index)
-	return int(inserted.uid)
+## Returns true only when the projectile horizontally overlaps a rendered chain ball.
+## The tolerance is the chain-ball radius plus the projectile's visual radius.
+func try_insert_shot(identity: int, impact_x: float, shot_radius := DEFAULT_SHOT_RADIUS) -> bool:
+	var contact_index := _find_contact_index(impact_x, radius + maxf(shot_radius, 0.0))
+	if contact_index < 0:
+		return false
+	var insert_after := impact_x >= float(balls[contact_index].display_x)
+	_insert_beside_contact(identity, contact_index, insert_after, impact_x)
+	return true
 
 func return_cached(requested_count: int = -1) -> int:
 	var count := cache_return_batch if requested_count < 0 else requested_count
@@ -131,19 +124,46 @@ func identities() -> Array[int]:
 		result.append(int(ball.identity))
 	return result
 
-func _nearest_gap_index(impact_x: float) -> int:
-	var best_index := 0
-	var best_distance := absf(impact_x - (float(balls[0].x) - spacing * 0.5))
-	for index in range(1, balls.size()):
-		var gap_x := (float(balls[index - 1].x) + float(balls[index].x)) * 0.5
-		var distance := absf(impact_x - gap_x)
-		if distance < best_distance:
-			best_distance = distance
-			best_index = index
-	var end_distance := absf(impact_x - (float(balls[-1].x) + spacing * 0.5))
-	if end_distance < best_distance:
-		best_index = balls.size()
-	return best_index
+func _find_contact_index(impact_x: float, tolerance: float) -> int:
+	var closest_index := -1
+	var closest_distance := INF
+	for index in range(balls.size()):
+		var distance := absf(impact_x - float(balls[index].display_x))
+		if distance <= tolerance and distance < closest_distance:
+			closest_index = index
+			closest_distance = distance
+	return closest_index
+
+func _insert_beside_contact(identity: int, contact_index: int, insert_after: bool, impact_x: float) -> void:
+	var insert_index := contact_index + 1 if insert_after else contact_index
+	var logical_x: float
+	if insert_after:
+		logical_x = float(balls[contact_index].x) + spacing
+		if contact_index + 1 < balls.size():
+			var next_segment_end := _connected_segment_end(contact_index + 1)
+			if _are_adjacent(contact_index, contact_index + 1):
+				_shift_logical_positions(contact_index + 1, next_segment_end, spacing)
+			else:
+				var gap_to_next := float(balls[contact_index + 1].x) - float(balls[contact_index].x)
+				if gap_to_next < spacing * 2.0:
+					_shift_logical_positions(contact_index + 1, next_segment_end, spacing * 2.0 - gap_to_next)
+	else:
+		logical_x = float(balls[contact_index].x) - spacing
+		if contact_index > 0:
+			var current_segment_end := _connected_segment_end(contact_index)
+			if _are_adjacent(contact_index - 1, contact_index):
+				logical_x = float(balls[contact_index].x)
+				_shift_logical_positions(contact_index, current_segment_end, spacing)
+			else:
+				var gap_from_previous := float(balls[contact_index].x) - float(balls[contact_index - 1].x)
+				if gap_from_previous < spacing * 2.0:
+					var required_shift := spacing * 2.0 - gap_from_previous
+					logical_x += required_shift
+					_shift_logical_positions(contact_index, current_segment_end, required_shift)
+
+	balls.insert(insert_index, _make_ball(identity, logical_x, impact_x))
+	state_changed.emit()
+	_resolve_inserted_match(insert_index)
 
 func _resolve_inserted_match(insert_index: int) -> void:
 	if insert_index < 0 or insert_index >= balls.size():
@@ -158,7 +178,7 @@ func _resolve_inserted_match(insert_index: int) -> void:
 	return_requests += cache_return_batch
 
 	while boundary > 0 and boundary < balls.size():
-		if int(balls[boundary - 1].identity) != int(balls[boundary].identity):
+		if not _are_adjacent(boundary - 1, boundary) or int(balls[boundary - 1].identity) != int(balls[boundary].identity):
 			break
 		var cascade := _group_at(boundary)
 		if int(cascade.size) < MATCH_SIZE:
@@ -176,27 +196,56 @@ func _group_at(index: int) -> Dictionary:
 	var identity := int(balls[index].identity)
 	var start := index
 	var end := index
-	while start > 0 and int(balls[start - 1].identity) == identity:
+	while start > 0 and _are_adjacent(start - 1, start) and int(balls[start - 1].identity) == identity:
 		start -= 1
-	while end + 1 < balls.size() and int(balls[end + 1].identity) == identity:
+	while end + 1 < balls.size() and _are_adjacent(end, end + 1) and int(balls[end + 1].identity) == identity:
 		end += 1
 	return {"start": start, "size": end - start + 1, "identity": identity}
 
 func _remove_group(start: int, count: int, identity: int) -> void:
+	var connected_end := _connected_segment_end(start)
 	for unused in range(count):
 		balls.remove_at(start)
-	_shift_logical_positions(start, -spacing * count)
+	var remaining_segment_end := connected_end - count
+	if start <= remaining_segment_end:
+		_shift_logical_positions(start, remaining_segment_end, -spacing * count)
 	total_match_events += 1
 	last_match_identity = identity
 	last_match_size = count
 	event_log.append({"identity": identity, "size": count})
 	match_completed.emit(identity, count)
 
-func _shift_logical_positions(from_index: int, amount: float) -> void:
-	for index in range(from_index, balls.size()):
+func _shift_logical_positions(from_index: int, through_index: int, amount: float) -> void:
+	for index in range(from_index, mini(through_index + 1, balls.size())):
 		var ball := balls[index]
 		ball.x += amount
 		balls[index] = ball
+
+func _are_adjacent(left_index: int, right_index: int) -> bool:
+	if left_index < 0 or right_index >= balls.size() or right_index != left_index + 1:
+		return false
+	var gap := float(balls[right_index].x) - float(balls[left_index].x)
+	return gap >= 0.0 and gap <= spacing * ADJACENCY_GAP_FACTOR
+
+func _connected_segment_end(start_index: int) -> int:
+	var result := start_index
+	while result + 1 < balls.size() and _are_adjacent(result, result + 1):
+		result += 1
+	return result
+
+func _close_disconnected_gaps(delta: float) -> void:
+	if delta <= 0.0:
+		return
+	for boundary in range(1, balls.size()):
+		var gap := float(balls[boundary].x) - float(balls[boundary - 1].x)
+		if gap <= spacing:
+			continue
+		var catchup := minf(RETURN_CATCHUP_SPEED * delta, gap - spacing)
+		for index in range(boundary, balls.size()):
+			var ball := balls[index]
+			ball.x -= catchup
+			ball.display_x -= catchup
+			balls[index] = ball
 
 func _append_on_right(identity: int) -> void:
 	var spawn_x := lane_width - radius

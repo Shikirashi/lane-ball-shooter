@@ -78,7 +78,7 @@ func _on_magazine_changed(loaded: int, next_value: int) -> void:
 	_magazine_view.set_identities(loaded, next_value)
 
 func _on_shot_reached_lane(identity: int, screen_x: float) -> void:
-	_chain_model.insert_shot(identity, screen_x - _chain_view.position.x)
+	_chain_model.try_insert_shot(identity, screen_x - _chain_view.position.x)
 
 func _build_scene() -> void:
 	_background = ColorRect.new()

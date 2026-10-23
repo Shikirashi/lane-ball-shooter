@@ -19,6 +19,8 @@ func _run() -> void:
 	_test_fifo_rollover_and_partial_return()
 	_test_empty_recovery()
 	_test_continuous_identity_motion()
+	_test_shot_contact_guard()
+	_test_recycled_gap_adjacency()
 	await _test_shot_pipeline()
 	_finish()
 
@@ -44,10 +46,11 @@ func _test_three_ball_threshold() -> void:
 	var reds: Array[int] = [TeamData.Identity.RED]
 	var cached: Array[int] = [TeamData.Identity.GREEN]
 	model.set_test_state(reds, 100.0, cached)
-	model.insert_shot(TeamData.Identity.RED, 129.0)
+	model.try_insert_shot(TeamData.Identity.RED, 110.0)
 	_check(model.identities() == [TeamData.Identity.RED, TeamData.Identity.RED], "two adjacent balls remain")
 	_check(model.total_match_events == 0, "two adjacent balls emit no match")
-	model.insert_shot(TeamData.Identity.RED, 187.0)
+	model.advance(0.2)
+	model.try_insert_shot(TeamData.Identity.RED, float(model.balls[-1].display_x) + 10.0)
 	_check(model.total_match_events == 1, "inserted third emits one match")
 	_check(model.last_match_identity == TeamData.Identity.RED and model.last_match_size == 3, "three-ball event reports identity and actual size")
 	_check(model.identities() == [TeamData.Identity.GREEN], "match returns cached ball without fabricating survivors")
@@ -57,7 +60,7 @@ func _test_large_group_single_event() -> void:
 	var identities: Array[int] = [TeamData.Identity.BLUE, TeamData.Identity.BLUE, TeamData.Identity.BLUE]
 	var cached: Array[int] = [TeamData.Identity.YELLOW]
 	model.set_test_state(identities, 100.0, cached)
-	model.insert_shot(TeamData.Identity.BLUE, 303.0)
+	model.try_insert_shot(TeamData.Identity.BLUE, 226.0)
 	_check(model.total_match_events == 1, "four-ball group is one event")
 	_check(model.event_log.size() == 1 and int(model.event_log[0].size) == 4, "large group reports four removed")
 
@@ -74,7 +77,7 @@ func _test_boundary_cascade_order() -> void:
 		TeamData.Identity.BLUE,
 	]
 	model.set_test_state(identities)
-	model.insert_shot(TeamData.Identity.RED, 303.0)
+	model.try_insert_shot(TeamData.Identity.RED, 284.0)
 	_check(model.event_log.size() == 2, "insertion and gap closure produce two distinct events")
 	if model.event_log.size() == 2:
 		_check(int(model.event_log[0].identity) == TeamData.Identity.RED and int(model.event_log[0].size) == 3, "inserted red group resolves first")
@@ -123,6 +126,44 @@ func _test_continuous_identity_motion() -> void:
 		_check(int(model.balls[index].identity) == int(before[index].identity), "moving ball keeps identity at index %d" % index)
 		_check(is_equal_approx(float(model.balls[index].x), float(before[index].x) - model.speed * 0.25), "moving ball advances continuously at index %d" % index)
 
+func _test_shot_contact_guard() -> void:
+	var model := ChainModel.new()
+	var identities: Array[int] = [TeamData.Identity.BLUE, TeamData.Identity.GREEN]
+	model.set_test_state(identities, 900.0)
+	var before_ids := model.identities()
+	var before_cache := model.cache.duplicate()
+	_check(not model.try_insert_shot(TeamData.Identity.RED, 100.0), "far-left shot misses far-right train")
+	_check(model.identities() == before_ids and model.cache == before_cache, "miss leaves chain and cache unchanged")
+	_check(model.total_match_events == 0, "miss emits no match event")
+	_check(model.try_insert_shot(TeamData.Identity.RED, 910.0), "shot within combined radii contacts a ball")
+	_check(model.balls.size() == 3, "legitimate contact inserts exactly once")
+
+	model.set_test_state(identities, 700.0)
+	model.advance(0.5)
+	var moving_contact_x := float(model.balls[0].display_x) + 8.0
+	_check(model.try_insert_shot(TeamData.Identity.RED, moving_contact_x), "shot contacts train at its updated moving position")
+	_check(model.balls.size() == 3, "moving-train contact inserts exactly once")
+
+func _test_recycled_gap_adjacency() -> void:
+	var model := ChainModel.new()
+	var tail: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED]
+	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
+	model.set_test_state(tail, 500.0, cached)
+	model.return_cached(3)
+	_check(model.identities().slice(-3) == cached, "recycled RED, GREEN, BLUE retain left-to-right FIFO order")
+	var initial_gap := float(model.balls[2].x) - float(model.balls[1].x)
+	_check(initial_gap > model.spacing * ChainModel.ADJACENCY_GAP_FACTOR, "returned batch starts physically disconnected at right boundary")
+	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[2].display_x)), "shot can contact returned right-side segment")
+	_check(model.total_match_events == 0, "same colors across recycled wide gap do not match")
+	_check(model.identities().slice(0, 4) == [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED], "disconnected same-color runs remain ordered")
+
+	model.advance(6.0)
+	var connected_gap := float(model.balls[2].x) - float(model.balls[1].x)
+	_check(is_equal_approx(connected_gap, model.spacing), "returned segment catches up without overlap or teleport")
+	var rightmost_red_index := 3
+	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[rightmost_red_index].display_x) + 8.0), "shot inserts after recycled segment reconnects")
+	_check(model.total_match_events == 1 and model.last_match_size == 5, "reconnected physical run matches with true size")
+
 func _test_shot_pipeline() -> void:
 	var packed: PackedScene = load("res://scenes/main.tscn")
 	var main := packed.instantiate()
@@ -133,7 +174,7 @@ func _test_shot_pipeline() -> void:
 	var shooter: ShooterView = main.get("_shooter_view")
 	var magazine: MagazineState = main.get("_magazine")
 	var safe_chain: Array[int] = [TeamData.Identity.BLUE, TeamData.Identity.GREEN, TeamData.Identity.YELLOW]
-	model.set_test_state(safe_chain, 220.0)
+	model.set_test_state(safe_chain, 1000.0)
 	var before_count := model.balls.size()
 	var fired_identity := magazine.loaded_identity
 	var expected_loaded := magazine.next_identity
@@ -143,8 +184,19 @@ func _test_shot_pipeline() -> void:
 	_check(shooter.get("_shots").size() == 1 and int(shooter.get("_shots")[0].identity) == fired_identity, "projectile locks fired identity")
 	shooter._process(1.0)
 	_check(shooter.get("_shots").is_empty(), "projectile is consumed at lane crossing")
-	_check(model.balls.size() == before_count + 1, "lane crossing inserts exactly one ball")
-	_check(model.identities().count(fired_identity) == 1, "inserted ball retains projectile identity")
+	_check(model.balls.size() == before_count, "far shot misses without changing chain")
+	_check(model.total_match_events == 0 and model.cache.is_empty(), "miss changes neither matches nor cache")
+	_check(magazine.loaded_identity == expected_loaded, "miss does not refund or consume magazine twice")
+
+	model.set_test_state(safe_chain, 860.0)
+	main.set("_cooldown_remaining", 0.0)
+	shooter.move_to(874.0)
+	var near_fired_identity := magazine.loaded_identity
+	var identity_count_before := model.identities().count(near_fired_identity)
+	main.call("_shoot")
+	shooter._process(1.0)
+	_check(model.balls.size() == safe_chain.size() + 1, "contacting lane crossing inserts exactly one ball")
+	_check(model.identities().count(near_fired_identity) == identity_count_before + 1, "contact insertion retains projectile identity")
 	main.queue_free()
 
 func _finish() -> void:

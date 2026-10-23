@@ -26,6 +26,6 @@ Controls:
 - Right-click or press Space to swap the loaded and next balls.
 - On touch devices, press and drag in the playfield, then release to fire once. Tap the magazine's center swap control to swap without firing.
 
-The top lane is now a functional ordered chain: shots insert at the closest valid gap, contiguous groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. The small readout on the top lane shows visible/cache counts and the latest match event for P002 testing.
+The top lane is now a functional ordered chain: a shot must horizontally overlap a visible ball to insert beside it, contiguous physical groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. Returned groups visibly catch up before becoming adjacent to a distant train. The small readout on the top lane shows visible/cache counts and the latest match event for P002 testing.
 
 Score/combo/fever progression, combat damage, defender knockdown, and game-over logic remain assigned to P003–P005. The hopping enemies continue to loop as a battlefield presentation placeholder.
