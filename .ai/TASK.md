@@ -1,6 +1,34 @@
-# ACTIVE TASK: LBS-P002 — Moving chain, shots, matching, cascades, and FIFO cache
+# ACTIVE TASK: LBS-P002 — Targeted Review Corrections
 
-**State:** READY FOR CODEX
+**State:** REVISION REQUIRED following implementation `0283c6e` / handoff `4fb0fb8`.
+**Task scope:** P002 has been implemented and its reported 41 tests pass. Do **not** rewrite the chain system. Address the two source-review findings below, preserve previous behavior, extend tests, and repush. P003 is not yet active.
+
+## P002-R1 — Prevent impossible long-distance shot insertion (required)
+Existing `scripts/main.gd::_on_shot_reached_lane` unconditionally calls `ChainModel.insert_shot(identity, x)`; `_nearest_gap_index` always returns some index. This lets a projectile far away from the visible train teleport into the nearest group when it reaches lane Y.
+
+- A straight-up projectile **must overlap a ball/occupied chain** at its shot X to connect. A shot outside the occupied portion, or in a wide empty gap, misses and does **not** modify the chain, trigger a match or affect cache.
+- Use a documented effective horizontal collision tolerance based on ball radius plus shot radius (or other clearly justified model) with the *actual current logical/display positions* consistently.
+- The magazine still consumes one ball when fired, even on a miss; misses do not emit match events or re-credit balls. Keep P001 cooldown and touch/mouse handling.
+- Test fired shots from far left while all balls are far right (MUST miss), legitimate near-ball X (MUST insert), and shots while chain is moving. Preserve single-insertion behavior at actual contact.
+
+## P002-R2 — Prevent nonphysical logical adjacency across recycled gaps (required)
+`_append_on_right()` may spawn returned cached balls at the right boundary even when the existing last ball is far left. They are immediately treated as contiguous logical neighbors despite a very large physical gap, allowing matches/cascades across disconnected trains.
+
+- Cached balls must still visibly **re-enter from the right**, FIFO order unchanged, while eventually joining the existing train OR remaining logically separate until they physically connect. Choose the simplest deterministic approach; avoid ball teleport, overlap, order reversal and runaway memory growth.
+- A pair of balls with a large spatial gap must not count as adjacent for matching or cascading. The game should remain playable when repeated cache batches arrive and when the visible chain empties.
+- Explicitly test a tail near the left/middle plus a returned group entering at the far right, including match detection before and after the group reconnects. Test cached RED,GREEN,BLUE remains left-to-right RED,GREEN,BLUE through partial and whole return.
+- Retain the original P002 regression suite plus P001 headless smoke test.
+
+## Completion
+- Run bounded Godot headless tests; add at least one new test for R1 and R2 and document precise results.
+- Do not implement score/combo/fever or 3D combat yet.
+- Update `.ai/CODEX_HANDOFF.md` with a clear **P002 revision** heading, fixes, commands/results, short manual verification, and known limitations.
+- Commit/push to `master`; stop and report commit SHA. ChatGPT will review and then advance to P003.
+---
+
+# Original P002 implementation specification
+
+**State:** Initial implementation delivered; see review corrections above
 **Branch:** `master`
 **Prerequisite:** LBS-P001 accepted after source/handoff review. Preserve its working controls, 3D battlefield, shared magazine state, and responsive layout.
 **Read:** `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md` and this task. Note the authoritative design is in DECISIONS.
