@@ -25,7 +25,8 @@ Controls:
 - Move the mouse horizontally to position the shooter; left-click in the playfield to fire.
 - Right-click or press Space to swap the loaded and next balls.
 - On touch devices, press and drag in the playfield, then release to fire once. Tap the magazine's center swap control to swap without firing.
+- Press F3 to show or hide the P002 chain/cache diagnostics.
 
-The top lane is now a functional ordered chain: a shot must horizontally overlap a visible ball to insert beside it, contiguous physical groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. Returned groups visibly catch up before becoming adjacent to a distant train. The small readout on the top lane shows visible/cache counts and the latest match event for P002 testing.
+The top lane is a functional ordered chain: a shot must horizontally overlap a visible ball to insert beside it, contiguous physical groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. Returned groups visibly catch up before becoming adjacent to a distant train.
 
-Score/combo/fever progression, combat damage, defender knockdown, and game-over logic remain assigned to P003–P005. The hopping enemies continue to loop as a battlefield presentation placeholder.
+Matches now award score and advance the three-second combo window through tiers 1–3; the fourth consecutive timely match activates FEVER. The HUD meter drains in real time, while score persists through timeout. Magazine colors come from a fair four-color shuffle bag. Combat damage, defender knockdown, and game-over logic remain assigned to P004–P005, and the hopping enemies continue to loop as a battlefield presentation placeholder.

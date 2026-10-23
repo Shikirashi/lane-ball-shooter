@@ -5,6 +5,10 @@ var model: ChainModel
 var _feedback_time := 0.0
 var _feedback_identity := -1
 var _feedback_size := 0
+var _feedback_points := 0
+var _feedback_tier := 0
+var _feedback_fever := false
+var debug_visible := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -36,10 +40,15 @@ func _draw() -> void:
 			draw_circle(center, model.radius, TeamData.color(identity))
 			draw_arc(center, model.radius, 0.0, TAU, 32, Color(1.0, 1.0, 1.0, 0.34), 2.0)
 			TeamData.draw_symbol(self, identity, center, model.radius, Color(0.08, 0.1, 0.16, 0.88))
-		draw_string(ThemeDB.fallback_font, Vector2(size.x - 248.0, size.y - 5.0), _debug_text(), HORIZONTAL_ALIGNMENT_RIGHT, 232.0, 10, Color(0.65, 0.72, 0.84, 0.85))
+		if debug_visible:
+			draw_string(ThemeDB.fallback_font, Vector2(size.x - 248.0, size.y - 5.0), _debug_text(), HORIZONTAL_ALIGNMENT_RIGHT, 232.0, 10, Color(0.65, 0.72, 0.84, 0.85))
 	if _feedback_time > 0.0:
 		var feedback_color := TeamData.color(_feedback_identity).lightened(0.18)
-		draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.5 - 90.0, 26.0), "MATCH %s x%d" % [TeamData.display_name(_feedback_identity), _feedback_size], HORIZONTAL_ALIGNMENT_CENTER, 180.0, 15, feedback_color)
+		var feedback_text := "MATCH %s x%d" % [TeamData.display_name(_feedback_identity), _feedback_size]
+		if _feedback_points > 0:
+			var state_text := "FEVER" if _feedback_fever else "TIER %d" % _feedback_tier
+			feedback_text = "%s  +%d  %s" % [feedback_text, _feedback_points, state_text]
+		draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.5 - 150.0, 26.0), feedback_text, HORIZONTAL_ALIGNMENT_CENTER, 300.0, 15, feedback_color)
 		var pulse_radius := 25.0 + (0.65 - _feedback_time) * 32.0
 		draw_arc(Vector2(size.x * 0.5, cy), pulse_radius, 0.0, TAU, 32, Color(feedback_color, _feedback_time), 2.0)
 	_draw_direction_hint(Vector2(36.0, cy))
@@ -52,7 +61,23 @@ func _debug_text() -> String:
 func _on_match_completed(identity: int, group_size: int) -> void:
 	_feedback_identity = identity
 	_feedback_size = group_size
+	_feedback_points = 0
+	_feedback_tier = 0
+	_feedback_fever = false
 	_feedback_time = 0.65
+	queue_redraw()
+
+func show_progression_feedback(result: Dictionary) -> void:
+	_feedback_identity = int(result.identity)
+	_feedback_size = int(result.group_size)
+	_feedback_points = int(result.points)
+	_feedback_tier = int(result.tier)
+	_feedback_fever = bool(result.fever)
+	_feedback_time = 0.9
+	queue_redraw()
+
+func toggle_debug() -> void:
+	debug_visible = not debug_visible
 	queue_redraw()
 
 func _draw_direction_hint(center: Vector2) -> void:

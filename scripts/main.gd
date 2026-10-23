@@ -11,6 +11,7 @@ var _magazine_view: MagazineView
 var _hud_view: HudView
 var _magazine := MagazineState.new()
 var _chain_model := ChainModel.new()
+var _progression := MatchProgression.new()
 var _cooldown_remaining := 0.0
 var _active_touch_id := -1
 var _touch_started_in_playfield := false
@@ -21,13 +22,18 @@ func _ready() -> void:
 	_magazine.changed.connect(_on_magazine_changed)
 	_magazine_view.swap_requested.connect(_swap)
 	_shooter_view.shot_reached_lane.connect(_on_shot_reached_lane)
+	_chain_model.match_completed.connect(_on_chain_match_completed)
+	_progression.state_changed.connect(_on_progression_state_changed)
+	_progression.match_resolved.connect(_on_match_resolved)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
+	_progression.publish_state()
 	_layout()
 
 func _process(delta: float) -> void:
 	_cooldown_remaining = maxf(0.0, _cooldown_remaining - delta)
 	_chain_model.advance(delta)
+	_progression.update(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
@@ -39,9 +45,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			_swap()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
-		_swap()
-		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_SPACE:
+			_swap()
+			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_F3:
+			_chain_view.toggle_debug()
+			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
 		_handle_touch(event)
 	elif event is InputEventScreenDrag and event.index == _active_touch_id:
@@ -80,6 +90,15 @@ func _on_magazine_changed(loaded: int, next_value: int) -> void:
 func _on_shot_reached_lane(identity: int, screen_x: float) -> void:
 	_chain_model.try_insert_shot(identity, screen_x - _chain_view.position.x)
 
+func _on_chain_match_completed(identity: int, group_size: int) -> void:
+	_progression.register_match(identity, group_size)
+
+func _on_progression_state_changed(score: int, combo_count: int, tier: int, fever_active: bool, window_ratio: float) -> void:
+	_hud_view.set_progress(score, combo_count, tier, fever_active, window_ratio)
+
+func _on_match_resolved(result: Dictionary) -> void:
+	_chain_view.show_progression_feedback(result)
+
 func _build_scene() -> void:
 	_background = ColorRect.new()
 	_background.name = "Background"
@@ -111,7 +130,7 @@ func _build_scene() -> void:
 	_magazine_view.name = "Magazine"
 	add_child(_magazine_view)
 	_hud_view = HudView.new()
-	_hud_view.name = "HUD_P003Placeholder"
+	_hud_view.name = "HUD"
 	add_child(_hud_view)
 
 func _layout() -> void:
