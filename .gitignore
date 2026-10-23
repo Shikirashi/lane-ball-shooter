@@ -1,0 +1,20 @@
+# Godot-generated / editor local
+.godot/
+.import/
+export.cfg
+export_presets.cfg.bak
+*.tmp
+*.bak
+*~
+.DS_Store
+Thumbs.db
+
+# Build artifacts (export presets themselves should be committed when added)
+build/
+dist/
+exports/
+*.apk
+*.aab
+*.pck
+*.exe
+*.wasm
