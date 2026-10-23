@@ -28,6 +28,8 @@ Controls:
 - Press F3 to show or hide the P002 chain/cache diagnostics.
 - After a lane breach, press R or use the on-screen RESTART button to begin a fresh run.
 
+The layout targets landscape screens and has automated coverage at 960×540, 1280×720, 1600×720 and 2400×1080. Native safe-area information is used when the platform supplies it; Web falls back to the browser canvas with an additional logical edge margin. The 3D SubViewport resolution is capped through integer downscaling on very wide/high-density windows to limit mobile fill cost.
+
 The top lane is a functional ordered chain: a shot must horizontally overlap a visible ball to insert beside it, contiguous physical groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. Returned groups visibly catch up before becoming adjacent to a distant train.
 
 Matches award score and advance the three-second combo window through tiers 1–3; the fourth consecutive timely match activates FEVER. The HUD meter drains in real time, while score persists through timeout. Magazine colors come from a fair four-color shuffle bag.
@@ -35,3 +37,50 @@ Matches award score and advance the three-second combo window through tiers 1–
 Each match also makes its matching 3D defender fire a one-, two-, or three-projectile burst according to the locked combo tier. Primitive enemies spawn independently, hop left, display HP pips, take same-lane projectile damage, and burst apart at zero HP.
 
 When an enemy reaches an active defender, that defender falls and spends its one emergency discharge to clear the lane. The charge is once per run. A down defender needs two separate matches of its own color to revive; those matches still score and build combo but launch no attack. Later knockdowns do not clear enemies. Any live enemy crossing the far-left boundary ends the run immediately, freezes gameplay, preserves the final score, and offers a clean restart.
+
+## Export
+
+The committed `export_presets.cfg` contains `Web` and `Android Debug` presets. Install the **Godot 4.7.2 Standard** export templates matching the editor build before exporting. Mono templates do not satisfy this GDScript editor's template lookup.
+
+Web export and local serving:
+
+```sh
+godot --headless --path . --export-release Web exports/web/index.html
+cd exports/web
+python3 -m http.server 8000
+```
+
+Then open `http://127.0.0.1:8000/`. Do not open `index.html` directly with a `file://` URL: WASM/PCK loading requires an HTTP server. The preset uses the non-threaded Web template, so cross-origin-isolation headers are not required. A current browser with WebAssembly and WebGL 2 is required; browser/OS gesture policy can affect focus and fullscreen behavior. The game has no remote URLs or runtime network dependency.
+
+Android debug export requires matching Android export templates plus a JDK and Android SDK configured under Godot's Editor Settings (`Java SDK Path` and `Android SDK Path`). The SDK must include `platform-tools`, a supported platform, build-tools and its `apksigner`. Then run:
+
+```sh
+godot --headless --path . --export-debug "Android Debug" exports/android/lane-ball-shooter-debug.apk
+adb install -r exports/android/lane-ball-shooter-debug.apk
+```
+
+The provisional package ID is `com.shikirashi.laneballshooter`, the preset exports ARM64, and orientation is sensor-landscape. Change the package ID in `export_presets.cfg` before any store submission and configure a private release keystore outside Git; the prototype preset intentionally needs no committed signing secret. Generated Web/APK/AAB files are ignored by Git.
+
+## Regression and playtest checklist
+
+Run the automated suites with the installed Godot binary:
+
+```sh
+godot --headless --path . --script res://tests/headless_smoke.gd
+godot --headless --path . --script res://tests/p002_logic_test.gd
+godot --headless --path . --script res://tests/p003_logic_test.gd
+godot --headless --path . --script res://tests/p004_combat_test.gd
+godot --headless --path . --script res://tests/p005_survival_test.gd
+godot --headless --path . --script res://tests/p006_platform_qa_test.gd
+```
+
+For a manual end-to-end smoke test:
+
+1. Resize through the four target landscape sizes. Confirm the chain, four lanes/status labels, shooter track, magazine, and HUD remain distinct and visible.
+2. Mouse-fire a physical chain hit, then make four timely groups: verify score, tier bursts, and fourth-match FEVER. Confirm right-click/Space swaps without firing.
+3. On touch hardware, press/drag in the playfield and release: exactly one ball should fire. A swap tap must only swap. Starting outside the playfield, canceling a gesture, or releasing after RESTART must not fire.
+4. Let an enemy touch a defender: it falls and the one-time emergency discharge clears that lane. Make two separate matches of that defender's color to revive it; neither revival match launches an attack, while the next does.
+5. Let a later enemy cross the left boundary. Confirm the chain/combat freeze, GAME OVER and the tappable RESTART control remain legible, then restart and verify there are no old enemies/projectiles/effects.
+6. Serve the Web export over HTTP and repeat touch/swap using browser device emulation, then repeat on a physical Android device after `adb install -r`. Synthetic tests do not replace real browser/notch/multi-touch QA.
+
+Gameplay balance is centralized in `ChainModel`, `MatchProgression`, `Main.SHOOT_COOLDOWN`, and the `LaneCombatModel.DEFAULT_*` constants (chain/refill population, three-second combo window, shot cooldown, enemy speed/HP/spawn cap, and projectile speed/damage). Team identity always uses both the shared color and DOT/SQUARE/TRIANGLE/DIAMOND geometry. An optional user-selectable high-contrast palette remains an accessibility follow-up; it was not added to this stabilization task because existing 3D materials are instantiated procedurally and the symbol channel already prevents color-only identification.

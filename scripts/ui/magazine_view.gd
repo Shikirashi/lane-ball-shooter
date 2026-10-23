@@ -35,13 +35,15 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_MOUSE_EXIT:
 		_swap_hovered = false
 		queue_redraw()
+	elif what == NOTIFICATION_RESIZED:
+		_update_swap_rect()
 
 func _draw() -> void:
 	draw_style_box(_panel_style(), Rect2(Vector2.ZERO, size))
 	var loaded_center := Vector2(size.x * 0.22, size.y * 0.54)
 	var swap_center := Vector2(size.x * 0.5, size.y * 0.54)
 	var next_center := Vector2(size.x * 0.78, size.y * 0.54)
-	_swap_rect = Rect2(swap_center - Vector2(32.0, 28.0), Vector2(64.0, 56.0))
+	_update_swap_rect()
 
 	_draw_slot(loaded_center, loaded_identity)
 	_draw_slot(next_center, next_identity)
@@ -52,6 +54,10 @@ func _draw() -> void:
 	draw_style_box(_button_style(button_color), _swap_rect)
 	draw_string(ThemeDB.fallback_font, Vector2(swap_center.x - 18.0, swap_center.y + 8.0), "<>", HORIZONTAL_ALIGNMENT_CENTER, 36.0, 23, Color.WHITE)
 	draw_string(ThemeDB.fallback_font, Vector2(swap_center.x - 29.0, size.y - 9.0), "SWAP", HORIZONTAL_ALIGNMENT_CENTER, 58.0, 11, Color(0.72, 0.8, 0.94))
+
+func _update_swap_rect() -> void:
+	var swap_center := Vector2(size.x * 0.5, size.y * 0.54)
+	_swap_rect = Rect2(swap_center - Vector2(32.0, 28.0), Vector2(64.0, 56.0))
 
 func _draw_slot(center: Vector2, identity: int) -> void:
 	draw_circle(center + Vector2(2.0, 4.0), 25.0, Color(0.0, 0.0, 0.0, 0.35))

@@ -6,6 +6,7 @@ signal game_over_requested(identity: int)
 var lanes: Array[LaneActor] = []
 var attack_history: Array[Dictionary] = []
 var game_over := false
+var _camera: Camera3D
 
 func _ready() -> void:
 	_build_environment()
@@ -52,6 +53,13 @@ func reset_run() -> void:
 	for lane in lanes:
 		lane.reset_run()
 
+func configure_viewport_aspect(aspect: float) -> void:
+	if _camera == null:
+		return
+	# Keep all four lanes vertically visible and prevent very wide mobile windows
+	# from shrinking the battlefield into the middle of excessive empty space.
+	_camera.size = clampf(31.0 / maxf(aspect, 1.0), 10.0, 11.5)
+
 func _on_lane_breached(identity: int, _enemy_uid: int) -> void:
 	if game_over:
 		return
@@ -79,12 +87,13 @@ func _build_environment() -> void:
 	add_child(light)
 
 func _build_camera() -> void:
-	var camera := Camera3D.new()
-	camera.name = "OrthographicCamera"
-	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 11.5
-	camera.position = Vector3(0.0, 9.6, 10.8)
-	camera.look_at_from_position(camera.position, Vector3(0.0, 0.0, 0.0))
-	camera.current = true
-	add_child(camera)
+	_camera = Camera3D.new()
+	_camera.name = "OrthographicCamera"
+	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	_camera.keep_aspect = Camera3D.KEEP_HEIGHT
+	_camera.size = 11.5
+	_camera.position = Vector3(0.0, 9.6, 10.8)
+	_camera.look_at_from_position(_camera.position, Vector3(0.0, 0.0, 0.0))
+	_camera.current = true
+	add_child(_camera)
 

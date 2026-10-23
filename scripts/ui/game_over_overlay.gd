@@ -5,6 +5,7 @@ signal restart_requested
 
 var final_score := 0
 var _restart_button: Button
+var _content_rect := Rect2()
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -30,15 +31,22 @@ func hide_for_restart() -> void:
 	_restart_button.release_focus()
 	queue_redraw()
 
+func set_content_rect(value: Rect2) -> void:
+	_content_rect = value
+	_layout_button()
+	queue_redraw()
+
 func _layout_button() -> void:
 	if _restart_button == null:
 		return
-	_restart_button.position = Vector2(size.x * 0.5 - 110.0, size.y * 0.5 + 58.0)
+	var content := _content_rect if _content_rect.size.x > 0.0 else Rect2(Vector2.ZERO, size)
+	_restart_button.position = content.get_center() + Vector2(-110.0, 58.0)
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.015, 0.02, 0.04, 0.84), true)
-	var center_x := size.x * 0.5
-	var center_y := size.y * 0.5
+	var content := _content_rect if _content_rect.size.x > 0.0 else Rect2(Vector2.ZERO, size)
+	var center_x := content.get_center().x
+	var center_y := content.get_center().y
 	draw_string(ThemeDB.fallback_font, Vector2(center_x - 220.0, center_y - 45.0), "GAME OVER", HORIZONTAL_ALIGNMENT_CENTER, 440.0, 46, Color(1.0, 0.38, 0.25))
 	draw_string(ThemeDB.fallback_font, Vector2(center_x - 180.0, center_y + 6.0), "FINAL SCORE  %06d" % final_score, HORIZONTAL_ALIGNMENT_CENTER, 360.0, 22, Color.WHITE)
 	draw_string(ThemeDB.fallback_font, Vector2(center_x - 180.0, center_y + 34.0), "The lane was breached", HORIZONTAL_ALIGNMENT_CENTER, 360.0, 15, Color(0.72, 0.8, 0.92))
