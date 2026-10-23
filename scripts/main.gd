@@ -10,6 +10,7 @@ var _chain_view: BallChainView
 var _shooter_view: ShooterView
 var _magazine_view: MagazineView
 var _hud_view: HudView
+var _game_over_overlay: GameOverOverlay
 var _magazine := MagazineState.new()
 var _chain_model := ChainModel.new()
 var _progression := MatchProgression.new()
@@ -17,6 +18,7 @@ var _cooldown_remaining := 0.0
 var _active_touch_id := -1
 var _touch_started_in_playfield := false
 var _playfield_rect := Rect2()
+var _game_over := false
 
 func _ready() -> void:
 	_build_scene()
@@ -26,17 +28,26 @@ func _ready() -> void:
 	_chain_model.match_completed.connect(_on_chain_match_completed)
 	_progression.state_changed.connect(_on_progression_state_changed)
 	_progression.match_resolved.connect(_on_match_resolved)
+	_battlefield.game_over_requested.connect(_on_game_over_requested)
+	_game_over_overlay.restart_requested.connect(_restart_run)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
 	_progression.publish_state()
 	_layout()
 
 func _process(delta: float) -> void:
+	if _game_over:
+		return
 	_cooldown_remaining = maxf(0.0, _cooldown_remaining - delta)
 	_chain_model.advance(delta)
 	_progression.update(delta)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _game_over:
+		if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
+			_restart_run()
+			get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseMotion:
 		_shooter_view.move_to(event.position.x)
 	elif event is InputEventMouseButton and event.pressed:
@@ -75,13 +86,15 @@ func _handle_touch(event: InputEventScreenTouch) -> void:
 	get_viewport().set_input_as_handled()
 
 func _shoot() -> void:
-	if _cooldown_remaining > 0.0:
+	if _game_over or _cooldown_remaining > 0.0:
 		return
 	var fired_identity := _magazine.consume_loaded()
 	_shooter_view.launch(fired_identity)
 	_cooldown_remaining = SHOOT_COOLDOWN
 
 func _swap() -> void:
+	if _game_over:
+		return
 	_magazine.swap()
 
 func _on_magazine_changed(loaded: int, next_value: int) -> void:
@@ -99,7 +112,29 @@ func _on_progression_state_changed(score: int, combo_count: int, tier: int, feve
 
 func _on_match_resolved(result: Dictionary) -> void:
 	_chain_view.show_progression_feedback(result)
-	_battlefield.fire_for_match(result)
+	_battlefield.handle_match(result)
+
+func _on_game_over_requested(_identity: int) -> void:
+	if _game_over:
+		return
+	_game_over = true
+	_active_touch_id = -1
+	_touch_started_in_playfield = false
+	_shooter_view.set_simulation_paused(true)
+	_game_over_overlay.show_game_over(_progression.score)
+
+func _restart_run() -> void:
+	_game_over = false
+	_cooldown_remaining = 0.0
+	_active_touch_id = -1
+	_touch_started_in_playfield = false
+	_shooter_view.reset_run()
+	_chain_view.reset_feedback()
+	_chain_model.reset_run()
+	_progression.reset_run()
+	_magazine.reset_run()
+	_battlefield.reset_run()
+	_game_over_overlay.hide_for_restart()
 
 func _build_scene() -> void:
 	_background = ColorRect.new()
@@ -136,6 +171,9 @@ func _build_scene() -> void:
 	_hud_view = HudView.new()
 	_hud_view.name = "HUD"
 	add_child(_hud_view)
+	_game_over_overlay = GameOverOverlay.new()
+	_game_over_overlay.name = "GameOverOverlay"
+	add_child(_game_over_overlay)
 
 func _layout() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
@@ -153,6 +191,8 @@ func _layout() -> void:
 
 	_hud_view.position = Vector2.ZERO
 	_hud_view.size = Vector2(viewport_size.x, hud_height)
+	_game_over_overlay.position = Vector2.ZERO
+	_game_over_overlay.size = viewport_size
 	_chain_view.position = Vector2(14.0, hud_height)
 	_chain_view.size = Vector2(viewport_size.x - 28.0, chain_height)
 	_chain_model.set_lane_width(_chain_view.size.x)

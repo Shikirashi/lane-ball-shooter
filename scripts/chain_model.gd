@@ -55,6 +55,16 @@ func _init() -> void:
 func set_lane_width(value: float) -> void:
 	lane_width = maxf(value, spacing * 3.0)
 
+func reset_run() -> void:
+	balls.clear()
+	cache.clear()
+	total_match_events = 0
+	last_match_identity = -1
+	last_match_size = 0
+	event_log.clear()
+	_next_ball_id = 1
+	seed_stream()
+
 func advance(delta: float) -> void:
 	var travel := speed * maxf(delta, 0.0)
 	for index in range(balls.size()):

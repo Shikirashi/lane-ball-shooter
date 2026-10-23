@@ -1,8 +1,11 @@
 class_name Battlefield
 extends Node3D
 
+signal game_over_requested(identity: int)
+
 var lanes: Array[LaneActor] = []
 var attack_history: Array[Dictionary] = []
+var game_over := false
 
 func _ready() -> void:
 	_build_environment()
@@ -14,21 +17,48 @@ func _ready() -> void:
 		lane.position.z = -3.0 + lane_index * 2.0
 		add_child(lane)
 		lanes.append(lane)
+		lane.combat_model.breached.connect(_on_lane_breached)
 
 func fire_for_match(result: Dictionary) -> Dictionary:
+	var outcome := handle_match(result)
+	if str(outcome.get("action", "")) == "attack":
+		return outcome.get("attack", {})
+	return {}
+
+func handle_match(result: Dictionary) -> Dictionary:
+	if game_over:
+		return {"action": "ignored"}
 	var identity := int(result.get("identity", -1))
 	if identity < 0 or identity >= lanes.size():
-		return {}
+		return {"action": "ignored"}
 	var locked_result := result.duplicate(true)
-	var attack := lanes[identity].fire_for_match(locked_result)
-	if not attack.is_empty():
-		attack_history.append(attack.duplicate(true))
-	return attack
+	var outcome := lanes[identity].handle_match(locked_result)
+	if str(outcome.get("action", "")) == "attack":
+		var attack: Dictionary = outcome.get("attack", {})
+		if not attack.is_empty():
+			attack_history.append(attack.duplicate(true))
+			while attack_history.size() > LaneCombatModel.HISTORY_LIMIT:
+				attack_history.pop_front()
+	return outcome
 
 func get_lane(identity: int) -> LaneActor:
 	if identity < 0 or identity >= lanes.size():
 		return null
 	return lanes[identity]
+
+func reset_run() -> void:
+	game_over = false
+	attack_history.clear()
+	for lane in lanes:
+		lane.reset_run()
+
+func _on_lane_breached(identity: int, _enemy_uid: int) -> void:
+	if game_over:
+		return
+	game_over = true
+	for lane in lanes:
+		lane.combat_model.set_game_over(true)
+	game_over_requested.emit(identity)
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()

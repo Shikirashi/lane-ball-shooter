@@ -4,8 +4,14 @@ extends RefCounted
 signal enemy_spawned(enemy: Dictionary)
 signal enemy_hit(enemy_uid: int, remaining_hp: int, impact_x: float)
 signal enemy_killed(enemy_uid: int, impact_x: float)
-signal enemy_recycled(enemy_uid: int)
 signal projectile_spawned(projectile: Dictionary)
+signal defender_knocked_down(identity: int)
+signal emergency_discharged(identity: int, cleared_count: int)
+signal revival_progressed(identity: int, progress: int, required: int)
+signal defender_revived(identity: int, repelled_count: int)
+signal breached(identity: int, enemy_uid: int)
+
+enum DefenderState { ACTIVE, DOWN }
 
 const DEFENDER_X := -5.9
 const PROJECTILE_START_X := -5.25
@@ -21,6 +27,10 @@ const DEFAULT_MAX_ENEMIES := 5
 const PROJECTILE_LIFETIME := 2.2
 const BURST_INTERVAL := 0.14
 const HIT_DISTANCE := 0.4
+const DEFAULT_REVIVAL_REQUIRED := 2
+const REVIVAL_REPEL_TRIGGER_DISTANCE := 0.4
+const REVIVAL_SAFE_OFFSET := 1.15
+const HISTORY_LIMIT := 128
 
 var team_identity := 0
 var enemy_speed := DEFAULT_ENEMY_SPEED
@@ -31,6 +41,11 @@ var spawn_interval := DEFAULT_SPAWN_INTERVAL
 var max_enemies := DEFAULT_MAX_ENEMIES
 var auto_spawn := true
 var spawn_timer := DEFAULT_SPAWN_INTERVAL
+var defender_state := DefenderState.ACTIVE
+var emergency_available := true
+var revival_progress := 0
+var revival_required := DEFAULT_REVIVAL_REQUIRED
+var game_over := false
 
 var enemies: Array[Dictionary] = []
 var projectiles: Array[Dictionary] = []
@@ -38,7 +53,8 @@ var attack_history: Array[Dictionary] = []
 var hit_history: Array[Dictionary] = []
 var total_spawned := 0
 var total_killed := 0
-var total_recycled := 0
+var total_emergency_cleared := 0
+var total_breaches := 0
 
 var _next_enemy_uid := 1
 var _next_projectile_uid := 1
@@ -48,6 +64,8 @@ func _init(identity_value := 0) -> void:
 	team_identity = posmod(identity_value, TeamData.COUNT)
 
 func fire_attack(match_result: Dictionary) -> Dictionary:
+	if game_over or defender_state != DefenderState.ACTIVE:
+		return {}
 	var locked_tier := clampi(int(match_result.get("tier", 1)), 1, 3)
 	var projectile_count := locked_tier
 	var attack := {
@@ -60,9 +78,31 @@ func fire_attack(match_result: Dictionary) -> Dictionary:
 	}
 	_next_attack_uid += 1
 	attack_history.append(attack.duplicate(true))
+	_trim_history(attack_history)
 	for burst_index in range(projectile_count):
 		_spawn_projectile(int(attack.uid), burst_index * BURST_INTERVAL)
 	return attack.duplicate(true)
+
+func handle_match(match_result: Dictionary) -> Dictionary:
+	if game_over or int(match_result.get("identity", -1)) != team_identity:
+		return {"action": "ignored"}
+	var breached_uid := _enemy_already_breached()
+	if breached_uid >= 0:
+		_trigger_breach(breached_uid)
+		return {"action": "breach"}
+	if defender_state == DefenderState.ACTIVE:
+		var attack := fire_attack(match_result)
+		return {"action": "attack", "attack": attack}
+
+	revival_progress = mini(revival_progress + 1, revival_required)
+	var completed := revival_progress >= revival_required
+	revival_progressed.emit(team_identity, revival_progress, revival_required)
+	if completed:
+		defender_state = DefenderState.ACTIVE
+		revival_progress = 0
+		var repelled_count := _repel_nearby_enemies()
+		defender_revived.emit(team_identity, repelled_count)
+	return {"action": "revival", "revived": completed, "progress": revival_progress}
 
 func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1) -> int:
 	if enemies.size() >= max_enemies:
@@ -84,6 +124,8 @@ func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1) -> int:
 	return int(enemy.uid)
 
 func update(delta: float) -> void:
+	if game_over:
+		return
 	var step := maxf(delta, 0.0)
 	var enemy_starts := {}
 	for enemy in enemies:
@@ -100,8 +142,23 @@ func clear_for_test() -> void:
 	hit_history.clear()
 	total_spawned = 0
 	total_killed = 0
-	total_recycled = 0
+	total_emergency_cleared = 0
+	total_breaches = 0
 	spawn_timer = spawn_interval
+	defender_state = DefenderState.ACTIVE
+	emergency_available = true
+	revival_progress = 0
+	game_over = false
+
+func reset_run(initial_enemy_x := NAN, initial_spawn_delay := DEFAULT_SPAWN_INTERVAL) -> void:
+	clear_for_test()
+	auto_spawn = true
+	spawn_timer = initial_spawn_delay
+	if not is_nan(initial_enemy_x):
+		spawn_enemy(initial_enemy_x)
+
+func set_game_over(value: bool) -> void:
+	game_over = value
 
 func active_enemy_count() -> int:
 	return enemies.size()
@@ -176,6 +233,7 @@ func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
 		enemy.hp = int(enemy.hp) - damage
 		enemy.hit_flash = 0.16
 		hit_history.append({"enemy_uid": enemy_uid, "damage": damage, "impact_x": impact_x, "remaining_hp": maxi(0, int(enemy.hp))})
+		_trim_history(hit_history)
 		if int(enemy.hp) <= 0:
 			enemies.remove_at(index)
 			total_killed += 1
@@ -186,24 +244,113 @@ func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
 		return
 
 func _update_enemies(delta: float) -> void:
-	for index in range(enemies.size() - 1, -1, -1):
+	var already_breached_uid := _enemy_already_breached()
+	if already_breached_uid >= 0:
+		_trigger_breach(already_breached_uid)
+		return
+
+	var previous_positions := {}
+	for enemy in enemies:
+		previous_positions[int(enemy.uid)] = float(enemy.x)
+	for index in range(enemies.size()):
 		var enemy := enemies[index]
 		enemy.x = float(enemy.x) - enemy_speed * delta
 		enemy.hop_clock = float(enemy.hop_clock) + delta * 3.25
 		enemy.hit_flash = maxf(0.0, float(enemy.hit_flash) - delta)
-		if float(enemy.x) <= LEFT_BOUNDARY:
-			var recycled_uid := int(enemy.uid)
-			enemies.remove_at(index)
-			total_recycled += 1
-			enemy_recycled.emit(recycled_uid)
-		else:
-			enemies[index] = enemy
+		enemies[index] = enemy
+
+	if defender_state == DefenderState.ACTIVE:
+		var contact_uid := _first_defender_contact(previous_positions)
+		if contact_uid >= 0:
+			_knock_down()
+			if emergency_available:
+				_discharge_emergency()
+				return
+
+	var breached_uid := _first_new_breach(previous_positions)
+	if breached_uid >= 0:
+		_trigger_breach(breached_uid)
 
 func _update_spawning(delta: float) -> void:
-	if not auto_spawn:
+	if not auto_spawn or game_over:
 		return
 	spawn_timer -= delta
 	while spawn_timer <= 0.0:
 		if enemies.size() < max_enemies:
 			spawn_enemy()
 		spawn_timer += maxf(spawn_interval, 0.1)
+
+func _first_defender_contact(previous_positions: Dictionary) -> int:
+	var best_time := INF
+	var best_uid := -1
+	for enemy in enemies:
+		var uid := int(enemy.uid)
+		var previous_x := float(previous_positions[uid])
+		var current_x := float(enemy.x)
+		if previous_x <= DEFENDER_X:
+			return uid
+		if current_x <= DEFENDER_X:
+			var crossing_time := (previous_x - DEFENDER_X) / maxf(enemy_speed, 0.0001)
+			if crossing_time < best_time:
+				best_time = crossing_time
+				best_uid = uid
+	return best_uid
+
+func _first_new_breach(previous_positions: Dictionary) -> int:
+	var best_time := INF
+	var best_uid := -1
+	for enemy in enemies:
+		if float(enemy.x) > LEFT_BOUNDARY:
+			continue
+		var uid := int(enemy.uid)
+		var previous_x := float(previous_positions[uid])
+		var crossing_time := 0.0 if previous_x <= LEFT_BOUNDARY else (previous_x - LEFT_BOUNDARY) / maxf(enemy_speed, 0.0001)
+		if crossing_time < best_time:
+			best_time = crossing_time
+			best_uid = uid
+	return best_uid
+
+func _enemy_already_breached() -> int:
+	for enemy in enemies:
+		if float(enemy.x) <= LEFT_BOUNDARY:
+			return int(enemy.uid)
+	return -1
+
+func _knock_down() -> void:
+	if defender_state == DefenderState.DOWN:
+		return
+	defender_state = DefenderState.DOWN
+	revival_progress = 0
+	defender_knocked_down.emit(team_identity)
+
+func _discharge_emergency() -> void:
+	if not emergency_available:
+		return
+	emergency_available = false
+	var cleared_count := enemies.size()
+	total_emergency_cleared += cleared_count
+	enemies.clear()
+	emergency_discharged.emit(team_identity, cleared_count)
+
+func _repel_nearby_enemies() -> int:
+	var safe_x := DEFENDER_X + REVIVAL_SAFE_OFFSET
+	var repelled := 0
+	for index in range(enemies.size()):
+		var enemy := enemies[index]
+		if float(enemy.x) <= DEFENDER_X + REVIVAL_REPEL_TRIGGER_DISTANCE:
+			enemy.x = safe_x + repelled * 0.3
+			enemies[index] = enemy
+			repelled += 1
+	enemies.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.x) < float(b.x))
+	return repelled
+
+func _trigger_breach(enemy_uid: int) -> void:
+	if game_over:
+		return
+	game_over = true
+	total_breaches += 1
+	breached.emit(team_identity, enemy_uid)
+
+func _trim_history(history: Array[Dictionary]) -> void:
+	while history.size() > HISTORY_LIMIT:
+		history.pop_front()

@@ -1,16 +1,25 @@
 class_name LaneActor
 extends Node3D
 
+const STATE_EFFECT_DURATION := 0.45
+const EMERGENCY_WAVE_EXPANSION := 38.0
+const REVIVAL_FLASH_EXPANSION := 3.0
+
 var team_identity := 0
 var lane_index := 0
 var combat_model: LaneCombatModel
 
 var _defender_root: Node3D
 var _muzzle_flash: MeshInstance3D
+var _charge_orb: MeshInstance3D
+var _status_label: Label3D
 var _enemy_visuals := {}
 var _projectile_visuals := {}
 var _death_effects: Array[Dictionary] = []
+var _state_effects: Array[Dictionary] = []
 var _attack_feedback := 0.0
+var _revive_feedback := 0.0
+var _last_status_key := ""
 
 func setup(identity: int, index: int) -> void:
 	team_identity = posmod(identity, TeamData.COUNT)
@@ -23,21 +32,53 @@ func _ready() -> void:
 	_build_lane()
 	_build_defender()
 	combat_model.enemy_killed.connect(_on_enemy_killed)
-	combat_model.spawn_timer = 2.8 + lane_index * 1.15
-	combat_model.spawn_enemy(3.6 + lane_index * 0.55)
+	combat_model.defender_knocked_down.connect(_on_defender_knocked_down)
+	combat_model.emergency_discharged.connect(_on_emergency_discharged)
+	combat_model.defender_revived.connect(_on_defender_revived)
+	combat_model.reset_run(3.6 + lane_index * 0.55, 2.8 + lane_index * 1.15)
 	_sync_visuals()
+	_update_status_visual()
 
 func _process(delta: float) -> void:
 	combat_model.update(delta)
+	if combat_model.game_over:
+		return
 	_update_defender_feedback(delta)
 	_update_death_effects(delta)
+	_update_state_effects(delta)
 	_sync_visuals()
+	_update_status_visual()
 
 func fire_for_match(result: Dictionary) -> Dictionary:
 	if int(result.get("identity", -1)) != team_identity:
 		return {}
 	_attack_feedback = 0.3
 	return combat_model.fire_attack(result)
+
+func handle_match(result: Dictionary) -> Dictionary:
+	if int(result.get("identity", -1)) != team_identity:
+		return {"action": "ignored"}
+	var outcome := combat_model.handle_match(result)
+	if str(outcome.get("action", "")) == "attack":
+		_attack_feedback = 0.3
+	_update_status_visual()
+	return outcome
+
+func reset_run() -> void:
+	for effect in _death_effects:
+		var death_node: Node = effect.node
+		death_node.queue_free()
+	for effect in _state_effects:
+		var state_node: Node = effect.node
+		state_node.queue_free()
+	_death_effects.clear()
+	_state_effects.clear()
+	_attack_feedback = 0.0
+	_revive_feedback = 0.0
+	combat_model.reset_run(3.6 + lane_index * 0.55, 2.8 + lane_index * 1.15)
+	_sync_visuals()
+	_last_status_key = ""
+	_update_status_visual()
 
 func _build_lane() -> void:
 	var team_color := TeamData.color(team_identity)
@@ -75,6 +116,19 @@ func _build_defender() -> void:
 	_muzzle_flash.position = Vector3(0.92, 0.64, 0.0)
 	_muzzle_flash.visible = false
 	_defender_root.add_child(_muzzle_flash)
+
+	_charge_orb = PrimitiveFactory.sphere(0.13, 0.26, Color(1.0, 0.74, 0.18))
+	_charge_orb.position = Vector3(-0.58, 0.82, 0.0)
+	_defender_root.add_child(_charge_orb)
+	_status_label = Label3D.new()
+	_status_label.name = "LaneStatus"
+	_status_label.position = Vector3(-4.65, 1.34, 0.0)
+	_status_label.font_size = 24
+	_status_label.outline_size = 6
+	_status_label.modulate = TeamData.color(team_identity).lightened(0.2)
+	_status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_status_label.no_depth_test = true
+	add_child(_status_label)
 
 func _sync_visuals() -> void:
 	var live_enemy_ids := {}
@@ -162,12 +216,34 @@ func _create_projectile_visual(uid: int) -> MeshInstance3D:
 
 func _update_defender_feedback(delta: float) -> void:
 	_attack_feedback = maxf(0.0, _attack_feedback - delta)
+	_revive_feedback = maxf(0.0, _revive_feedback - delta)
+	if combat_model.defender_state == LaneCombatModel.DefenderState.DOWN:
+		_defender_root.position = Vector3(LaneCombatModel.DEFENDER_X, 0.12, 0.0)
+		_defender_root.rotation_degrees.z = 78.0
+		_defender_root.scale = Vector3(1.0, 0.82, 1.0)
+		_muzzle_flash.visible = false
+		return
 	var amount := clampf(_attack_feedback / 0.3, 0.0, 1.0)
 	var lunge := sin(amount * PI) * 0.28
-	_defender_root.position.x = LaneCombatModel.DEFENDER_X + lunge
+	var revive_amount := clampf(_revive_feedback / 0.5, 0.0, 1.0)
+	_defender_root.position = Vector3(LaneCombatModel.DEFENDER_X + lunge, sin(revive_amount * PI) * 0.18, 0.0)
 	_defender_root.rotation_degrees.z = -lunge * 9.0
+	_defender_root.scale = Vector3.ONE * (1.0 + sin(revive_amount * PI) * 0.16)
 	_muzzle_flash.visible = amount > 0.12
 	_muzzle_flash.scale = Vector3.ONE * (0.55 + amount * 0.9)
+
+func _update_status_visual() -> void:
+	if _status_label == null:
+		return
+	var state_name := "ACTIVE" if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else "DOWN %d/%d" % [combat_model.revival_progress, combat_model.revival_required]
+	var charge_name := "CHARGE" if combat_model.emergency_available else "SPENT"
+	var status_key := "%s|%s" % [state_name, charge_name]
+	if status_key == _last_status_key:
+		return
+	_last_status_key = status_key
+	_status_label.text = "%s  %s  %s" % [TeamData.symbol_name(team_identity), state_name, charge_name]
+	_status_label.modulate = TeamData.color(team_identity).lightened(0.25) if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else Color(0.72, 0.75, 0.82)
+	_charge_orb.material_override = PrimitiveFactory.material(Color(1.0, 0.74, 0.18) if combat_model.emergency_available else Color(0.16, 0.17, 0.2))
 
 func _on_enemy_killed(_enemy_uid: int, impact_x: float) -> void:
 	var effect := Node3D.new()
@@ -192,6 +268,42 @@ func _update_death_effects(delta: float) -> void:
 			_death_effects.remove_at(index)
 		else:
 			_death_effects[index] = effect
+
+func _on_defender_knocked_down(_identity: int) -> void:
+	_attack_feedback = 0.0
+	_update_status_visual()
+
+func _on_emergency_discharged(_identity: int, _cleared_count: int) -> void:
+	var wave := PrimitiveFactory.cylinder(0.32, 0.32, 0.035, TeamData.color(team_identity).lightened(0.3), 24)
+	wave.name = "EmergencyDischargeWave"
+	wave.position = Vector3(LaneCombatModel.DEFENDER_X, 0.06, 0.0)
+	add_child(wave)
+	_state_effects.append({"node": wave, "age": 0.0, "kind": "discharge"})
+	_update_status_visual()
+
+func _on_defender_revived(_identity: int, _repelled_count: int) -> void:
+	_revive_feedback = 0.5
+	var flash := PrimitiveFactory.sphere(0.3, 0.6, TeamData.color(team_identity).lightened(0.35))
+	flash.name = "RevivalFlash"
+	flash.position = Vector3(LaneCombatModel.DEFENDER_X, 0.65, 0.0)
+	add_child(flash)
+	_state_effects.append({"node": flash, "age": 0.0, "kind": "revive"})
+	_update_status_visual()
+
+func _update_state_effects(delta: float) -> void:
+	for index in range(_state_effects.size() - 1, -1, -1):
+		var effect := _state_effects[index]
+		effect.age = float(effect.age) + delta
+		var node: Node3D = effect.node
+		if str(effect.kind) == "discharge":
+			node.scale = Vector3(1.0 + float(effect.age) * EMERGENCY_WAVE_EXPANSION, 1.0, 1.0 + float(effect.age) * 1.8)
+		else:
+			node.scale = Vector3.ONE * (1.0 + float(effect.age) * REVIVAL_FLASH_EXPANSION)
+		if float(effect.age) >= STATE_EFFECT_DURATION:
+			node.queue_free()
+			_state_effects.remove_at(index)
+		else:
+			_state_effects[index] = effect
 
 func _add_team_glyph(parent: Node3D, identity: int) -> void:
 	var glyph: MeshInstance3D

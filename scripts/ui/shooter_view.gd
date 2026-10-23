@@ -11,6 +11,7 @@ var track_right := 850.0
 var shot_ceiling := 118.0
 var _shots: Array[Dictionary] = []
 var _muzzle_flash := 0.0
+var simulation_paused := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -28,6 +29,16 @@ func set_loaded(identity: int) -> void:
 	loaded_identity = identity
 	queue_redraw()
 
+func reset_run() -> void:
+	_shots.clear()
+	_muzzle_flash = 0.0
+	simulation_paused = false
+	set_process(true)
+	queue_redraw()
+
+func set_simulation_paused(value: bool) -> void:
+	simulation_paused = value
+
 func move_to(screen_x: float) -> void:
 	shooter_x = clampf(screen_x, track_left, track_right)
 	queue_redraw()
@@ -38,6 +49,8 @@ func launch(identity: int) -> void:
 	queue_redraw()
 
 func _process(delta: float) -> void:
+	if simulation_paused:
+		return
 	var needs_redraw := false
 	for index in range(_shots.size() - 1, -1, -1):
 		var shot: Dictionary = _shots[index]

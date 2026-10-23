@@ -137,9 +137,11 @@ func _test_enemy_movement_spawning_and_boundary() -> void:
 
 	var boundary := LaneCombatModel.new(TeamData.Identity.YELLOW)
 	boundary.clear_for_test()
+	boundary.defender_state = LaneCombatModel.DefenderState.DOWN
+	boundary.emergency_available = false
 	boundary.spawn_enemy(LaneCombatModel.LEFT_BOUNDARY + 0.01, 2)
 	boundary.update(0.1)
-	_check(boundary.active_enemy_count() == 0 and boundary.total_recycled == 1, "P004 left boundary despawns without loss state")
+	_check(boundary.game_over and boundary.total_breaches == 1, "P005 boundary override emits terminal breach once")
 
 func _test_scene_routing_and_genuine_clear() -> void:
 	var packed: PackedScene = load("res://scenes/main.tscn")

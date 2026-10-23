@@ -80,6 +80,15 @@ func toggle_debug() -> void:
 	debug_visible = not debug_visible
 	queue_redraw()
 
+func reset_feedback() -> void:
+	_feedback_time = 0.0
+	_feedback_identity = -1
+	_feedback_size = 0
+	_feedback_points = 0
+	_feedback_tier = 0
+	_feedback_fever = false
+	queue_redraw()
+
 func _draw_direction_hint(center: Vector2) -> void:
 	var shade := Color(0.92, 0.96, 1.0, 0.92)
 	draw_rect(Rect2(center.x - 3.0, center.y - 20.0, 6.0, 40.0), Color(0.02, 0.03, 0.06, 0.75), true)

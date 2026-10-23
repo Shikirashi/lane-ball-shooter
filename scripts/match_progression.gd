@@ -17,6 +17,15 @@ var fever_active := false
 var time_remaining := 0.0
 var last_result: Dictionary = {}
 
+func reset_run() -> void:
+	score = 0
+	combo_count = 0
+	tier = 0
+	fever_active = false
+	time_remaining = 0.0
+	last_result.clear()
+	_emit_state()
+
 func register_match(identity: int, group_size: int) -> Dictionary:
 	if group_size < BASE_MATCH_SIZE:
 		return {}

@@ -12,11 +12,24 @@ var generated_history: Array[int] = []
 
 var _random := RandomNumberGenerator.new()
 var _bag: Array[int] = []
+var _seed := DEFAULT_SEED
 
 func _init(seed_value := DEFAULT_SEED) -> void:
-	_random.seed = seed_value
+	_seed = seed_value
+	_reset_state(false)
+
+func reset_run() -> void:
+	_reset_state(true)
+
+func _reset_state(emit_change: bool) -> void:
+	_random.seed = _seed
+	_bag.clear()
+	generated_history.clear()
+	draw_count = 0
 	loaded_identity = _draw_identity()
 	next_identity = _draw_identity()
+	if emit_change:
+		changed.emit(loaded_identity, next_identity)
 
 func swap() -> void:
 	var previous_loaded := loaded_identity
