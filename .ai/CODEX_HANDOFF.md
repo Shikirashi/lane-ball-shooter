@@ -1,23 +1,31 @@
-# Codex Handoff — LBS-P003
+# Codex Handoff — LBS-P004
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** `aa65950` (`Implement P003 scoring combo and fever`)
+**Implementation commit:** `99dbfdb` (`Implement P004 lane projectile combat`)
 
-**Mailbox:** remains on LBS-P003; task/ledger/decision/protocol files were not changed.
+**Mailbox:** remains on LBS-P004; task/ledger/decision/protocol files were not changed.
 
 ## Implemented
 
-- Added independent deterministic `MatchProgression` state for persistent score, consecutive-match combo, tiers 1–3, fever from match four onward, and the three-second decay window.
-- Wired `ChainModel.match_completed` directly into progression. Every normal/cascade emission produces one copied structured result containing identity, group size, combo count, locked tier, fever flag, and awarded points for P004/P005 consumers.
-- Implemented score formula `100 + 50 × (group_size - 3)` with no combo/fever multiplier or miss/rollover/timeout penalties.
-- Defined exactly 3.0 seconds elapsed as expired. Timeout clears combo/tier/fever and the meter while preserving score; the next match restarts at combo/tier 1. Same-frame cascades advance in signal order without relying on wall-clock time.
-- Rebuilt `HudView` as a live responsive score/combo/tier/fever display with a ticking meter and distinct pulsing fever palette. Match feedback shows color, true group size, points, and locked tier/FEVER.
-- P002 visible/cache diagnostics now default hidden and toggle with F3.
-- Replaced arbitrary magazine generation with a deterministic-seed Fisher–Yates four-color shuffle bag. Initial LOADED/NEXT are bag draws; swap draws nothing; every accepted shot draws exactly one new NEXT, including misses. Cross-bag duplicates are allowed naturally.
-- Preserved P001 input/3D presentation and all accepted P002 shot-contact, connected-segment adjacency, cascade, and FIFO recycling behavior.
+- Added pure deterministic `LaneCombatModel` state per color lane for enemies, HP, projectiles, delayed bursts, spawning, attack/hit history, and the temporary P004 left-boundary recycle.
+- Wired P003 `match_resolved` results directly through `Battlefield.fire_for_match()` to exactly one matching `LaneActor`. Identity, tier, fever flag, and group size are copied and locked at match time.
+- Tier 1/2/3 creates 1/2/3 same-lane shots; FEVER remains tier 3. Burst shots use 0.14-second launch offsets, so they are visually distinct. Group sizes above three do not add shots.
+- Added swept relative-motion collision against moving enemies. Hop height is visual only; each projectile hits at most the first enemy reached, applies one damage event, and despawns. Dead targets are removed once so later burst shots can continue to the next enemy.
+- Reworked `LaneActor` to render multiple enemy/projectile records with procedural primitives: independent hop/squash and ground shadows, HP pips, hit squash, defender lunge/muzzle flash, hidden delayed shots, and short primitive death bursts.
+- Added staggered per-lane spawning with a five-enemy cap. Projectiles also expire at the world-right boundary or after their lifetime, preventing dynamic visual accumulation.
+- Preserved P001–P003 chain collision, physical adjacency, cascades, FIFO cache, controls, shuffle bag, score, combo, fever, HUD, and match feedback.
+- Documented the P004 combat loop and temporary no-loss boundary in README.
+
+## Tuning defaults
+
+- Enemy HP: 2; projectile damage: 1.
+- Enemy speed: 0.48 world units/s; projectile speed: 9.0 units/s.
+- Spawn interval: 5.5 seconds per lane, with initial lane staggering and maximum 5 active enemies per lane.
+- Projectile lifetime: 2.2 seconds; burst interval: 0.14 seconds; swept hit distance: 0.4 units.
+- One initial enemy is placed in every lane. Enemies at/past X = -7.25 are despawned without penalty until P005.
 
 ## Validation
 
@@ -26,26 +34,26 @@ Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 - `godot --headless --path . --script res://tests/headless_smoke.gd` — `P001 headless smoke: PASS`.
 - `godot --headless --path . --script res://tests/p002_logic_test.gd` — `P002 gameplay logic: PASS (59 checks)`.
 - `godot --headless --path . --script res://tests/p003_logic_test.gd` — `P003 progression and magazine: PASS (72 checks)`.
-- P001 smoke at `--resolution 960x540` and `--resolution 1600x720` — PASS at both responsive widths (default 1280×720 also passed).
-- `godot --headless --path . --quit-after 120` — clean bounded runtime startup.
+- `godot --headless --path . --script res://tests/p004_combat_test.gd` — `P004 lane combat: PASS (44 checks)`.
+- `godot --headless --path . --quit-after 180` at default 1280×720 and `--resolution 1600x720` — clean bounded runtime startup at both sizes.
 - `git diff --check` — PASS before implementation commit.
 
-P003 coverage includes all five timely combo states; fever activation/sustain; 3/4/5/7-ball scoring; same-tick cascade order; one-event large groups; near-3s and exact-3s timing; score persistence; post-timeout restart; full structured results; genuine chain→progression→HUD flow; no scoring from misses, rollovers, or repaints; three complete shuffle bags; no-draw swaps; and exactly-one-draw shots including a miss.
+P004 coverage includes color/lane isolation; locked 1/2/3-shot bursts; group-size independence; combo-timeout retention; burst spacing; empty-lane travel/despawn; swept large-delta hits; damage, death, and no duplicate kill; ordered two-target impacts; hop independence; frame-rate-independent enemy movement; bounded/tunable spawning; temporary boundary recycle; and a genuine `ChainModel → MatchProgression → Battlefield → LaneActor` clear.
 
 Validation used isolated `/tmp` XDG data/config/cache directories.
 
 ## Manual playtest
 
-1. Run `godot --path .`. Use mouse X + left-click (or touch drag/release) to insert balls; right-click, Space, or the magazine button swaps LOADED/NEXT. F3 toggles chain/cache diagnostics.
-2. Complete a three-ball match. Confirm `SCORE 000100`, `COMBO x1`, `TIER 1`, a full blue window meter, and matching `+100` feedback.
-3. Complete further matches less than three seconds apart. The second shows tier 2, third tier 3, and fourth changes the HUD to distinct orange FEVER. Fifth and later timely matches remain tier 3/FEVER.
-4. Let the meter fully drain. Combo returns to zero/READY while score remains; the next match starts tier 1. Exactly 3.0 seconds is intentionally treated as expired.
-5. Create a four/five-ball group and confirm it produces one combo step but awards 150/200 points. A cascade should produce a separate step/result for each cleared group.
-6. Fire into empty space and confirm the magazine advances once but score/combo do not. Verify recycled FIFO balls, physical-gap behavior, and the four hopping 3D lanes remain intact.
+1. Run `godot --path .`. Confirm each colored defender has one independently hopping enemy initially and more enemies enter at staggered intervals.
+2. Complete a three-ball match. The defender of that identity should lunge/flash and fire one colored 3D sphere to the right in its own lane, even if that lane has become empty.
+3. Complete timely second and third matches to see two- and three-shot sequential bursts. Fourth-match FEVER still fires three shots, with no extra fever damage.
+4. Watch shots stop at the first enemy, remove one HP pip per hit, and produce a small orange burst when HP reaches zero. With two one-HP targets, successive burst shots should hit them in order.
+5. Confirm enemies remain hittable at the top of their cosmetic hop and neighboring lanes never take damage.
+6. Let an enemy reach the far left: it currently disappears with no defender damage or game over. This is the documented P004 placeholder for P005.
+7. Recheck top-chain misses/insertion/cascades, FIFO return, magazine swap, score/combo/fever, touch/mouse input, F3 diagnostics, and wide layout.
 
 ## Known limitations / scope
 
-- P003 records attack-ready match results but does not fire defender projectiles or modify enemies; that begins in P004.
-- Fever is presentation/progression only and deliberately has no damage or score multiplier.
-- The generator seed is deterministic for reproducible prototype runs; fairness comes from one of each identity per bag, not forced duplicate avoidance.
-- No knockdown/revival/loss or export/device QA was added.
+- P004 intentionally has one basic enemy type and fixed per-lane tuning; no special abilities or fever bonus.
+- Left-boundary enemies are despawned rather than causing knockdown or loss. Defender state, emergency discharge, revival, breach, and restart are reserved for P005.
+- No audio, external assets, rigid-body physics, navigation, or export/device QA was added.
