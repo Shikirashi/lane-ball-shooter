@@ -1,6 +1,8 @@
 class_name ShooterView
 extends Control
 
+signal shot_reached_lane(identity: int, impact_x: float)
+
 var loaded_identity: int = TeamData.Identity.RED
 var shooter_x := 400.0
 var shooter_y := 650.0
@@ -39,9 +41,11 @@ func _process(delta: float) -> void:
 	var needs_redraw := false
 	for index in range(_shots.size() - 1, -1, -1):
 		var shot: Dictionary = _shots[index]
+		var previous_y := float(shot.position.y)
 		shot.position.y -= 610.0 * delta
 		_shots[index] = shot
-		if shot.position.y < shot_ceiling:
+		if previous_y >= shot_ceiling and float(shot.position.y) <= shot_ceiling:
+			shot_reached_lane.emit(int(shot.identity), float(shot.position.x))
 			_shots.remove_at(index)
 		needs_redraw = true
 	if _muzzle_flash > 0.0:

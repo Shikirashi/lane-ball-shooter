@@ -10,7 +10,7 @@ A hybrid 2D/3D lane-defense game prototype in **Godot 4 / GDScript**, targeting 
 ## Codex development mailbox
 This repository uses a shared mailbox: read [AGENTS.md](AGENTS.md) first, then `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and the current `.ai/TASK.md`. Codex implements the active task and writes `.ai/CODEX_HANDOFF.md`.
 
-## Run the P001 prototype
+## Run the prototype
 
 Open the folder in Godot 4.x and run the project, or launch it from a terminal:
 
@@ -26,4 +26,6 @@ Controls:
 - Right-click or press Space to swap the loaded and next balls.
 - On touch devices, press and drag in the playfield, then release to fire once. Tap the magazine's center swap control to swap without firing.
 
-P001 is a functional presentation and input shell. The moving top train, looping enemies, score/combo/fever values, and projectile disappearance are deliberate placeholders. Chain insertion/matching, scoring/fever rules, combat damage, defender knockdown, and game-over logic remain assigned to P002–P005.
+The top lane is now a functional ordered chain: shots insert at the closest valid gap, contiguous groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. The small readout on the top lane shows visible/cache counts and the latest match event for P002 testing.
+
+Score/combo/fever progression, combat damage, defender knockdown, and game-over logic remain assigned to P003–P005. The hopping enemies continue to loop as a battlefield presentation placeholder.
