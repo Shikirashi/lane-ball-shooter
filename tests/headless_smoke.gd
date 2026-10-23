@@ -1,0 +1,63 @@
+extends SceneTree
+
+var _failures: Array[String] = []
+
+func _initialize() -> void:
+	call_deferred("_run")
+
+func _check(condition: bool, message: String) -> void:
+	if not condition:
+		_failures.append(message)
+
+func _run() -> void:
+	var packed: PackedScene = load("res://scenes/main.tscn")
+	_check(packed != null, "main scene loads")
+	if packed == null:
+		_finish()
+		return
+
+	var main := packed.instantiate()
+	root.add_child(main)
+	await process_frame
+	await process_frame
+
+	var lanes := main.find_children("*", "LaneActor", true, false)
+	var cameras := main.find_children("*", "Camera3D", true, false)
+	_check(lanes.size() == 4, "battlefield contains four LaneActor nodes")
+	_check(cameras.size() == 1, "battlefield contains one camera")
+	if cameras.size() == 1:
+		_check(cameras[0].projection == Camera3D.PROJECTION_ORTHOGONAL, "camera is orthographic")
+
+	var shooter: ShooterView = main.get("_shooter_view")
+	var magazine_view: MagazineView = main.get("_magazine_view")
+	var magazine: MagazineState = main.get("_magazine")
+	_check(shooter != null and magazine_view != null, "2D shooter and magazine exist")
+	_check(shooter.loaded_identity == magazine.loaded_identity, "shooter starts synchronized with magazine")
+
+	var original_loaded := magazine.loaded_identity
+	var original_next := magazine.next_identity
+	main.call("_swap")
+	_check(magazine.loaded_identity == original_next and magazine.next_identity == original_loaded, "swap exchanges loaded and next")
+	_check(shooter.loaded_identity == magazine.loaded_identity, "swap updates shooter identity")
+	_check(magazine_view.loaded_identity == magazine.loaded_identity, "swap updates magazine display")
+
+	main.call("_shoot")
+	_check(shooter.get("_shots").size() == 1, "shoot launches one visible projectile")
+	_check(shooter.loaded_identity == magazine.loaded_identity, "shoot advances and synchronizes loaded identity")
+	main.call("_shoot")
+	_check(shooter.get("_shots").size() == 1, "cooldown rejects an immediate second shot")
+
+	var battlefield_region: SubViewportContainer = main.get("_battlefield_container")
+	var chain: BallChainView = main.get("_chain_view")
+	_check(battlefield_region.position.y >= chain.position.y + chain.size.y, "3D region starts below the top chain")
+	_check(magazine_view.position.y >= battlefield_region.position.y + battlefield_region.size.y, "magazine starts below the 3D region")
+	_finish()
+
+func _finish() -> void:
+	if _failures.is_empty():
+		print("P001 headless smoke: PASS")
+		quit(0)
+		return
+	for failure in _failures:
+		push_error("P001 headless smoke: " + failure)
+	quit(1)
