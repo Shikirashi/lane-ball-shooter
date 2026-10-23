@@ -1,46 +1,50 @@
-# Codex Handoff — LBS-P001
+# Codex Handoff — LBS-P002
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** `6d22352` (`Build P001 hybrid Godot prototype shell`)
+**Implementation commit:** `0283c6e` (`Implement P002 moving chain and matching`)
 
-**Mailbox:** remains on LBS-P001; task/ledger/decision/protocol files were not changed.
+**Mailbox:** remains on LBS-P002; task/ledger/decision/protocol files were not changed.
 
 ## Implemented
 
-- Added a Godot 4.7-compatible GDScript project with `gl_compatibility`, a 1280x720 reference viewport, landscape orientation, and responsive top/center/bottom layout.
-- Added a moving 2D sample ball train, direction cue, straight-up shooter, aim guide, visible sample projectiles, persistent loaded/swap/next magazine, and placeholder score/combo/fever HUD.
-- Added centralized red-dot, blue-square, yellow-triangle, and green-diamond identity data shared by chain, shooter, magazine, defenders, and lane markers.
-- Added four primitive-mesh 3D lanes in a clipped SubViewport, fixed elevated orthographic camera, colored defenders, and neutral enemies. Enemy logical X movement is separate from cosmetic hop/squash motion; ground shadows remain on the lane.
-- Added mouse, keyboard, and single-touch routing through one shoot method and one swap method. Swap UI consumes touch/click input, shot identities are locked per projectile, and an initial 0.4-second cooldown rejects rapid shots.
-- Documented running, controls, and deliberately deferred P002–P005 mechanics in `README.md`.
-- Added `tests/headless_smoke.gd` for scene composition, orthographic camera, state synchronization, shot cooldown, and region-order checks.
+- Replaced the repeating P001 sample train with `ChainModel`, the authoritative ordered state for stable ball IDs, identities, logical X positions, animated display X positions, FIFO cache contents, and match history.
+- Added continuous frame-rate-independent leftward movement, a bounded 12-ball deterministic seed containing all four identities and no initial triples, tunable speed/spacing/radius/population/cache constants, and no automatic population growth beyond the configured seed cap.
+- Connected the existing locked-identity shooter projectile to the chain lane. It inserts only when crossing the visible lane and chooses the nearest valid ordered gap/end at the recorded impact X.
+- Added insertion-local matching for groups of 3+, true-size match events, animated gap closure, and boundary-only cascades in occurrence order. Unrelated pre-existing groups are not globally scanned or removed.
+- Added FIFO rollover and right-side return. Each distinct match event requests a three-ball cache batch; an empty visible chain returns up to eight cached balls, while a truly empty chain+cache reseeds.
+- Reworked `BallChainView` as a pure model renderer with symbols/colors, short match feedback, and subtle visible/cache/last-match/event counters.
+- Preserved the P001 orthographic battlefield, responsive layout, magazine/swap behavior, desktop/touch paths, and 0.4-second cooldown.
+- Added `tests/p002_logic_test.gd`; updated README behavior and deferrals.
 
 ## Validation
 
-Godot version: `4.7.2.stable.official.ed1daf0bf`.
+Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 
-- `godot --headless --path . --editor --quit` — project import and script-class registration completed without parse/resource errors. The sandbox blocks Godot's optional local editor TCP listener; this did not affect import.
+- `godot --headless --path . --script res://tests/p002_logic_test.gd` — `P002 gameplay logic: PASS (41 checks)`.
 - `godot --headless --path . --script res://tests/headless_smoke.gd` — `P001 headless smoke: PASS`.
-- Same smoke test with `--resolution 1600x720` — PASS for a wider landscape viewport.
-- `godot --headless --path . --quit-after 5` at 1280x720 and 1600x720 — clean bounded runtime startup; no warnings/errors.
-- `git diff --check` — PASS before commit.
+- P001 smoke with `--resolution 1600x720` — PASS.
+- `godot --headless --path . --quit-after 120` — bounded runtime startup completed without warnings/errors.
+- `git diff --check` — PASS before implementation commit.
 
-Commands used isolated `/tmp` XDG data/config/cache directories so validation did not depend on writable user configuration paths.
+The P002 suite covers bounded/all-color/no-triple seeding, two-versus-three threshold behavior, true-size four-ball events, ordered boundary cascades with an unrelated triple retained, RED/GREEN/BLUE FIFO exit and partial/full return, cached and fresh-seed empty recovery, stable ID/color mapping during sub-spacing movement, and one-time magazine consumption with delayed locked-identity insertion at lane crossing.
+
+Commands used isolated `/tmp` XDG data/config/cache directories. An editor import also completed script registration; this sandbox blocks Godot's optional editor TCP listener, so runtime/test commands are the clean validation source.
 
 ## Manual playtest
 
-1. Open the project in Godot 4.x or run `godot --path .` and confirm the Compatibility renderer is selected.
-2. Confirm the moving symbol-marked ball train is above the four-lane 3D battlefield, and the shooter/magazine are below it. Resize to 16:9 and a wider landscape window; essential controls should remain visible.
-3. Watch each dark enemy travel left while hopping; the shadow should track horizontally without hopping. Enemies loop because combat/breach behavior is deferred.
-4. Move the mouse horizontally and verify the shooter follows. Left-click in the playfield: one color/symbol projectile should travel straight upward, old NEXT should become LOADED, and shooter/magazine visuals should agree. Rapid clicks inside 0.4 seconds should be ignored.
-5. Right-click or press Space to swap. Click the magazine's center `<>` button and verify it swaps without firing.
-6. On touch hardware, press/drag in the playfield and release to fire once. Tap the magazine swap button and verify no release-shot occurs.
+1. Run `godot --path .`. Confirm the ordered symbol-marked balls move smoothly left above the preserved four 3D lanes without spacing-boundary teleports.
+2. The initial magazine is RED loaded / BLUE next. Press Space (or right-click) to load BLUE, place the shooter beneath the adjacent BLUE pair near the right half of the chain, and left-click. The BLUE projectile should remain independent until it reaches the lane, insert between/next to the pair, and clear one BLUE x3 event.
+3. Fire away from a same-color pair and confirm a one- or two-ball group remains. Fire into a larger same-color run and confirm one event reports the actual removed size.
+4. For deterministic cascade reproduction, run the P002 test command above: its RED insertion clears RED x3, joins and clears GREEN x3 second, and deliberately leaves an unrelated BLUE x3 untouched. In play, the top feedback/counter reports each group as a distinct event when an equivalent arrangement is created.
+5. Let the project run without firing. After roughly 18 seconds at default speed, `CACHE` begins increasing as leftmost balls exit with no penalty. Complete a match after cache is nonzero: up to three cached balls return at the right and cache count falls. Let the visible chain fully roll off (roughly 37 seconds from launch) to see automatic FIFO re-entry without a stuck empty board.
+6. Recheck mouse movement/left-click, right-click/Space, magazine button, and touch drag/release. The shooter, LOADED, and NEXT visuals must remain synchronized; tapping swap must not fire.
 
-## Assumptions / deferred work
+## Assumptions / limitations
 
-- P001 sample chain movement, enemy looping, projectiles, and zeroed HUD are presentation placeholders only. No matching/cache, scoring/fever, combat damage, knockdown/revival, or game-over logic was implemented.
-- Fresh NEXT identities use a deterministic RNG and avoid immediately duplicating LOADED for visual clarity; the production generator remains a P002/P003 balancing decision.
-- Headless validation cannot confirm touch behavior on physical Android hardware or visual color calibration; those require the manual checks above and later P006 device QA.
+- Each distinct cascade match requests its own configurable cache-return batch, consistent with the decision that each cleared group is a separate match event.
+- Logical closure is immediate for correct cascading; display X eases toward the new positions at a configurable speed. Removed balls use lightweight text/ring feedback rather than particle effects.
+- The debug readout is temporarily always visible for P002 playtesting. P003 may integrate match events into score/combo/fever and replace or hide it.
+- No P003 scoring/combo/fever, P004 defender attacks/damage, P005 loss systems, or P006 exports/device QA were implemented.
