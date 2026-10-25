@@ -53,7 +53,11 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 ## ACTIVE mailbox and release separation
 - P027 is currently the ONLY active Codex task in `.ai/TASK.md`: prepare and, only when signing and release permissions are available/approved, publish actual signed Android APK and matching existing-style portfolio download tile. Do not alter unrelated portfolio cards, switch Pages host, or mark empty/fake APK links live.
-- P024 builds/tests are validated by Actions run `40242224166`. Its publishing stage is NOT operational until user adds narrowly scoped `PORTFOLIO_PUBLISH_TOKEN` to game repo Actions secrets and manually dispatches a successful end-to-end run. Codex must not generate/borrow user credentials or claim publication complete. P027 can proceed independently.
+- P024 cross-repo publishing token was added by user and worked: run `40244954365` pushed production portfolio `d3c09f58` and Pages `40245097145` completed. Build, static hashes and browser secure live canvas passed; workflow result red only on Chrome temporary-profile cleanup `ENOTEMPTY`. A targeted verifier cleanup repair is permitted; no new token needed.
 
 ## P027 current checkpoint
 - P027 source scaffolding was pushed as `75f0dd75` and reviewed. Actual release APK/card remains BLOCKED by absent Android SDK, Android release template, signing identity and device. The ONLY active task is to safely bootstrap user-local Android toolchain per current `.ai/TASK.md`, test it and stop before creating a private keystore without explicit user approval. Preserve P024 Web CI and current public portfolio, do not publish placeholder APK links.
+
+## Latest state after SDK/key backup checkpoint
+- P027 signing key and local environment already EXIST, created by Codex with user approval. User confirms secure root-protected backup at `/var/backups/lane-ball-shooter/`. Do not recreate key or paste secrets. Next user-dependent step is Google command-line tools installation and explicit SDK license acceptance; then existing scripts can build and verify release APK. Do not publish Android card before actual tested asset.
+- P024 cross-repo pipeline has successfully pushed and Pages has deployed; fix only race in `scripts/ci/verify_browser_startup.mjs` by waiting for spawned Chrome to exit and safely removing temp profile without weakening secure canvas assertions; rerun targeted CI. Game mechanics and portfolio homepage stay untouched.
