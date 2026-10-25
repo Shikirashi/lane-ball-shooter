@@ -1,35 +1,49 @@
-# Lane Ball Shooter — USER PLAYTEST AFTER P020 / NO ACTIVE CODEX TASK
+# ACTIVE TASK: LBS-P021 — Web main menu, fullscreen choice and real Web export
 
-**Status:** WAITING FOR USER PLAYTEST
+**Status:** READY FOR CODEX / ONLY ACTIVE TASK
 **Branch:** `master`
-**P020 implementation:** `8f37cb8932ff62412a0e86383e647bf666bd29d8` (source/handoff reviewed and accepted; graphical, audio and device QA pending). P019 roster implementation: `eb65018`.
-**Workflow:** Codex STOP. No active implementation task until ChatGPT posts the next after user feedback. P001–P020 Godot 4.7.2 headless suites all reported passing by Codex, including P020 67 checks and P011 16,485 stress checks. The tests were not independently rerun here.
+**Requested:** 2026-10-25. The user considers gameplay sufficiently complete for a browser build. For the **Web version**, before gameplay display a simple main menu with **START GAME**. Clicking START GAME opens a modal prompt with the EXACT text **"Play in fullscreen?"**, and **YES** / **NO** choices. YES requests browser fullscreen then starts gameplay; NO starts gameplay in the normal browser page without requesting fullscreen. Codex must also **produce a real, testable Godot Web export** for eventual Mintbase LAN/Tailscale hosting at `http://mintbaseIP:PORT/`. Do not deploy to Mintbase in this task; P022 is queued for subsequent explicit user request.
+**Baseline:** P020 code `8f37cb8932ff62412a0e86383e647bf666bd29d8`, reviewed/accepted, all P001–P020 suites reported PASS. Read `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, current `.ai/TASK.md`, P020 handoff. Code-only/GDScript; no GUI or mouse automation, no unapproved external assets or dependencies.
 
-## Current enemy roster
+## A. Menu and game lifecycle
 
-- Hopper = original 2HP gray hopping model, 2 orange top horn squares PERMANENT decorative, not health bars.
-- Heavy = orange wider Hopper, 4HP, 0.7x sliding.
-- Sickle Snake = yellow taller Hopper, 2HP, 2x sliding, after surviving hit freezes exactly 0.5s, crosses to valid adjacent lane with 0.3s 3D visual transition and collision-safe UID remap while preserving original global spawn_id. A full destination makes it try other neighboring lane, or wait. Only ONE living Snake across all lanes, next eligible at least 15 seconds after death.
-- Healyzard = green 0.7-scale Hopper at back of lane, stationary, 2HP. Every 15s each healer heals every OTHER non-Healyzard alive on its CURRENT lane +1HP up to max; no healers heal themselves/other healers. Displays yellow circular center glow with radial fade-to-transparent edges BEHIND its body on each pulse, fading within 0.85s.
-- Random weighted spawn base 50% Hopper, 20% Heavy, 20% Snake, 10% Healyzard. Snake ineligibility renormalizes other weights. 8 actual spawns per lane, 32 encounter total, five live at most per lane. No HP bars on any enemy. Prior rejected assistant vector drawings are NOT to be used.
-- P018 enemy death SFX + explosion/fall/fade, 3s WAVE CLEARED delay after last enemy, immediate GAME OVER and restart stay intact.
-- P017 102px/s ball conveyor and original-UID physical return from OFFSCREEN LEFT after causally-created gravity gap stays intact.
+- The Web build must BOOT TO A MAIN MENU, not immediately spawn/init/live-update the 32-enemy gameplay, timers, chain, combo or SFX. Preferred: small dedicated bootstrap/main-menu scene at `scenes/boot.tscn` (or similar), activated via `project.godot` main_scene only if it also preserves direct/main test fixtures. Instantiate `scenes/main.tscn` only once after either YES or NO selection (or otherwise prove absolutely no game simulation advances underneath the menu).
+- For **desktop and Android**, preserve existing immediate gameplay startup by default; the user's request is explicitly for the Web version. A standalone menu scene remains testable from desktop without exporting. Avoid breaking unit tests that load `scenes/main.tscn` directly. Keep platform detection simple and reliable (`OS.has_feature("web")`, etc.) and don't mistake mobile web browsers for native Android.
+- Main menu should visually match the game's existing dark minimalist 2D UI: dark backdrop, readable centered game title `LANE BALL SHOOTER`, one prominent `START GAME` button. No vector-character artwork, no external images; use Godot native Control/Button/Label drawing and responsive safe-area layout, covering typical 960x540, 1280x720, 1600x720, 2400x1080 and browser resizing. Large touch targets and readable text at phone landscape sizes.
+- Clicking/tapping START GAME opens one centered modal panel with exactly `Play in fullscreen?` and two working buttons labelled `YES` and `NO`. It MUST NOT start gameplay until choice selected. Avoid multiple simultaneous modals, accidental click-through to shooter, focus issues, unhandled duplicate press, or black frames.
+- NO: close menu and load the real game in current embedded/windowed Web canvas; no fullscreen API request. YES: request fullscreen immediately from the **actual YES button press handler** before deferring/awaiting/scene transitions; then initiate normal gameplay. Browser user activation is transient and expires; no timer, `call_deferred`, or `await` BEFORE requesting fullscreen. Use Godot Web-supported `DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)` or a carefully scoped `JavaScriptBridge` requestFullscreen on the Godot canvas/containing element if required; verify correct behavior for Godot 4.x and actual exported HTML. The browser, not the game, has final say. If denied/unsupported, the game still starts normally in-page and may show a SMALL informational notice rather than hanging or claiming success.
+- Escape/F11/browser fullscreen exit should work normally; game must resize and keep shooter/balls/control hitboxes aligned with responsive layout; NO must never enter fullscreen implicitly. Native Android must NOT show this dialog.
+- Controls must be usable with mouse, keyboard focus (Enter/Space activation where appropriate) and touch. Audio initialization/playback should be gated by user interaction where browser requires it, without autoplay errors before start.
+- Preserve P020 Snake/Healyzard, P019 typed spawn distribution, P018 death animations and 3s victory screen, P017 left-hidden physical ball return, all prior timing, input/restart/game over. Don't change game balance, score or enemy count. Keep `RESTART [R]` existing behavior (restart current run, not main menu) unless necessary; no extra menu features without request.
 
-## Manual visual QA
+## B. Produce an ACTUAL Web build, not just an export preset
 
-```bash
-cd ~/Documents/GitHub/laneballshooter
-git pull --ff-only
-godot --path .
-```
+- `export_presets.cfg` ALREADY has `Web` export path `exports/web/index.html`, single-threaded `variant/thread_support=false`, Compatibility renderer. Review/preserve that preset. Threadless Web build is intentional: simple static HTTP servers should not need COOP/COEP/SharedArrayBuffer isolation headers. Do not casually enable multithreading, GDExtension, PWA/service-worker, external analytics, telemetry, or hotlink/CDN assets.
+- Check actual Godot version, matching installed Web export templates and the Godot 4.7.2 CLI capabilities. Prefer bounded headless command:
+  `mkdir -p exports/web && godot --headless --path . --export-release "Web" exports/web/index.html`
+  (adapt `godot` executable/path as needed).
+- **If export templates are missing:** attempt to install the exact official templates matching the installed Godot build using allowed noninteractive means; never silently use mismatched templates and never claim success without binaries. If unavailable, report precise blocker and verified actionable manual template install steps, still commit the code/menu/export preset changes. Download only from official release source and avoid requiring user GUI interactions unless absolutely necessary.
+- Confirm a full static Web build exists at `exports/web/`: matching generated `index.html`, JavaScript, `.wasm`, `.pck` and any required asset/icon files (names as generated; don't arbitrarily rename). Ensure all required resources remain together, with relative references, suitable for a static file server at root `/`.
+- Package **all runtime files** into `exports/lane-ball-shooter-web.zip` (ZIP root directly contains `index.html`, no extra top-level `web/` folder), with a repeatable script such as `scripts/build_web.sh` (no GUI), and provide exact path/file sizes/SHA256 in handoff. By default compiled `exports/` and ZIP remain .gitignored and LOCAL, not committed as giant binary assets. Do NOT push WebAssembly/PCK binaries into Git history or claim someone can download them from GitHub code view. User will later transfer the local folder or ZIP to Mintbase. If Codex needs a remote downloadable build, propose an optional GitHub Release asset, but do not automatically publish unless explicitly authorized.
+- Add a small no-dependency dev server instruction or script `python3 -m http.server 8765 --bind 127.0.0.1 --directory exports/web`. The build must be served by HTTP instead of opening `file://index.html`. For later LAN hosting, bind `0.0.0.0` on Mintbase explicitly; do NOT alter firewall or start a persistent/public listening service on development machine in this task.
+- Test HTTP status and relevant MIME types (`.wasm` application/wasm, `.js` JavaScript, `.pck` downloadable/octet stream), and HTTP requests for each referenced resource. If a headless WebGL 2 browser/browser test is available, exercise menu YES/NO and a running game using automated browser interactions only when compatible with repository's no-GUI rule; no claims of manual visual QA.
+- **Do not conflate Web export with Web deployment.** This task MUST leave a real local Web build if toolchain supports it and tell user exactly where it is. No claim of being live at `mintbaseIP:PORT` yet.
 
-1. Observe visible models of all four types; ensure Hopper alone has two permanent orange horns, no HP bars, correct relative sizes/colors and sliding vs hopping.
-2. Hit a Snake for 1HP: stops 0.5 seconds; smoothly transitions to valid adjacent lane over ~0.3 seconds; resumes sliding at 2x Hopper after transit. Edge lane chooses inward; another Snake cannot spawn until 15s after this one dies, not after merely being hit.
-3. Kill Snake during/after transfer; no duplicate SFX/VFX, invisible lingering copies or extra quota. Confirm no adjacent lane exceeds 5 live enemies.
-4. Watch Healyzard's pulse every 15 seconds; a soft YELLOW gradient circle appears BEHIND its body (not opaque or in front), expands and fades in 0.85s. A wounded Heavy/Hopper/Snake in the same lane should receive exactly 1 HP; Healyzards never heal each other or targets in other lanes.
-5. Complete 32-enemy encounter; hear and see P018 death animation, wait 3s before WAVE CLEARED; GAME OVER on breach remains immediate. Restart should clean all effects. Review ball conveyor P017 LEFT reentry, fresh RIGHT feeder, shot/magazine/touch, and F3 `I0`.
-6. Desktop/Web/Android perceived visuals, actual audio mix, touch and exports have NOT been tested with real devices.
+## C. Regression tests and acceptance
 
-## Verified source scope
+Create `tests/p021_web_menu_export_test.gd` using headless-friendly verification:
+1. On simulated/forced Web menu path, before pressing START GAME, the gameplay scene is not running and no enemy/chain simulation progresses; title and START GAME visible.
+2. START GAME shows EXACT prompt and YES/NO labels, with no game yet. No click-through, no duplicate starts.
+3. NO calls no fullscreen API and starts game exactly once; YES invokes fullscreen request directly from real choice handler and starts game exactly once, with fallback if unsupported/denied (can inject/mock a fullscreen callable to test outside browser). Check no async before fullscreen request and event propagation.
+4. Bootstrap defaults to legacy immediate Main scene for native Android/desktop (or equivalent platform gate), and Web correctly gets menu.
+5. Resize/safe rect at 960x540, 1280x720, 1600x720, 2400x1080 and narrow mobile landscape, buttons remain accessible and modal readable.
+6. Button touch/keyboard focus works; fullscreen exit does not freeze/restart gameplay or misalign aim.
+7. Full P001–P020 regression suites still PASS, including P018 victory delay, P019 weighted roster, P020 abilities and P017 same-UID left return; don't weaken tests.
+8. Bounded Godot 4.7.2 main-scene startup checks and `git diff --check`.
+9. Produce real exports + local HTTP smoke test and preserve generated manifest/command outcomes (when toolchain available). Test YES fullscreen in actual browser only if browser/WebGL supports it, and explicitly report any unverified visual/browser paths.
 
-P020 source, test and Codex handoff reviewed: `scripts/world/lane_combat_model.gd`, `scripts/world/battlefield.gd`, `scripts/world/lane_actor.gd`, `tests/p020_special_enemy_abilities_test.gd`. Codex reports Godot 4.7.2 headless P001–P020 PASS including P020 67 checks, `git diff --check` PASS, bounded scene starts 960x540/1280x720/1600x720/2400x1080. No independent graphical/device test was performed here.
+## D. End / handoff
+
+- README: `Web main menu`, `YES/NO` semantics, exact export/build command, how to start localhost static server and open URL, generated `exports/` paths, `file://` caveat, browser constraints, and later copy/host-on-Mintbase distinction. Avoid referencing a specific LAN IP as permanent.
+- Write `.ai/CODEX_HANDOFF.md` with code details, actual test results/check counts, export template version/path, exact web build file list and zip hash if built, any browser/fullscreen limitations and how user can playtest.
+- Commit and push only source, helper scripts and handoff; preserve ignored compiled assets locally. **STOP**. Do not edit ChatGPT-owned `.ai/TASK.md`, `.ai/TASK_LEDGER.md`, `.ai/DECISIONS.md`, `.ai/PROTOCOL.md`. Do not implement or activate queued P022 Mintbase deployment.
