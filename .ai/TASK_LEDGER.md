@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The active task is in `.ai/TASK.md`. P001–P007 have been reviewed at source/handoff level; the second playtest generated P008. Only ChatGPT advances this ledger.
+The active task is in `.ai/TASK.md`. P008 implementation and user speed correction were pushed; the latest playtest uncovered an incorrect chain-collapse direction, assigned to P009. Only ChatGPT advances this ledger.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -11,6 +11,8 @@ The active task is in `.ai/TASK.md`. P001–P007 have been reviewed at source/ha
 | LBS-P005 | COMPLETE — code `0c61edc`, handoff `387a512` | Defender knockdown, one-time emergency clear, two-match revival, lane breach and game-over/restart |
 | LBS-P006 | IMPLEMENTATION COMPLETE — `2ffcf3f`, handoff `2d740e0`; Web/Android exports and physical-device QA pending toolchains | Web/Android export configuration, mobile touch QA, layout/accessibility refinements, balancing and regression tests |
 | LBS-P007 | COMPLETE — code `ab5359f`, handoff `5b0e7c8`; desktop visual playtest pending | Double conveyor speed to 68 px/s; perpetual fresh + FIFO-fed top chain; tier-2 one-hit kills and tier-3 two-adjacent-lane clears; hop-driven enemies with grounded pauses; tests and visual feedback |
-| LBS-P008 | ACTIVE | 0.20s shooter travel across layouts, enemy average speed 0.24, weighted same-color chain clusters incl. seven without passive removal, seven synthesized event-driven SFX, regression tests |
+| LBS-P008 | IMPLEMENTED — code `327077e`, speed correction `d1df357`, handoff `eeff275`; final QA continuing in P009 | 0.20s shooter travel, enemy average speed 0.24, weighted same-color clusters incl. seven, seven synthesized SFX, 34 px/s conveyor correction |
 
-Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008. Web/Android exported artifacts and physical-device testing remain pending toolchains.
+| LBS-P009 | ACTIVE | Zuma-style gap rollback: move existing LEFT/front ball section right after player clear; physical reconnection and delayed causal cascades; preserve right-only infinite feed/FIFO and P008 systems |
+
+Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009. Web/Android exported artifacts and physical-device testing remain pending toolchains.
