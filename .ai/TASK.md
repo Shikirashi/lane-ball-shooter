@@ -2,7 +2,7 @@
 
 **Status:** READY FOR CODEX
 **Branch:** master
-**Priority:** User playtest after P010: chain improvements feel better, but quick consecutive matches sometimes cause OVERLAPPING balls; bottom-right magazine blocks aiming at rightmost balls.
+**Priority:** User playtest after P010: chain improvements feel better, but quick consecutive matches sometimes cause OVERLAPPING balls; bottom-right magazine blocks aiming at rightmost balls; BLUE and GREEN lane colors look too similar.
 **Baseline:** P010 implementation `891ad0d`, handoff `80020c0`; P010 accepted. Do not introduce new features or alter established balance.
 **Read first:** `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, `.ai/CODEX_HANDOFF.md`, this task.
 **External design references (principles, not a license to copy source code):**
@@ -82,3 +82,14 @@ Add `tests/p011_segment_chain_stress_test.gd` plus input/layout tests if appropr
 - GDScript Godot 4.7.2 Compatibility, Web and Android landscape. No new enemy types, graphics assets, audio redesign, export SDK installation, GUI/mouse automation or unrelated features.
 - Update README with segment model / reliable rollback and moved swap layout. Update `.ai/CODEX_HANDOFF.md` with architecture, tests/real counts, reproduce seeds, performance/limits and manual QA checklist.
 - Commit/push to master and **STOP**. Don't edit `.ai/TASK_LEDGER.md` or `.ai/DECISIONS.md`, don't self-advance P012. ChatGPT will review on "check push".
+
+
+## E. Fix fourth-lane color identity readability (user screenshot)
+
+User's screenshot shows lane 2 (BLUE) and lane 4 (GREEN) appearing almost identical cyan/turquoise, especially their bright stripes, 3D defender bodies and floor accents. The intended identity order is **RED, BLUE, YELLOW, GREEN** (indices 0,1,2,3), already correctly mapped in `TeamData`, but the final 3D material/lighting output is confusing.
+
+- Fold this into P011 rather than creating a separate task.
+- Inspect `scripts/team_data.gd`, `scripts/world/lane_actor.gd`, `scripts/world/battlefield.gd` and procedural `PrimitiveFactory` materials/lighting and `WorldEnvironment`. Preserve identities/order of all lanes, ball colors, magazine loaded/next, projectiles, lane symbols, scoreboard/status. Fix **perceived rendered contrast** and not just source-level numeric equality. Lane 2 must visibly read as a saturated BLUE, lane 4 as unmistakable grassy/emerald GREEN, not both cyan.
+- Prefer one canonical palette `TeamData.COLORS` driving every visible matching identity; if lighting/tonemapping makes green cyan, adjust palette/hue and/or neutralized lighting and materials while preserving readable brightness. Suggested starting values: BLUE `#3677E8`, GREEN `#37C45A`; tune against the actual rendered scene for best distinction. Avoid green becoming too dark on navy floors and avoid red/yellow collisions. Don't introduce unrelated palette menus here.
+- Preserve color-blind redundancy: BLUE square, GREEN diamond, RED dot, YELLOW triangle on the conveyor, markers, shooter and magazine. Make the lane's distinguishing marker or status label large/clear enough on 960x540 without obstructing enemies.
+- Tests: assert team identities remain 0/1/2/3; BLUE/GREEN palette sufficiently distinguishable (including a hue/distance measure not just `blue != green`); all lane stripe, defender and corresponding chain/magazine colors derive from the same team identity; ensure material colors not overwritten by generic teal accents; screenshot/manual verification at 1280x720 and 960x540. Avoid declaring visual QA complete based solely on headless RGB tests.
