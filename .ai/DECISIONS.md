@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: prototype design baseline, updated with user playtest changes 2026-10-25 (P007). Parameters labeled "initial" are playtest values; mechanics are authoritative until changed via task mailbox.
+Status: prototype design baseline, updated with second desktop playtest changes 2026-10-25 (P008). Later playtest decisions supersede conflicting earlier prototype tuning. Parameters labeled "initial" are playtest values; mechanics are authoritative until changed via task mailbox.
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. Endless survival/high score for prototype.
@@ -21,10 +21,12 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - Android: finger press/drag in the play area moves shooter X; release fires. A tap on the magazine swap control does **not** fire. Handle multi-touch input ownership robustly; optional second-finger swap is not required.
 - Persistent visible magazine shared by desktop/mobile: **LOADED ball | swap icon | NEXT ball**. Swap exchanges loaded and next identities immediately and also changes displayed shooter ball; no resource cost/cooldown. After fire, old next becomes loaded, a fresh next is generated.
 - Thin vertical aim guide is helpful but should not obstruct gameplay.
+- **Player-fired ball reaches upper chain in ~0.20 seconds from launch regardless of viewport height.** This is vertical shot travel, not the chain's horizontal scroll speed. Fire cooldown stays ~0.4s. Missing shots do not insert or trigger a hit SFX.
 - Initial shooter cooldown: ~0.4 seconds; test/tune later.
 
 ## Upper moving chain + cache
-- One straight horizontal visible lane; chain travels right-to-left, and balls insert into the moving sequence on impact as in Zuma.
+- One straight horizontal visible lane with **68 px/s** top-chain conveyor motion, unaffected by the P008 faster fired projectile. Balls insert on impact as in Zuma.
+- **P008 fresh feeder favors same-color consecutive runs** of 2, with occasional 4–7 consecutive balls; e.g. seven GREEN in a row is valid. These already-connected groups are **never cleared automatically** on spawn, movement, cache return or connection; a player-triggered successful insertion starts matching and then physical cascades. No unrelated seeded group should vanish just because a shot hits elsewhere. Only the top-chain FRESH feeder adopts this biased generator; magazine remains a four-color shuffle bag.
 - A successful match = group of >=3 **adjacent balls of one identity**, removed as one match event. After removal, close gap; if it reveals adjacent groups of >=3, cascade until stable.
 - Larger groups grant extra **score only**, not stronger attacks.
 - Balls crossing the screen's **left boundary are NOT destroyed and NOT penalized**: cache them in FIFO order. Successful matches request cached returns from the **right** (initial batch size 3), admitted when spacing allows. The conveyor also has a **continuous independent source of fresh balls at the right edge**, indefinitely throughout the run—not just on total chain exhaustion. Space pending cache returns among fresh balls without violating FIFO or blocking the new stream. Never strand an empty board or build an offscreen-right backlog.
@@ -46,7 +48,7 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - Active defender fires immediately on color match even if lane is empty (attack can be wasted).
 
 ## Enemy combat, knockdown, recovery, loss
-- Basic enemies spawn on right and move left **only by hops**, with stationary grounded intervals; multiple can coexist per lane. Basic enemies have **2 HP**, tier-1 projectile hits deal 1 and tier-2 projectile hits deal 2. Tier-3 area clearing affects exactly the matched lane and one adjacent lane when its origin defender is ACTIVE; does not spend emergency charges.
+- Basic enemies spawn on right and move left **only by hops**, with stationary grounded intervals; multiple can coexist per lane. **P008 enemy average travel speed is halved from 0.48 to 0.24 world units/s**, preserving the existing hop/ground timing and swept contact detection. Basic enemies have **2 HP**, tier-1 projectile hits deal 1 and tier-2 projectile hits deal 2. Tier-3 area clearing affects exactly the matched lane and one adjacent lane when its origin defender is ACTIVE; does not spend emergency charges.
 - When an enemy touches an **active** defender, knock the defender down.
 - Each lane has an **emergency discharge** available **once per run**. On its first defender knockdown, automatically kill all enemies currently on that lane. The charge never refreshes.
 - Later knockdowns still incapacitate the defender, but do **not** clear enemies.
@@ -56,7 +58,7 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - Emergency-charge availability and revival progress must be legible by lane.
 
 ## Starting balance and prototype scope
-- Four lanes/colors, three-ball match threshold, three-second combo/fever window, two matches to revive, one emergency discharge per lane. Top-chain base speed **68 px/s** (2x the previous 34 px/s); independent perpetual right-edge stream.
+- Four lanes/colors, three-ball match threshold, three-second combo/fever window, two matches to revive, one emergency discharge per lane. Top-chain base speed **68 px/s**, fired vertical ball arrival target **0.20s**, enemies average **0.24 world units/s**, independent perpetual right-edge stream.
 - Use adjustable debug constants for chain speed, refill count/population, enemy spawn rate, enemy speed, enemy HP, projectile speed/damage, cooldown and revival requirement.
 - Placeholder primitives, flat materials, no external models/SFX needed. Later work: dramatic effects, special enemies, distinct character abilities, accessibility palette menus, audio, richer fever effects.
 - Web and Android export validation is a later mailbox task; do not block core development on Android SDK setup.
@@ -76,3 +78,10 @@ If necessary, implement conservative and configurable defaults and report decisi
 - Tier 3/FEVER is a two-lane instant clear: matched lane plus randomly chosen directly adjacent lane. For top/bottom edge, only one eligible neighbor. No collateral nonadjacent lane or emergency-charge consumption. DOWN origin defender gets revival progress instead; no tier attack.
 - Enemies pause on ground, then leap forward only while airborne; average advance roughly as before (0.48 units/s). Gameplay X, swept collisions, hop visuals, defender contact and breach use the same displacement model.
 - These decisions supersede any older P002/P004/P005 statements or tests that assume a finite upper ball seed, three ordinary tier-3 projectiles, or constant horizontal enemy speed.
+
+## P008 second playtest decisions (2026-10-25)
+- **Do not confuse ball shot speed with chain speed:** the user requested the fired ball reach the top in ~0.20 seconds. Keep the conveyor scrolling horizontally at 68 px/s and the shot firing cooldown at 0.4s.
+- Reduce enemy average advance from 0.48 to **0.24 world units/s**, keeping explicit grounded pauses and forward movement only during airborne hops.
+- The top fresh-ball generator must intentionally produce **clusters of repeated colors**, including 4–7+ in a row. Suggested tunable run-length weights: 1=20%, 2=30%, 3=18%, 4=13%, 5=9%, 6=6%, 7=4%, with balanced choices of four colors. This supersedes P007's top-stream strict four-color shuffle bag. **Do not** change the fired-ball magazine's separate shuffle bag.
+- A pre-existing group of 3+ same-color balls may exist untouched on the conveyor: spawning or merging does **not** automatically clear it. Only a real **player-fired insertion into the corresponding group** initiates clearing (and any locally connected cascades). A 7+same-color group plus a matching shot clears as one larger match event; group size still affects score but not attack tier.
+- Add gentle, distinct **procedural SFX** for accepted shoot, successful insert, swap, matching, active defender attack, defender knockdown and defender revive, connected to gameplay signals without duplicate triggering. "Defender dying" means the existing **DOWN** state, not permanent death; the defender can revive. Sounds must be web/android-compatible, rate/voice limited, and ideally mutatable. Headless tests can validate routing/synthesis but human listening remains necessary.
