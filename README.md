@@ -30,11 +30,13 @@ Controls:
 
 The layout targets landscape screens and has automated coverage at 960×540, 1280×720, 1600×720 and 2400×1080. Native safe-area information is used when the platform supplies it; Web falls back to the browser canvas with an additional logical edge margin. The 3D SubViewport resolution is capped through integer downscaling on very wide/high-density windows to limit mobile fill cost.
 
-The top lane is a functional ordered chain: a shot must horizontally overlap a visible ball to insert beside it, contiguous physical groups of three or more clear, and newly connected groups cascade. Balls that leave on the left enter a FIFO cache and return from the right after matches or when the visible stream empties. Returned groups visibly catch up before becoming adjacent to a distant train.
+The top lane is a functional ordered chain moving right-to-left at 68 pixels/second: a shot must horizontally overlap a visible ball to insert beside it, contiguous physical groups of three or more clear, and newly connected groups cascade. A separate four-color shuffle-bag feeder continuously admits fresh balls whenever real spacing opens at the right edge, so the supply continues indefinitely without creating an offscreen backlog. Balls that leave on the left enter a FIFO cache; matches request FIFO returns that share right-edge slots with the fresh stream. Live balls remain capped, while the cache intentionally uses linear storage for legitimate exits that have not yet returned. Returned and fresh groups do not become match-adjacent across a physical gap.
 
 Matches award score and advance the three-second combo window through tiers 1–3; the fourth consecutive timely match activates FEVER. The HUD meter drains in real time, while score persists through timeout. Magazine colors come from a fair four-color shuffle bag.
 
-Each match also makes its matching 3D defender fire a one-, two-, or three-projectile burst according to the locked combo tier. Primitive enemies spawn independently, hop left, display HP pips, take same-lane projectile damage, and burst apart at zero HP.
+Each match also activates its matching 3D defender using the tier locked at match time. Tier 1 fires one 1-damage projectile, so a standard 2-HP enemy needs two hits. Tier 2 fires two spaced 2-damage projectiles; each can kill a fresh standard enemy. Tier 3 and FEVER replace the old three-shot burst with an immediate clear of the matched lane plus exactly one randomly selected adjacent lane. This clear does not consume either lane's emergency charge, and a down origin defender still receives revival progress instead of attacking.
+
+Primitive enemies spawn independently, display HP pips, and now use a shared logical/visual hop cycle: horizontal X remains stationary during a grounded dwell, advances only through the airborne arc, then pauses again after landing. Projectile sweeps use that same piecewise motion, so both grounded and airborne enemies remain hittable and large frame steps cannot tunnel through them.
 
 When an enemy reaches an active defender, that defender falls and spends its one emergency discharge to clear the lane. The charge is once per run. A down defender needs two separate matches of its own color to revive; those matches still score and build combo but launch no attack. Later knockdowns do not clear enemies. Any live enemy crossing the far-left boundary ends the run immediately, freezes gameplay, preserves the final score, and offers a clean restart.
 
@@ -72,14 +74,15 @@ godot --headless --path . --script res://tests/p003_logic_test.gd
 godot --headless --path . --script res://tests/p004_combat_test.gd
 godot --headless --path . --script res://tests/p005_survival_test.gd
 godot --headless --path . --script res://tests/p006_platform_qa_test.gd
+godot --headless --path . --script res://tests/p007_playtest_revision_test.gd
 ```
 
 For a manual end-to-end smoke test:
 
 1. Resize through the four target landscape sizes. Confirm the chain, four lanes/status labels, shooter track, magazine, and HUD remain distinct and visible.
-2. Mouse-fire a physical chain hit, then make four timely groups: verify score, tier bursts, and fourth-match FEVER. Confirm right-click/Space swaps without firing.
+2. Confirm incoming balls continue indefinitely and move at the faster 68 px/s pace. Mouse-fire a physical chain hit, then make four timely groups: verify tier 1 needs two hits to kill a standard enemy, either tier-2 projectile kills one, tier 3 clears the matching lane plus one adjacent lane, and the fourth match shows FEVER. Confirm right-click/Space swaps without firing.
 3. On touch hardware, press/drag in the playfield and release: exactly one ball should fire. A swap tap must only swap. Starting outside the playfield, canceling a gesture, or releasing after RESTART must not fire.
-4. Let an enemy touch a defender: it falls and the one-time emergency discharge clears that lane. Make two separate matches of that defender's color to revive it; neither revival match launches an attack, while the next does.
+4. Watch enemies pause with their feet grounded, travel left only during the jump, land, and pause again. Let one touch a defender: it falls and the one-time emergency discharge clears that lane. Make two separate matches of that defender's color to revive it; neither revival match launches an attack, while the next does.
 5. Let a later enemy cross the left boundary. Confirm the chain/combat freeze, GAME OVER and the tappable RESTART control remain legible, then restart and verify there are no old enemies/projectiles/effects.
 6. Serve the Web export over HTTP and repeat touch/swap using browser device emulation, then repeat on a physical Android device after `adb install -r`. Synthetic tests do not replace real browser/notch/multi-touch QA.
 

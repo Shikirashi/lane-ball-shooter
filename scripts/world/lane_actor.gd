@@ -64,6 +64,18 @@ func handle_match(result: Dictionary) -> Dictionary:
 	_update_status_visual()
 	return outcome
 
+func show_tier3_clear_wave() -> void:
+	var wave := PrimitiveFactory.box(Vector3(16.2, 0.05, 1.18), TeamData.color(team_identity).lightened(0.38))
+	wave.name = "Tier3ClearWave"
+	wave.position = Vector3(0.0, 0.1, 0.0)
+	add_child(wave)
+	_state_effects.append({"node": wave, "age": 0.0, "kind": "tier3"})
+
+func enemy_hop_height(enemy: Dictionary) -> float:
+	if not bool(enemy.get("hop_airborne", false)):
+		return 0.0
+	return sin(float(enemy.get("hop_progress", 0.0)) * PI) * 0.52
+
 func reset_run() -> void:
 	for effect in _death_effects:
 		var death_node: Node = effect.node
@@ -187,9 +199,9 @@ func _create_enemy_visual(uid: int, max_hp: int) -> Dictionary:
 func _update_enemy_visual(visual: Dictionary, enemy: Dictionary) -> void:
 	var root: Node3D = visual.root
 	var shadow: MeshInstance3D = visual.shadow
-	var hop_phase := fmod(float(enemy.hop_clock), PI)
-	var hop_height := sin(hop_phase) * 0.52
-	var landing_amount := pow(absf(cos(hop_phase)), 10.0)
+	var hop_progress := float(enemy.get("hop_progress", 0.0))
+	var hop_height := enemy_hop_height(enemy)
+	var landing_amount := 0.16 if not bool(enemy.get("hop_airborne", false)) else pow(absf(cos(hop_progress * PI)), 10.0)
 	var hit_amount := clampf(float(enemy.hit_flash) / 0.16, 0.0, 1.0)
 	root.position = Vector3(float(enemy.x), 0.29 + hop_height, 0.0)
 	root.scale = Vector3(1.0 + landing_amount * 0.12 + hit_amount * 0.16, 1.0 - landing_amount * 0.16 - hit_amount * 0.08, 1.0 + landing_amount * 0.12 + hit_amount * 0.16)
@@ -297,6 +309,8 @@ func _update_state_effects(delta: float) -> void:
 		var node: Node3D = effect.node
 		if str(effect.kind) == "discharge":
 			node.scale = Vector3(1.0 + float(effect.age) * EMERGENCY_WAVE_EXPANSION, 1.0, 1.0 + float(effect.age) * 1.8)
+		elif str(effect.kind) == "tier3":
+			node.scale = Vector3(1.0, 1.0 + float(effect.age) * 5.0, 1.0)
 		else:
 			node.scale = Vector3.ONE * (1.0 + float(effect.age) * REVIVAL_FLASH_EXPANSION)
 		if float(effect.age) >= STATE_EFFECT_DURATION:

@@ -4,7 +4,7 @@ extends RefCounted
 signal state_changed
 signal match_completed(identity: int, group_size: int)
 
-const DEFAULT_SPEED := 34.0
+const DEFAULT_SPEED := 68.0
 const DEFAULT_SPACING := 58.0
 const DEFAULT_RADIUS := 22.0
 const DEFAULT_INITIAL_POPULATION := 12
@@ -39,6 +39,7 @@ var cache_return_batch := DEFAULT_CACHE_RETURN_BATCH
 var empty_return_count := DEFAULT_EMPTY_RETURN_COUNT
 var max_auto_population := DEFAULT_MAX_AUTO_POPULATION
 var lane_width := 1252.0
+var continuous_feed_enabled := true
 
 var balls: Array[Dictionary] = []
 var cache: Array[int] = []
@@ -46,23 +47,37 @@ var total_match_events := 0
 var last_match_identity := -1
 var last_match_size := 0
 var event_log: Array[Dictionary] = []
+var pending_cache_returns := 0
+var total_fresh_generated := 0
+var total_cache_returned := 0
 
 var _next_ball_id := 1
+var _fresh_bag: Array[int] = []
+var _fresh_rng := RandomNumberGenerator.new()
+var _returns_since_fresh := 0
 
 func _init() -> void:
+	_fresh_rng.seed = 0x1B5C007
 	seed_stream()
 
 func set_lane_width(value: float) -> void:
 	lane_width = maxf(value, spacing * 3.0)
 
 func reset_run() -> void:
+	continuous_feed_enabled = true
 	balls.clear()
 	cache.clear()
 	total_match_events = 0
 	last_match_identity = -1
 	last_match_size = 0
 	event_log.clear()
+	pending_cache_returns = 0
+	total_fresh_generated = 0
+	total_cache_returned = 0
 	_next_ball_id = 1
+	_fresh_bag.clear()
+	_fresh_rng.seed = 0x1B5C007
+	_returns_since_fresh = 0
 	seed_stream()
 
 func advance(delta: float) -> void:
@@ -83,7 +98,9 @@ func advance(delta: float) -> void:
 		var exited: Dictionary = balls.pop_front()
 		cache.append(int(exited.identity))
 		rolled_off = true
-	if balls.is_empty():
+	if continuous_feed_enabled:
+		_feed_right_edge()
+	elif balls.is_empty():
 		_ensure_playable_stream()
 	if travel > 0.0 or rolled_off:
 		state_changed.emit()
@@ -100,12 +117,22 @@ func try_insert_shot(identity: int, impact_x: float, shot_radius := DEFAULT_SHOT
 
 func return_cached(requested_count: int = -1) -> int:
 	var count := cache_return_batch if requested_count < 0 else requested_count
-	count = mini(maxi(count, 0), cache.size())
-	for unused in range(count):
-		_append_on_right(cache.pop_front())
-	if count > 0:
+	if not continuous_feed_enabled:
+		count = mini(maxi(count, 0), cache.size())
+		for unused in range(count):
+			_append_on_right(cache.pop_front())
+		if count > 0:
+			state_changed.emit()
+		return count
+	var available_to_request := maxi(0, cache.size() - pending_cache_returns)
+	count = mini(maxi(count, 0), available_to_request)
+	pending_cache_returns += count
+	var returned_before := total_cache_returned
+	_feed_right_edge()
+	var admitted := total_cache_returned - returned_before
+	if count > 0 or admitted > 0:
 		state_changed.emit()
-	return count
+	return admitted
 
 func seed_stream() -> void:
 	if balls.size() + cache.size() > 0:
@@ -115,15 +142,19 @@ func seed_stream() -> void:
 	var left_x := right_x - spacing * (count - 1)
 	for index in range(count):
 		balls.append(_make_ball(SEED_PATTERN[index % SEED_PATTERN.size()], left_x + spacing * index))
+		total_fresh_generated += 1
 	state_changed.emit()
 
 func set_test_state(identities: Array[int], start_x := 100.0, cached: Array[int] = []) -> void:
+	continuous_feed_enabled = false
 	balls.clear()
 	cache = cached.duplicate()
 	total_match_events = 0
 	last_match_identity = -1
 	last_match_size = 0
 	event_log.clear()
+	pending_cache_returns = 0
+	_returns_since_fresh = 0
 	for index in range(identities.size()):
 		balls.append(_make_ball(identities[index], start_x + spacing * index))
 	state_changed.emit()
@@ -260,16 +291,49 @@ func _close_disconnected_gaps(delta: float) -> void:
 func _append_on_right(identity: int) -> void:
 	var spawn_x := lane_width - radius
 	if not balls.is_empty():
-		spawn_x = maxf(spawn_x, float(balls[-1].x) + spacing)
-	balls.append(_make_ball(identity, spawn_x, spawn_x + minf(spacing * 0.35, 18.0)))
+		spawn_x = float(balls[-1].x) + spacing if continuous_feed_enabled else maxf(spawn_x, float(balls[-1].x) + spacing)
+	var display_x := spawn_x if continuous_feed_enabled else spawn_x + minf(spacing * 0.35, 18.0)
+	balls.append(_make_ball(identity, spawn_x, display_x))
 
 func _ensure_playable_stream() -> void:
-	if not balls.is_empty():
-		return
-	if not cache.is_empty():
-		return_cached(mini(empty_return_count, cache.size()))
-	else:
-		seed_stream()
+	if continuous_feed_enabled:
+		_feed_right_edge()
+	elif balls.is_empty():
+		if not cache.is_empty():
+			return_cached(mini(empty_return_count, cache.size()))
+		else:
+			seed_stream()
+
+## Fills only physically available slots up to the right boundary. Requested FIFO
+## returns are admitted in batches, followed by at least one fresh shuffle-bag ball,
+## so recycling cannot starve the independent infinite source. The live array stays
+## bounded; the rollover cache intentionally grows linearly with legitimate exits.
+func _feed_right_edge() -> void:
+	var right_edge := lane_width - radius
+	while balls.size() < max_auto_population:
+		if not balls.is_empty() and float(balls[-1].x) + spacing > right_edge + 0.001:
+			break
+		var use_return := pending_cache_returns > 0 and not cache.is_empty() and _returns_since_fresh < cache_return_batch
+		if use_return:
+			_append_on_right(cache.pop_front())
+			pending_cache_returns -= 1
+			total_cache_returned += 1
+			_returns_since_fresh += 1
+		else:
+			_append_on_right(_draw_fresh_identity())
+			total_fresh_generated += 1
+			_returns_since_fresh = 0
+
+func _draw_fresh_identity() -> int:
+	if _fresh_bag.is_empty():
+		for identity in range(TeamData.COUNT):
+			_fresh_bag.append(identity)
+		for index in range(_fresh_bag.size() - 1, 0, -1):
+			var swap_index := _fresh_rng.randi_range(0, index)
+			var temporary := _fresh_bag[index]
+			_fresh_bag[index] = _fresh_bag[swap_index]
+			_fresh_bag[swap_index] = temporary
+	return _fresh_bag.pop_front()
 
 func _make_ball(identity: int, logical_x: float, display_x := NAN) -> Dictionary:
 	var resolved_display := logical_x if is_nan(display_x) else display_x

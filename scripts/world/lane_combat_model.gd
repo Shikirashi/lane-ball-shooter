@@ -22,6 +22,7 @@ const DEFAULT_ENEMY_SPEED := 0.48
 const DEFAULT_ENEMY_HP := 2
 const DEFAULT_PROJECTILE_SPEED := 9.0
 const DEFAULT_PROJECTILE_DAMAGE := 1
+const TIER_TWO_PROJECTILE_DAMAGE := 2
 const DEFAULT_SPAWN_INTERVAL := 5.5
 const DEFAULT_MAX_ENEMIES := 5
 const PROJECTILE_LIFETIME := 2.2
@@ -31,6 +32,9 @@ const DEFAULT_REVIVAL_REQUIRED := 2
 const REVIVAL_REPEL_TRIGGER_DISTANCE := 0.4
 const REVIVAL_SAFE_OFFSET := 1.15
 const HISTORY_LIMIT := 128
+const HOP_GROUND_DURATION := 0.55
+const HOP_AIR_DURATION := 0.75
+const HOP_CYCLE_DURATION := HOP_GROUND_DURATION + HOP_AIR_DURATION
 
 var team_identity := 0
 var enemy_speed := DEFAULT_ENEMY_SPEED
@@ -67,7 +71,8 @@ func fire_attack(match_result: Dictionary) -> Dictionary:
 	if game_over or defender_state != DefenderState.ACTIVE:
 		return {}
 	var locked_tier := clampi(int(match_result.get("tier", 1)), 1, 3)
-	var projectile_count := locked_tier
+	var projectile_count := 1 if locked_tier == 1 else (2 if locked_tier == 2 else 0)
+	var locked_damage := projectile_damage if locked_tier == 1 else (TIER_TWO_PROJECTILE_DAMAGE if locked_tier == 2 else 0)
 	var attack := {
 		"uid": _next_attack_uid,
 		"identity": team_identity,
@@ -75,12 +80,13 @@ func fire_attack(match_result: Dictionary) -> Dictionary:
 		"fever": bool(match_result.get("fever", false)),
 		"group_size": int(match_result.get("group_size", 3)),
 		"projectile_count": projectile_count,
+		"projectile_damage": locked_damage,
 	}
 	_next_attack_uid += 1
 	attack_history.append(attack.duplicate(true))
 	_trim_history(attack_history)
 	for burst_index in range(projectile_count):
-		_spawn_projectile(int(attack.uid), burst_index * BURST_INTERVAL)
+		_spawn_projectile(int(attack.uid), burst_index * BURST_INTERVAL, locked_damage, locked_tier)
 	return attack.duplicate(true)
 
 func handle_match(match_result: Dictionary) -> Dictionary:
@@ -113,9 +119,12 @@ func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1) -> int:
 		"x": x_position,
 		"hp": resolved_hp,
 		"max_hp": resolved_hp,
-		"hop_clock": float(_next_enemy_uid) * 0.71 + float(team_identity) * 0.43,
+		"hop_clock": fmod(float(_next_enemy_uid - 1) * 0.31 + float(team_identity) * 0.17, HOP_CYCLE_DURATION),
+		"hop_airborne": false,
+		"hop_progress": 0.0,
 		"hit_flash": 0.0,
 	}
+	_sync_enemy_hop_state(enemy)
 	_next_enemy_uid += 1
 	total_spawned += 1
 	enemies.append(enemy)
@@ -125,6 +134,10 @@ func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1) -> int:
 
 func update(delta: float) -> void:
 	if game_over:
+		return
+	var already_breached_uid := _enemy_already_breached()
+	if already_breached_uid >= 0:
+		_trigger_breach(already_breached_uid)
 		return
 	var step := maxf(delta, 0.0)
 	var enemy_starts := {}
@@ -149,6 +162,9 @@ func clear_for_test() -> void:
 	emergency_available = true
 	revival_progress = 0
 	game_over = false
+	_next_enemy_uid = 1
+	_next_projectile_uid = 1
+	_next_attack_uid = 1
 
 func reset_run(initial_enemy_x := NAN, initial_spawn_delay := DEFAULT_SPAWN_INTERVAL) -> void:
 	clear_for_test()
@@ -166,12 +182,13 @@ func active_enemy_count() -> int:
 func active_projectile_count() -> int:
 	return projectiles.size()
 
-func _spawn_projectile(attack_uid: int, launch_delay: float) -> void:
+func _spawn_projectile(attack_uid: int, launch_delay: float, locked_damage: int, locked_tier: int) -> void:
 	var projectile := {
 		"uid": _next_projectile_uid,
 		"attack_uid": attack_uid,
 		"x": PROJECTILE_START_X,
-		"damage": projectile_damage,
+		"damage": locked_damage,
+		"tier": locked_tier,
 		"age": 0.0,
 		"launch_delay": launch_delay,
 	}
@@ -207,20 +224,32 @@ func _update_projectiles(delta: float, enemy_starts: Dictionary) -> void:
 func _first_swept_hit(projectile_x: float, active_start: float, active_delta: float, enemy_starts: Dictionary) -> Dictionary:
 	var best_time := INF
 	var best_uid := -1
-	var closing_speed := projectile_speed + enemy_speed
 	for enemy in enemies:
 		var uid := int(enemy.uid)
-		var enemy_x_at_start := float(enemy_starts[uid]) - enemy_speed * active_start
-		var relative_start := enemy_x_at_start - projectile_x
-		if relative_start < -HIT_DISTANCE:
-			continue
-		var relative_end := relative_start - closing_speed * active_delta
-		if relative_end > HIT_DISTANCE:
-			continue
-		var contact_time := clampf((relative_start - HIT_DISTANCE) / closing_speed, 0.0, active_delta)
-		if contact_time < best_time:
-			best_time = contact_time
-			best_uid = uid
+		var clock_at_active_start := float(enemy.hop_clock) + active_start
+		var enemy_x := float(enemy_starts[uid]) - _hop_displacement(float(enemy.hop_clock), active_start)
+		var elapsed := 0.0
+		while elapsed < active_delta - 0.000001:
+			var phase := fmod(clock_at_active_start + elapsed, HOP_CYCLE_DURATION)
+			var airborne := phase >= HOP_GROUND_DURATION
+			var phase_end := HOP_CYCLE_DURATION if airborne else HOP_GROUND_DURATION
+			var segment_duration := minf(active_delta - elapsed, phase_end - phase)
+			if segment_duration <= 0.000001:
+				segment_duration = minf(active_delta - elapsed, 0.000001)
+			var enemy_velocity := -_hop_air_speed() if airborne else 0.0
+			var projectile_at_segment := projectile_x + projectile_speed * elapsed
+			var relative_start := enemy_x - projectile_at_segment
+			var closing_speed := projectile_speed - enemy_velocity
+			var relative_end := relative_start - closing_speed * segment_duration
+			if relative_start >= -HIT_DISTANCE and relative_end <= HIT_DISTANCE:
+				var contact_in_segment := clampf((relative_start - HIT_DISTANCE) / closing_speed, 0.0, segment_duration)
+				var contact_time := elapsed + contact_in_segment
+				if contact_time < best_time:
+					best_time = contact_time
+					best_uid = uid
+				break
+			enemy_x += enemy_velocity * segment_duration
+			elapsed += segment_duration
 	if best_uid < 0:
 		return {}
 	return {"enemy_uid": best_uid, "time": best_time}
@@ -244,18 +273,14 @@ func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
 		return
 
 func _update_enemies(delta: float) -> void:
-	var already_breached_uid := _enemy_already_breached()
-	if already_breached_uid >= 0:
-		_trigger_breach(already_breached_uid)
-		return
-
 	var previous_positions := {}
 	for enemy in enemies:
 		previous_positions[int(enemy.uid)] = float(enemy.x)
 	for index in range(enemies.size()):
 		var enemy := enemies[index]
-		enemy.x = float(enemy.x) - enemy_speed * delta
-		enemy.hop_clock = float(enemy.hop_clock) + delta * 3.25
+		enemy.x = float(enemy.x) - _hop_displacement(float(enemy.hop_clock), delta)
+		enemy.hop_clock = fmod(float(enemy.hop_clock) + delta, HOP_CYCLE_DURATION)
+		_sync_enemy_hop_state(enemy)
 		enemy.hit_flash = maxf(0.0, float(enemy.hit_flash) - delta)
 		enemies[index] = enemy
 
@@ -290,7 +315,7 @@ func _first_defender_contact(previous_positions: Dictionary) -> int:
 		if previous_x <= DEFENDER_X:
 			return uid
 		if current_x <= DEFENDER_X:
-			var crossing_time := (previous_x - DEFENDER_X) / maxf(enemy_speed, 0.0001)
+			var crossing_time := (previous_x - DEFENDER_X) / maxf(previous_x - current_x, 0.0001)
 			if crossing_time < best_time:
 				best_time = crossing_time
 				best_uid = uid
@@ -304,7 +329,7 @@ func _first_new_breach(previous_positions: Dictionary) -> int:
 			continue
 		var uid := int(enemy.uid)
 		var previous_x := float(previous_positions[uid])
-		var crossing_time := 0.0 if previous_x <= LEFT_BOUNDARY else (previous_x - LEFT_BOUNDARY) / maxf(enemy_speed, 0.0001)
+		var crossing_time := 0.0 if previous_x <= LEFT_BOUNDARY else (previous_x - LEFT_BOUNDARY) / maxf(previous_x - float(enemy.x), 0.0001)
 		if crossing_time < best_time:
 			best_time = crossing_time
 			best_uid = uid
@@ -350,6 +375,50 @@ func _trigger_breach(enemy_uid: int) -> void:
 	game_over = true
 	total_breaches += 1
 	breached.emit(team_identity, enemy_uid)
+
+func clear_enemies_for_tier3() -> int:
+	if game_over or _enemy_already_breached() >= 0:
+		return 0
+	var victims := enemies.duplicate(true)
+	enemies.clear()
+	for enemy in victims:
+		total_killed += 1
+		enemy_killed.emit(int(enemy.uid), float(enemy.x))
+	return victims.size()
+
+func check_terminal_breach() -> bool:
+	var enemy_uid := _enemy_already_breached()
+	if enemy_uid < 0:
+		return false
+	_trigger_breach(enemy_uid)
+	return true
+
+func _hop_air_speed() -> float:
+	return enemy_speed * HOP_CYCLE_DURATION / HOP_AIR_DURATION
+
+func _hop_displacement(start_clock: float, duration: float) -> float:
+	var remaining := maxf(duration, 0.0)
+	var clock := fmod(start_clock, HOP_CYCLE_DURATION)
+	var distance := 0.0
+	while remaining > 0.000001:
+		var airborne := clock >= HOP_GROUND_DURATION
+		var phase_end := HOP_CYCLE_DURATION if airborne else HOP_GROUND_DURATION
+		var segment := minf(remaining, phase_end - clock)
+		if segment <= 0.000001:
+			clock = 0.0
+			continue
+		if airborne:
+			distance += _hop_air_speed() * segment
+		remaining -= segment
+		clock += segment
+		if clock >= HOP_CYCLE_DURATION - 0.000001:
+			clock = 0.0
+	return distance
+
+func _sync_enemy_hop_state(enemy: Dictionary) -> void:
+	var phase := fmod(float(enemy.hop_clock), HOP_CYCLE_DURATION)
+	enemy.hop_airborne = phase >= HOP_GROUND_DURATION
+	enemy.hop_progress = clampf((phase - HOP_GROUND_DURATION) / HOP_AIR_DURATION, 0.0, 1.0) if bool(enemy.hop_airborne) else 0.0
 
 func _trim_history(history: Array[Dictionary]) -> void:
 	while history.size() > HISTORY_LIMIT:

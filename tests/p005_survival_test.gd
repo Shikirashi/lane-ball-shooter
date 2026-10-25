@@ -34,6 +34,9 @@ func _test_first_contact_and_emergency_ordering() -> void:
 	model.spawn_enemy(LaneCombatModel.DEFENDER_X + 0.05, 2)
 	model.spawn_enemy(2.0, 2)
 	model.spawn_enemy(4.0, 2)
+	var contact_enemy := model.enemies[0]
+	contact_enemy.hop_clock = LaneCombatModel.HOP_GROUND_DURATION
+	model.enemies[0] = contact_enemy
 	model.update(0.2)
 	_check(model.defender_state == LaneCombatModel.DefenderState.DOWN, "first contact knocks active defender down")
 	_check(not model.emergency_available, "first contact consumes exactly one emergency charge")
@@ -53,6 +56,9 @@ func _test_revival_and_second_contact() -> void:
 	var model := LaneCombatModel.new(TeamData.Identity.GREEN)
 	model.clear_for_test()
 	model.spawn_enemy(LaneCombatModel.DEFENDER_X + 0.01, 2)
+	var first_contact := model.enemies[0]
+	first_contact.hop_clock = LaneCombatModel.HOP_GROUND_DURATION
+	model.enemies[0] = first_contact
 	model.update(0.1)
 	_check(model.defender_state == LaneCombatModel.DefenderState.DOWN and not model.emergency_available, "setup spends charge and downs defender")
 	var first := model.handle_match(_result(TeamData.Identity.GREEN, 3))
@@ -63,10 +69,13 @@ func _test_revival_and_second_contact() -> void:
 	_check(model.revival_progress == 0 and model.projectiles.is_empty(), "finishing revival resets progress and still does not attack")
 	_check(not model.emergency_available, "revival never restores emergency charge")
 	var attack := model.handle_match(_result(TeamData.Identity.GREEN, 3))
-	_check(str(attack.action) == "attack" and model.active_projectile_count() == 3, "post-revival match launches locked tier-3 burst")
+	_check(str(attack.action) == "attack" and model.active_projectile_count() == 0, "post-revival tier-3 attack creates no conventional burst")
 
 	model.projectiles.clear()
 	model.spawn_enemy(LaneCombatModel.DEFENDER_X + 0.01, 2)
+	var later_contact := model.enemies[0]
+	later_contact.hop_clock = LaneCombatModel.HOP_GROUND_DURATION
+	model.enemies[0] = later_contact
 	model.update(0.1)
 	_check(model.defender_state == LaneCombatModel.DefenderState.DOWN, "later contact knocks revived defender down again")
 	_check(model.active_enemy_count() == 1 and model.total_emergency_cleared == 1, "spent charge does not clear later contact enemy")
@@ -146,6 +155,9 @@ func _test_game_over_freeze_and_restart() -> void:
 	red_lane.clear_for_test()
 	red_lane.spawn_enemy(LaneCombatModel.DEFENDER_X + 0.01, 2)
 	red_lane.spawn_enemy(2.0, 2)
+	var red_contact := red_lane.enemies[0]
+	red_contact.hop_clock = LaneCombatModel.HOP_GROUND_DURATION
+	red_lane.enemies[0] = red_contact
 	red_lane.update(0.1)
 	_check(progression.score == 0 and chain.identities() == initial_chain, "emergency contact changes neither score nor top chain")
 	_check(battlefield.get_lane(TeamData.Identity.BLUE).combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE, "RED emergency leaves other lane defender unchanged")
@@ -168,6 +180,9 @@ func _test_game_over_freeze_and_restart() -> void:
 	breach_lane.defender_state = LaneCombatModel.DefenderState.DOWN
 	breach_lane.emergency_available = false
 	breach_lane.spawn_enemy(LaneCombatModel.LEFT_BOUNDARY + 0.01, 2)
+	var breach_enemy := breach_lane.enemies[0]
+	breach_enemy.hop_clock = LaneCombatModel.HOP_GROUND_DURATION
+	breach_lane.enemies[0] = breach_enemy
 	breach_lane.update(0.1)
 	_check(bool(main.get("_game_over")) and battlefield.game_over, "alive boundary crossing triggers global game over")
 	_check(overlay.visible and overlay.final_score == score_before_breach, "game-over overlay preserves final score")

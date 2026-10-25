@@ -25,7 +25,7 @@ func _run() -> void:
 	_finish()
 
 func _test_tier_mapping_and_locking() -> void:
-	for tier in range(1, 4):
+	for tier in range(1, 3):
 		var model := LaneCombatModel.new(TeamData.Identity.RED)
 		model.clear_for_test()
 		var group_size := 7 if tier == 3 else 5
@@ -35,6 +35,11 @@ func _test_tier_mapping_and_locking() -> void:
 		_check(int(attack.group_size) == group_size, "large group metadata is retained without extra shots")
 		if tier > 1:
 			_check(float(model.projectiles[1].launch_delay) > float(model.projectiles[0].launch_delay), "burst projectiles have distinct launch times")
+	var tier_three := LaneCombatModel.new(TeamData.Identity.RED)
+	tier_three.clear_for_test()
+	var clear_attack := tier_three.fire_attack(_result(TeamData.Identity.RED, 3, true, 7))
+	_check(int(clear_attack.projectile_count) == 0 and tier_three.active_projectile_count() == 0, "tier 3 creates no conventional projectiles")
+	_check(int(clear_attack.group_size) == 7, "tier-3 clear retains match metadata")
 
 	var progression := MatchProgression.new()
 	progression.register_match(TeamData.Identity.BLUE, 3)
@@ -50,8 +55,8 @@ func _test_tier_mapping_and_locking() -> void:
 func _test_empty_lane_despawn() -> void:
 	var model := LaneCombatModel.new(TeamData.Identity.GREEN)
 	model.clear_for_test()
-	model.fire_attack(_result(TeamData.Identity.GREEN, 3, true, 7))
-	_check(model.active_projectile_count() == 3, "empty lane still fires tier-3 burst")
+	model.fire_attack(_result(TeamData.Identity.GREEN, 2, false, 7))
+	_check(model.active_projectile_count() == 2, "empty lane still fires tier-2 burst")
 	var start_x := float(model.projectiles[0].x)
 	model.update(0.1)
 	_check(float(model.projectiles[0].x) > start_x, "active 3D projectile advances toward world right")
@@ -95,7 +100,9 @@ func _test_hop_independence_and_lane_isolation() -> void:
 	low_hop.spawn_enemy(3.0, 1)
 	high_hop.spawn_enemy(3.0, 1)
 	var high_enemy := high_hop.enemies[0]
-	high_enemy.hop_clock = PI * 0.5
+	high_enemy.hop_clock = LaneCombatModel.HOP_GROUND_DURATION + LaneCombatModel.HOP_AIR_DURATION * 0.5
+	high_enemy.hop_airborne = true
+	high_enemy.hop_progress = 0.5
 	high_hop.enemies[0] = high_enemy
 	low_hop.fire_attack(_result(TeamData.Identity.RED, 1))
 	high_hop.fire_attack(_result(TeamData.Identity.RED, 1))
@@ -140,6 +147,9 @@ func _test_enemy_movement_spawning_and_boundary() -> void:
 	boundary.defender_state = LaneCombatModel.DefenderState.DOWN
 	boundary.emergency_available = false
 	boundary.spawn_enemy(LaneCombatModel.LEFT_BOUNDARY + 0.01, 2)
+	var boundary_enemy := boundary.enemies[0]
+	boundary_enemy.hop_clock = LaneCombatModel.HOP_GROUND_DURATION
+	boundary.enemies[0] = boundary_enemy
 	boundary.update(0.1)
 	_check(boundary.game_over and boundary.total_breaches == 1, "P005 boundary override emits terminal breach once")
 
