@@ -1,44 +1,31 @@
-# QUEUED TASK: LBS-P024 — Automatically build, validate and deploy each approved Web update
+# QUEUED TASK: LBS-P024 — Automatically publish future Lane Ball Shooter Web builds to portfolio GitHub Pages
 
-**Status:** QUEUED / NOT ACTIVE. **Do not execute P024 until P022 Mintbase hosting is complete, manually verified, and ChatGPT explicitly activates P024.** Current active task remains whatever `.ai/TASK.md` states (P023 at planning time); this archived spec is NOT authorization.
-**User decision 2026-10-25:** Once Mintbase is serving Lane Ball Shooter, ALL subsequent approved game changes should automatically propagate to the browser version hosted on Mintbase, without repeated manual Godot exports, file copying or web-service restarts. Source changes still need normal Codex implementation, tests, commit and GitHub push.
+**Status:** QUEUED / NOT ACTIVE. Activate ONLY after P026 has successfully published and the user has verified HTTPS gameplay. **P026** is the only active Codex task at time of drafting.
+**User standing goal:** After initial hosting works, every future APPROVED gameplay code update should automatically test/build the latest Godot Web export and publish it to the same browser URL without manually exporting, copying files, or restarting a server.
 
-## Goal and intended order
+## Current target (supersedes prior Mintbase automation proposal)
 
-1. Codex/user makes intended source modifications in `Shikirashi/lane-ball-shooter` and runs local checks.
-2. Codex commits and **pushes `master`** (do not confuse with pushing generated WASM/PCK).
-3. That approved push automatically triggers a CI/CD job against that exact commit (never blindly deploy an uncommitted checkout).
-4. Build with pinned **matching Godot 4.7.2 official non-Mono Web export templates** using existing `scripts/build_web.sh` or a repeatable improved noninteractive equivalent; Godot Compatibility and single-threaded Web export must remain intact.
-5. Validate tests and static HTML/JS/WASM/PCK output, ensure all referenced files exist and are correctly packaged.
-6. Stage output into a versioned release directory on Mintbase, verify it before promotion, and atomically activate the new release so **the same IP:PORT** immediately serves it for fresh page loads. Preserve a known-good release for rollback.
-7. Report deployed commit, build status and errors through the CI/deployment logs (optionally check/status endpoint), and leave prior live version serving if build/deploy/health check fails.
+- GAME source: `Shikirashi/lane-ball-shooter`, `master`; Godot 4.7.2 standard Web build, Compatibility renderer, single-threaded.
+- PUBLIC portfolio site: `Shikirashi/Shikirashi.github.io`, `master`, static assets in `lane-ball-shooter/`; public URL `https://shikirashi.github.io/lane-ball-shooter/`.
+- Pages already provides HTTPS and global reachability; a Mintbase systemd server, local Tailscale Serve/HTTPS, a tailnet agent, and a Mintbase CI runner should NOT be required for the public game. Keep any old Mintbase site untouched unless user separately asks to retire it.
+- `Shikirashi.github.io` retains all existing portfolio pages/demos. Its root `.nojekyll` protects raw Godot WASM/PCK assets. Never replace portfolio home page with a game-only site.
 
-**IMPORTANT:** Do NOT design "automatically push every file change in a watched worktree." Only deliberate Codex/user commits to the designated trusted branch deploy. Never force-push, auto-commit secrets or publish arbitrary local files. Avoid a CI loop from bot-generated commits; deployment should not need to push source commits back to GitHub.
+## Automatic update contract
 
-## Deployment design
+1. Codex/user intentionally implements an active approved task and tests, **commits and pushes** the game source to trusted `master`.
+2. A trusted CI event triggers a pinned Godot 4.7.2 Web build from **that exact source commit**; run relevant/full regression suites, validate generated static assets and package metadata, and ensure no stale exported binaries are used.
+3. Via a secure, minimal-privilege cross-repository deployment mechanism, publish all *nine* generated static Web files as a coherent release to `Shikirashi.github.io/lane-ball-shooter/`; rest of public portfolio tree stays exactly unchanged. Normal GitHub Pages publication makes the new game available on the SAME HTTPS URL (reload for an update).
+4. Maintain logs showing source SHA, build/test results, publishing commit/artifact SHA and Pages HTTPS smoke result; never claim published until online. A failing test/build/deploy must leave the prior good public game functional.
+5. Don't automatically commit unreviewed working-tree changes; no force pushes or untrusted PR execution, and no generated binaries in GAME SOURCE repository Git history.
+6. Restrict any cross-repo deploy token/SSH deploy key to the portfolio repository and required permissions; **never** write secrets or key material in repo, logs, Pages content, or chat. Obtain user approval for granting deploy credentials before configuring. Check the Pages publishing mode; GitHub's `GITHUB_TOKEN` commits to a branch do NOT themselves trigger a fresh Pages branch build. Consider first-party Pages `actions/upload-pages-artifact` + `actions/deploy-pages` with the complete portfolio site, or a GitHub App / narrowly scoped token that can update the portfolio branch and trigger Pages. Choose an approach that preserves all portfolio content and uses minimum required credentials. Never deploy only the game artifact as the *entire* Pages site, replacing the portfolio root.
+7. If using git-history copies of large binaries, Godot `index.wasm` is about 39.5MB; do not use Git LFS (not served transparently by Pages), keep Git objects under 100MiB and monitor portfolio repo history/size. Prefer reusable binary artifacts + direct Pages Actions deploy when practical after analyzing existing site settings.
+8. Prevent overlapping pushes deploying out of order: serialize releases and do not let older build override newer; stage/validate before switching. Keep a known-good rollback path to a prior tested Pages release.
+9. All assets served from `https://shikirashi.github.io/lane-ball-shooter/` must be same HTTPS origin and relative URLs; verify secure context, WASM MIME, PCK, UI menu YES/NO fullscreen and basic gameplay.
 
-- Use the Mintbase server/service and port already provisioned and tested under P022, keeping other apps (including rembg) untouched. Avoid hardcoded prior LAN/Tailscale IPs, changing firewall rules or exposing the game publicly. Read actual P022 handoff to learn service name, directory layout, privilege/port boundaries and whether Mintbase is also the dev/build machine.
-- Prefer a GitHub Actions `push` trigger on `master` combined with an **isolated, non-root self-hosted runner on Mintbase** if its security and credentials can be configured safely. Alternatively, if already-provisioned trusted infrastructure better fits, document/choose a GitHub-hosted builder plus authenticated private deployment channel (e.g. Tailscale) or a secure server-side pull agent. No inbound public webhook/SSH port should be required as a default. Discuss risks of executing repository workflow code on Mintbase; limit accepted triggers to trusted branch, do not run untrusted PR jobs on the Mintbase runner, scope credentials minimally, and obtain user's approval for persistent runner/service installation before starting it.
-- Separate **source repo/worktree**, **build cache**, **staging release**, and **live static document root**. Bind the static host to the desired authorized network only. A release could be `~/srv/lane-ball-shooter/releases/<commit-sha>/` and a `current` symlink, with appropriate per-user filesystem permissions; adapt to P022 actual paths.
-- Use a temporary staging directory and verify exported assets, sizes and MIME/HTTP before switching `current`. Atomic symlink swap or equivalent prevents readers seeing partial exports. Keep >=2 known-good versions and offer one-command rollback. Never `rsync --delete` directly into the live `current` target.
-- Static server should **stay running if only web files change**. Restart/reload its user service only if actual server config/service binary changes, not with every update. Existing live games need not be forcibly reloaded; newest game is served after a page refresh. Consider cache control for `index.html` and fresh build asset URLs to prevent HTML/PCK/WASM mismatches while avoiding unnecessary bandwidth or cache busting.
-- Godot build/web package currently in ignored `exports/`. Continue not committing compiled `index.wasm`, `index.pck` or ZIP to Git. CI can store a temporary, access-controlled build artifact/manifest if useful, but publicly sharing it requires explicit permission. The source GitHub repository remains the canonical source of truth.
-- Pin/verify Godot and export template versions, refrain from silently downloading incompatible or modified tools, and ensure reproducible dependencies. If template installation/bootstrap is part of CI, source from trusted official releases.
-- A newly pushed commit supersedes a still-running older CI job: serialize deploys, cancel safely, and prevent an older build from becoming live AFTER a newer valid build. Check expected SHA under a release lock before promotion. Protect against partial ZIP, failed checks, unavailable disk/network, and simple retries without downtime.
-- Each source push should trigger fresh Web build even for post-P024 gameplay code changes. Allow explicit manual rebuild/rollback actions for recovery, with clear logs and last-deployed SHA.
-- If workflow files have modified permissions/execution path, review security; do not run arbitrary shell under root, write to unrelated service dirs, or grant GitHub credentials access to system resources.
+## Verification and handoff
 
-## Acceptance / tests
-
-1. Push an intentionally benign code change on `master` (after separate user/Codex task authorization). Verify auto workflow starts, Godot Web export completes, HTTP serves correct new content from Mintbase at same address/port without manual file copy or service restart.
-2. Verify `P001`–latest gameplay regression suite, new packaging/smoke tests, and Web entry menu behavior; do not depend on stale `exports/` outputs. If full suites are expensive, use gating tiers with mandatory relevant tests and no silent claims of complete coverage.
-3. Deliberately introduce a **test fixture-only simulated build failure**, with no persistent broken commit: verify last good deployed build remains accessible, live symlink unchanged, clear job FAILED status. Also simulate missing asset/HTTP failure pre-activation.
-4. Race two successive trusted commits: only newest validated commit can be promoted after both builds complete.
-5. Restart Mintbase to verify static service AND trusted deployment runner/agent recover automatically without elevated root access.
-6. Confirm browser shows latest content after reload and normal non-fullscreen and fullscreen YES/NO flows still work, including real browser checks if supported. Verify no unintended restarts/interruptions.
-7. Update `README.md` with once-only setup, credentials/permissions overview (NEVER document tokens), workflow semantics, logs, status, how to trigger deployment, how to disable automatic deployments, rollback and recovery.
-8. Update `.ai/CODEX_HANDOFF.md` with actual verified workflow, commit→build→deploy→health proof, names/paths of user services and pipeline files, exact commands, test results and any remaining operational risks.
-
-## End
-
-Commit/push only CI workflow sources, safe scripts/docs and Codex handoff to `master`; do not modify ChatGPT-owned mailbox files or other tasks. **STOP**. ChatGPT will review and mark P024 complete. Hosted build assets remain separate from Git source. P024 remains queued until P022 hosting is installed and the user is ready to authorize automatic deployment services.
+- Create reproducible workflow/script and minimal doc commands for manual trigger and rollback.
+- Demonstrate at least one nontrivial but safe new source push initiating full workflow and updating exactly the nine Pages game assets without changing other portfolio files. Test failure path without damaging production.
+- Test public Pages URL, ensure `window.isSecureContext === true` and launch goes past Godot splash screen. Stop for real browser QA if browser automation unavailable.
+- Update GAME `README.md` and `.ai/CODEX_HANDOFF.md` with true source and portfolio deployment identifiers, job links/status, security limitations and operational instructions; push and STOP.
+- Do not edit ChatGPT-owned task/ledger/decision documents; do not configure unrelated Tailscale or Mintbase services.
