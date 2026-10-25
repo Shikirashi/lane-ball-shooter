@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The mailbox state is in `.ai/TASK.md`. P001–P017 implementation was source/handoff reviewed; P017 preserves physical offscreen-LEFT history and gravity-driven reentry. Awaiting user graphical playtest. Historical `LBS` prefixes are internal identifiers, not branding. Only ChatGPT advances this ledger.
+The active task is in `.ai/TASK.md`. P001–P017 were source/handoff reviewed; P018 fixes frozen defeated-enemy visuals at the victory moment, adds enemy death SFX/VFX, and delays WAVE CLEARED by 3 seconds. Historical `LBS` prefixes are internal identifiers, not branding. Only ChatGPT advances this ledger.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -23,5 +23,6 @@ The mailbox state is in `.ai/TASK.md`. P001–P017 implementation was source/han
 | LBS-P015 | COMPLETE — code/handoff `3d2623e`; graphical/device QA pending | Replace gap-reason motors with virtual rightward gravity for every unsupported rigid segment and a right-side pusher for supported chain; preserve infinite conveyor/shot balls, staged causal cascades and mask; cap enemy spawns at 8/lane (32 total) and award victory when all scheduled enemies are resolved |
 | LBS-P016 | COMPLETE — implementation and handoff `ed0b3cf`; graphical/device QA pending | Triple upper conveyor speed to 102 px/s; auto-schedule FIFO return whenever balls leave LEFT (without match), preserve fair fresh-ball generation and right-side masked entry, P015 gravity, 32-enemy victory, and test return bookkeeping/long runs |
 | LBS-P017 | COMPLETE — code/handoff `f2fa832`; graphical/device QA pending | Keep same UID/color/ordered rigid balls physically simulated at x<0 beyond LEFT edge, then let existing virtual gravity roll them back into view from LEFT after an appropriate match gap; replace P016 right-side recycling, preserve new right fresh source 102 px/s, 32-enemy encounter and regression suites |
+| LBS-P018 | ACTIVE | Make enemy death VFX/SFX (small explosion, actual body tumbles sideways to horizontal then fades), including normal/tier3/emergency clears; ensure cosmetic updates continue after logical victory; delay WAVE CLEARED overlay exactly three seconds after final neutralization without allowing combat or inputs, preserve immediate defeat, P017 left rollback and 102 px/s chain |
 
-Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017. P017 source-reviewed and accepted; no active Codex task until user graphical playtest; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
+Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017 -> P018. P017 source-reviewed and accepted; P018 is the ONLY active Codex task; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
