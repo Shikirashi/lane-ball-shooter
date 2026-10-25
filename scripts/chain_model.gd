@@ -4,7 +4,7 @@ extends RefCounted
 signal state_changed
 signal match_completed(identity: int, group_size: int)
 
-const DEFAULT_SPEED := 68.0
+const DEFAULT_SPEED := 34.0
 const DEFAULT_SPACING := 58.0
 const DEFAULT_RADIUS := 22.0
 const DEFAULT_INITIAL_POPULATION := 12

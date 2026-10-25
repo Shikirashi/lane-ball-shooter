@@ -34,6 +34,7 @@ func _run() -> void:
 	_finish()
 
 func _test_shot_travel_all_layouts() -> void:
+	_check(is_equal_approx(ChainModel.DEFAULT_SPEED, 34.0), "conveyor remains 34 px/s independently of projectile travel")
 	_check(is_equal_approx(ShooterView.SHOT_TRAVEL_TIME, 0.20), "shot travel target is exactly 0.20 seconds")
 	for viewport_size in [Vector2(960, 540), Vector2(1280, 720), Vector2(1600, 720), Vector2(2400, 1080)]:
 		var layout := LayoutCalculator.calculate(viewport_size, Rect2(Vector2.ZERO, viewport_size))
@@ -189,7 +190,7 @@ func _test_weighted_generator() -> void:
 
 	var stream := ChainModel.new()
 	var max_live := stream.balls.size()
-	for unused in range(1400):
+	for unused in range(2200):
 		stream.advance(0.1)
 		max_live = maxi(max_live, stream.balls.size())
 	_check(stream.total_fresh_generated > 100 and max_live <= stream.max_auto_population, "weighted feeder remains infinite and live-population bounded")

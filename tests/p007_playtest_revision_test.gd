@@ -32,19 +32,19 @@ func _run() -> void:
 	_finish()
 
 func _test_speed_and_infinite_feed() -> void:
-	_check(is_equal_approx(ChainModel.DEFAULT_SPEED, 68.0), "default conveyor speed is exactly 68 px/s")
+	_check(is_equal_approx(ChainModel.DEFAULT_SPEED, 34.0), "P008 correction restores default conveyor speed to 34 px/s")
 	for delta in [0.016, 0.1, 1.0]:
 		var motion := ChainModel.new()
 		var identities: Array[int] = [TeamData.Identity.RED, TeamData.Identity.BLUE]
 		motion.set_test_state(identities, 600.0)
 		var before := float(motion.balls[0].x)
 		motion.advance(delta)
-		_check(is_equal_approx(float(motion.balls[0].x), before - 68.0 * delta), "conveyor motion is delta-based at %.3fs" % delta)
+		_check(is_equal_approx(float(motion.balls[0].x), before - 34.0 * delta), "corrected conveyor motion is delta-based at %.3fs" % delta)
 
 	var stream := ChainModel.new()
 	var minimum_live := stream.balls.size()
 	var maximum_live := stream.balls.size()
-	for unused in range(1400):
+	for unused in range(2200):
 		stream.advance(0.1)
 		minimum_live = mini(minimum_live, stream.balls.size())
 		maximum_live = maxi(maximum_live, stream.balls.size())
@@ -64,14 +64,14 @@ func _test_fifo_feed_and_physical_adjacency() -> void:
 	_check(feeder.pending_cache_returns == 2, "partial cached batch waits when the right edge has no slot")
 	var returned: Array[int] = []
 	var returned_count := feeder.total_cache_returned
-	for unused in range(30):
+	for unused in range(45):
 		feeder.advance(0.1)
 		if feeder.total_cache_returned > returned_count:
 			returned.append(int(feeder.balls[-1].identity))
 			returned_count = feeder.total_cache_returned
 	_check(feeder.pending_cache_returns == 0 and feeder.cache[0] == TeamData.Identity.BLUE, "partial pending returns drain from cache front as slots open")
 	feeder.return_cached(1)
-	for unused in range(12):
+	for unused in range(20):
 		feeder.advance(0.1)
 		if feeder.total_cache_returned > returned_count:
 			returned.append(int(feeder.balls[-1].identity))

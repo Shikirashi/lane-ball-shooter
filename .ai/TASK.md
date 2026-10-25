@@ -9,7 +9,7 @@
 
 ## Intent and crucial disambiguation
 
-The user says a "ball needs to be even faster: it should take maybe 0.2s to reach the top." This means the **PLAYER-FIRED VERTICAL PROJECTILE**, not the moving top conveyor. **Do not change `ChainModel.DEFAULT_SPEED=68 px/s`.**
+The user says a "ball needs to be even faster: it should take maybe 0.2s to reach the top." This means the **PLAYER-FIRED VERTICAL PROJECTILE**, not the moving top conveyor. **P008 correction: restore `ChainModel.DEFAULT_SPEED=34 px/s`.**
 
 Five explicit revisions:
 1. Player's fired ball travels from shooter to upper chain in approximately **0.20 seconds**.
@@ -94,7 +94,7 @@ Create `tests/p008_gamefeel_sfx_test.gd` (split into more suites if useful) and 
 
 ## Manual acceptance
 
-- At all four landscape view sizes, 2D projectile visibly reaches upper lane around **0.2s** after firing. The conveyor's own speed remains the old 68 px/s.
+- At all four landscape view sizes, 2D projectile visibly reaches upper lane around **0.2s** after firing. The conveyor moves independently at the corrected 34 px/s.
 - Enemies hop toward the defenders at **half** the former overall speed; pause without drifting when grounded.
 - Top train often includes runs of 2, sometimes 4–7 (7 GREEN in a row is valid). These long runs do not disappear until the player inserts a matching ball into them. One inserted same-color shot clears the entire resulting run, with score based on group size and one combo step.
 - Audio: distinctly hear soft shoot 'pew', successful insert 'plop', swap 'bip-bop', match arpeggio, active attack zap, defender knockdown 'womp' and revival chime. Sound layers stay comfortable during a fast cascade and fever. No impact sound on a shot into empty space. Muting (if implemented) silences all SFX.

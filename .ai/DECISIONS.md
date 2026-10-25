@@ -25,7 +25,7 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - Initial shooter cooldown: ~0.4 seconds; test/tune later.
 
 ## Upper moving chain + cache
-- One straight horizontal visible lane with **68 px/s** top-chain conveyor motion, unaffected by the P008 faster fired projectile. Balls insert on impact as in Zuma.
+- One straight horizontal visible lane with **34 px/s** top-chain conveyor motion. The P008 0.20-second travel applies only to the player-fired vertical projectile. Balls insert on impact as in Zuma.
 - **P008 fresh feeder favors same-color consecutive runs** of 2, with occasional 4–7 consecutive balls; e.g. seven GREEN in a row is valid. These already-connected groups are **never cleared automatically** on spawn, movement, cache return or connection; a player-triggered successful insertion starts matching and then physical cascades. No unrelated seeded group should vanish just because a shot hits elsewhere. Only the top-chain FRESH feeder adopts this biased generator; magazine remains a four-color shuffle bag.
 - A successful match = group of >=3 **adjacent balls of one identity**, removed as one match event. After removal, close gap; if it reveals adjacent groups of >=3, cascade until stable.
 - Larger groups grant extra **score only**, not stronger attacks.
@@ -58,7 +58,7 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - Emergency-charge availability and revival progress must be legible by lane.
 
 ## Starting balance and prototype scope
-- Four lanes/colors, three-ball match threshold, three-second combo/fever window, two matches to revive, one emergency discharge per lane. Top-chain base speed **68 px/s**, fired vertical ball arrival target **0.20s**, enemies average **0.24 world units/s**, independent perpetual right-edge stream.
+- Four lanes/colors, three-ball match threshold, three-second combo/fever window, two matches to revive, one emergency discharge per lane. Top-chain base speed **34 px/s**, fired vertical ball arrival target **0.20s**, enemies average **0.24 world units/s**, independent perpetual right-edge stream.
 - Use adjustable debug constants for chain speed, refill count/population, enemy spawn rate, enemy speed, enemy HP, projectile speed/damage, cooldown and revival requirement.
 - Placeholder primitives, flat materials, no external models/SFX needed. Later work: dramatic effects, special enemies, distinct character abilities, accessibility palette menus, audio, richer fever effects.
 - Web and Android export validation is a later mailbox task; do not block core development on Android SDK setup.
@@ -80,7 +80,7 @@ If necessary, implement conservative and configurable defaults and report decisi
 - These decisions supersede any older P002/P004/P005 statements or tests that assume a finite upper ball seed, three ordinary tier-3 projectiles, or constant horizontal enemy speed.
 
 ## P008 second playtest decisions (2026-10-25)
-- **Do not confuse ball shot speed with chain speed:** the user requested the fired ball reach the top in ~0.20 seconds. Keep the conveyor scrolling horizontally at 68 px/s and the shot firing cooldown at 0.4s.
+- **P008 correction:** do not confuse ball shot speed with chain speed. The player-fired ball reaches the top in ~0.20 seconds, while the conveyor is restored to **34 px/s**. The shot firing cooldown remains 0.4s.
 - Reduce enemy average advance from 0.48 to **0.24 world units/s**, keeping explicit grounded pauses and forward movement only during airborne hops.
 - The top fresh-ball generator must intentionally produce **clusters of repeated colors**, including 4–7+ in a row. Suggested tunable run-length weights: 1=20%, 2=30%, 3=18%, 4=13%, 5=9%, 6=6%, 7=4%, with balanced choices of four colors. This supersedes P007's top-stream strict four-color shuffle bag. **Do not** change the fired-ball magazine's separate shuffle bag.
 - A pre-existing group of 3+ same-color balls may exist untouched on the conveyor: spawning or merging does **not** automatically clear it. Only a real **player-fired insertion into the corresponding group** initiates clearing (and any locally connected cascades). A 7+same-color group plus a matching shot clears as one larger match event; group size still affects score but not attack tier.
