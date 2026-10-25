@@ -32,14 +32,14 @@ func _run() -> void:
 	_finish()
 
 func _test_speed_and_infinite_feed() -> void:
-	_check(is_equal_approx(ChainModel.DEFAULT_SPEED, 34.0), "P008 correction restores default conveyor speed to 34 px/s")
+	_check(is_equal_approx(ChainModel.DEFAULT_SPEED, 102.0), "P016 triples default conveyor speed to 102 px/s")
 	for delta in [0.016, 0.1, 1.0]:
 		var motion := ChainModel.new()
 		var identities: Array[int] = [TeamData.Identity.RED, TeamData.Identity.BLUE]
 		motion.set_test_state(identities, 600.0)
 		var before := float(motion.balls[0].x)
 		motion.advance(delta)
-		_check(is_equal_approx(float(motion.balls[0].x), before - 34.0 * delta), "corrected conveyor motion is delta-based at %.3fs" % delta)
+		_check(is_equal_approx(float(motion.balls[0].x), before - motion.speed * delta), "conveyor motion is delta-based at %.3fs" % delta)
 
 	var stream := ChainModel.new()
 	var minimum_live := stream.balls.size()
@@ -59,24 +59,17 @@ func _test_fifo_feed_and_physical_adjacency() -> void:
 	feeder.set_test_state(rollover, -190.0)
 	feeder.continuous_feed_enabled = true
 	feeder.advance(0.0)
-	_check(feeder.cache.slice(0, 3) == [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE], "rollover cache records RED, GREEN, BLUE in FIFO order")
-	feeder.return_cached(2)
-	_check(feeder.pending_cache_returns == 2, "partial cached batch waits when the right edge has no slot")
-	var returned: Array[int] = []
+	_check(feeder.total_exited == 3 and feeder.total_cache_returned == 1 and feeder.cache.slice(0, 2) == [TeamData.Identity.GREEN, TeamData.Identity.BLUE], "rollover records RED, GREEN, BLUE and immediately admits the FIFO front")
+	_check(feeder.pending_cache_returns == feeder.cache.size(), "all rollover colors are automatically eligible while the right edge has no slot")
+	var returned: Array[int] = [TeamData.Identity.RED]
 	var returned_count := feeder.total_cache_returned
 	for unused in range(45):
 		feeder.advance(0.1)
 		if feeder.total_cache_returned > returned_count:
 			returned.append(int(feeder.balls[-1].identity))
 			returned_count = feeder.total_cache_returned
-	_check(feeder.pending_cache_returns == 0 and feeder.cache[0] == TeamData.Identity.BLUE, "partial pending returns drain from cache front as slots open")
-	feeder.return_cached(1)
-	for unused in range(20):
-		feeder.advance(0.1)
-		if feeder.total_cache_returned > returned_count:
-			returned.append(int(feeder.balls[-1].identity))
-			returned_count = feeder.total_cache_returned
-	_check(returned == [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE], "partial FIFO returns retain RED, GREEN, BLUE visual order")
+	_check(feeder.pending_cache_returns == feeder.cache.size(), "automatic eligibility counter tracks the exact remaining FIFO queue")
+	_check(returned.slice(0, 3) == [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE], "automatic FIFO returns retain RED, GREEN, BLUE visual order")
 	var generated_before := feeder.total_fresh_generated
 	for unused in range(50):
 		feeder.advance(0.1)

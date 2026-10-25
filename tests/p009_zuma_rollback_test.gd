@@ -147,7 +147,7 @@ func _test_wide_and_end_clears() -> void:
 	var tail_after_clear := _position_for_uid(tail_clear, tail_uid)
 	tail_clear.advance(1.0)
 	var tail_net_move := _position_for_uid(tail_clear, tail_uid) - tail_after_clear
-	_check(tail_clear.rollback_gaps.is_empty() and absf(tail_net_move + tail_clear.speed) < 0.001, "rightmost surviving tail train remains source-supported at -34 px/s")
+	_check(tail_clear.rollback_gaps.is_empty() and absf(tail_net_move + tail_clear.speed) < 0.001, "rightmost surviving tail train remains source-supported at baseline speed")
 
 	var all_clear := ChainModel.new()
 	var pair: Array[int] = [TeamData.Identity.YELLOW, TeamData.Identity.YELLOW]

@@ -6,7 +6,7 @@ signal match_completed(identity: int, group_size: int)
 
 enum GapType { FEED, CAUSAL }
 
-const DEFAULT_SPEED := 34.0
+const DEFAULT_SPEED := 102.0
 const DEFAULT_SPACING := 58.0
 const DEFAULT_RADIUS := 22.0
 const DEFAULT_INITIAL_POPULATION := 12
@@ -67,6 +67,8 @@ var event_log: Array[Dictionary] = []
 var pending_cache_returns := 0
 var total_fresh_generated := 0
 var total_cache_returned := 0
+var total_automatic_cache_returned := 0
+var total_exited := 0
 var fresh_seed := DEFAULT_FRESH_SEED
 var fresh_identity_counts: Array[int] = [0, 0, 0, 0]
 var fresh_run_length_counts: Array[int] = [0, 0, 0, 0, 0, 0, 0]
@@ -121,6 +123,8 @@ func reset_run() -> void:
 	pending_cache_returns = 0
 	total_fresh_generated = 0
 	total_cache_returned = 0
+	total_automatic_cache_returned = 0
+	total_exited = 0
 	total_rollbacks_started = 0
 	total_rollbacks_completed = 0
 	simulation_time = 0.0
@@ -202,17 +206,17 @@ func return_cached(requested_count: int = -1) -> int:
 		for unused in range(count):
 			_admit_on_right(cache.pop_front(), true)
 			total_cache_returned += 1
+		_sync_pending_cache_returns()
 		_refresh_snapshot()
 		if count > 0:
 			state_changed.emit()
 		return count
-	var available := maxi(0, cache.size() - pending_cache_returns)
-	count = mini(maxi(count, 0), available)
-	pending_cache_returns += count
-	var returned_before := total_cache_returned
-	_feed_right_edge()
-	var admitted := total_cache_returned - returned_before
-	if count > 0 or admitted > 0:
+	# Every cached color is already eligible. This compatibility API only asks
+	# the ordinary feeder to prioritize up to `count` admissions; it never adds
+	# a second quota token for an item that rollover already scheduled.
+	count = mini(maxi(count, 0), cache.size())
+	var admitted := _feed_right_edge(count, false)
+	if admitted > 0:
 		state_changed.emit()
 	return admitted
 
@@ -243,8 +247,10 @@ func set_test_state(identities_value: Array[int], start_x := 100.0, cached: Arra
 	last_match_identity = -1
 	last_match_size = 0
 	event_log.clear()
-	pending_cache_returns = 0
+	pending_cache_returns = cache.size()
 	_returns_since_fresh = 0
+	total_automatic_cache_returned = 0
+	total_exited = 0
 	total_rollbacks_started = 0
 	total_rollbacks_completed = 0
 	simulation_time = 0.0
@@ -361,7 +367,7 @@ func _integrate_segments(delta: float) -> void:
 
 	# The rightmost segment is attached to the virtual source/pusher. Every
 	# segment left of a real gap is unsupported, so its one rigid anchor falls
-	# RIGHT. Baseline -34 is overridden (not added) while unsupported.
+	# RIGHT. Baseline -102 is overridden (not added) while unsupported.
 	for index in range(segments.size()):
 		var segment := segments[index]
 		if index == segments.size() - 1:
@@ -572,6 +578,8 @@ func _roll_off_left() -> bool:
 			break
 		var exited: Dictionary = members.pop_front()
 		cache.append(int(exited.identity))
+		total_exited += 1
+		_sync_pending_cache_returns()
 		_retire_pending_insertion(int(exited.uid))
 		rolled_off = true
 		if members.is_empty():
@@ -595,22 +603,37 @@ func _ensure_playable_stream() -> void:
 		else:
 			seed_stream()
 
-func _feed_right_edge() -> void:
+func _feed_right_edge(max_return_admissions := -1, count_as_automatic := true) -> int:
 	var spawn_x := entry_spawn_x()
+	var returns_admitted := 0
 	while _live_count() < max_auto_population:
 		if not segments.is_empty() and _segment_end_x(segments[-1]) + spacing > spawn_x + POSITION_EPSILON:
 			break
-		var use_return := pending_cache_returns > 0 and not cache.is_empty() and _returns_since_fresh < cache_return_batch
+		if max_return_admissions >= 0 and returns_admitted >= max_return_admissions:
+			break
+		# Canonical scheduling policy: admit up to three FIFO returns, then one
+		# fresh weighted-run color. This prioritizes lossless recirculation while
+		# guaranteeing the independent infinite fresh source keeps advancing.
+		var use_return := not cache.is_empty() and _returns_since_fresh < cache_return_batch
 		if use_return:
 			_admit_on_right(cache.pop_front(), false)
-			pending_cache_returns -= 1
 			total_cache_returned += 1
+			if count_as_automatic:
+				total_automatic_cache_returned += 1
+			returns_admitted += 1
 			_returns_since_fresh += 1
+			_sync_pending_cache_returns()
 		else:
 			_admit_on_right(_draw_fresh_identity(), false)
 			total_fresh_generated += 1
 			_returns_since_fresh = 0
 	_refresh_snapshot()
+	return returns_admitted
+
+func _sync_pending_cache_returns() -> void:
+	# Compatibility/debug field: eligibility is now exactly the FIFO contents,
+	# never a separately incremented quota that can duplicate or strand colors.
+	pending_cache_returns = cache.size()
 
 func _admit_on_right(identity: int, _force_right_edge: bool) -> void:
 	var spawn_x := entry_spawn_x()

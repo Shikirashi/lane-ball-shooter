@@ -1,43 +1,40 @@
-# Codex Handoff — LBS-P015
+# Codex Handoff — LBS-P016
 
-**Status:** Implementation complete; automated verification passes.
+**Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** this scoped P015 commit.
+**Implementation commit:** this scoped P016 commit.
 
-**Mailbox:** remains on LBS-P015. `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
+**Mailbox:** remains on LBS-P016. `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
 
-## Conveyor root cause and implementation
+## Implementation
 
-- P014 deliberately restricted accelerated reverse motion to CAUSAL gaps and left FEED gaps with no closing motor. That preserved the visible player-caused rollback but made a separated FEED/FIFO group capable of remaining permanently detached. Per-gap motor ownership also forced topology repair code to decide which movement policy survived every split and merge.
-- Replaced CAUSAL/FEED-specific motors with one support model. The rightmost segment is attached to the virtual source/pusher and moves LEFT at the preserved `34 px/s`. Every segment to the left of a physical gap is unsupported and moves RIGHT from `60 px/s`, accelerating at `900 px/s²` to `420 px/s`.
-- Velocity is authoritative per rigid segment. Every member derives its position from one anchor; the existing deterministic constraint pass clamps contacts at exact spacing. A merge inherits support and velocity from its right/source-side segment, propagating support leftward without per-ball motion or overlap.
-- CAUSAL and FEED remain stable gap metadata only. Both close physically under gravity, but only a CAUSAL reconnection may scan the contact color and start a staged cascade. A FEED contact merges without matching even when both ends have the same color.
-- Removed the separate tail-recoil motion. A surviving rightmost segment is source-supported and continues LEFT; unsupported surviving front sections fall RIGHT only while a real gap exists.
-- Preserved the 50 ms insertion settlement and exact match/SFX/event order, P012's 58 px LEFT/front insertion displacement, offscreen-right generation, FIFO return order, masked established conveyor layer, deterministic microsteps, and unlimited generation.
-- F3 now reports `U` unsupported segments, `G` gaps, maximum gravity speed `V`, latest rightward gravity displacement `D`, and invariant violations `I`.
+- Changed the single canonical `ChainModel.DEFAULT_SPEED` from 34 to **102 px/s**. Source-supported rigid segments, fresh entrants, and recycled entrants all use that same normal speed.
+- Preserved the separate movement values: vertical player shots remain 0.20 seconds, cooldown 0.40 seconds, insertion settlement 0.05 seconds, enemy average speed 0.24 units/s, and unsupported-segment gravity remains initial 60 px/s, acceleration 900 px/s², cap 420 px/s.
+- Fixed the rollover root cause by making `cache` the canonical eligibility queue. `_roll_off_left()` appends each fully crossed color once, increments `total_exited`, and immediately exposes the full queue through `pending_cache_returns == cache.size()`.
+- Ordinary `_feed_right_edge()` calls now drain cached colors without a match. The deterministic policy admits up to three FIFO returns, then one weighted fresh color. This prioritizes recycling while guaranteeing continued fresh generation.
+- Preserved the legacy `return_cached()` API as a compatibility prompt. In continuous mode it can immediately admit already-eligible colors when a legal slot exists, but it cannot add quota tokens or schedule the same color twice. Its return value is the number actually admitted during that call. Deterministic fixtures with continuous feed disabled retain direct requested-count admission.
+- Recycled and fresh colors use the same single offscreen-right slot, mask, segment admission, 102 px/s motion, and maximum 24 live automatic balls. FIFO colors retain order and get new unique live UIDs.
+- Added bounded F3 counters: `Q` queue length, `P` eligible count, `X` total left exits, `A` returns admitted automatically by ordinary simulation, and `F` total fresh generations, alongside P015 gravity diagnostics. The model also retains total recycled admissions for exact reconciliation.
+- Restart clears queue, eligibility and all recycle counters. Main's existing terminal guard prevents movement, spawning, exits, and returns after defeat or WAVE CLEARED.
 
-## Finite encounter implementation
+## Scheduling and memory trade-off
 
-- Added configurable `enemy_spawn_budget`, defaulting to eight per lane. Each initial enemy consumes one slot, so a normal encounter schedules 32 total enemies.
-- Successful spawns consume quota; a lane at its five-enemy concurrent cap defers the remaining quota. Once eight have spawned, that lane cannot produce a ninth, regardless of elapsed time.
-- All ordinary projectile kills, tier-3 clears, and emergency clears feed encounter progress. Existing enemy HP, hopping, attacks, knockdown, emergency discharge, revival, and breach behavior remain unchanged.
-- `Battlefield` aggregates spawned/live/neutralized counts. Victory requires all four lane quotas to be exhausted and zero live enemies. A terminal breach is checked first, so defeat wins a same-update race.
-- Victory freezes all lane simulation, chain input, shooter simulation, and gameplay SFX just like defeat. The overlay shows `WAVE CLEARED`, the final score, and the existing restart control. The HUD shows `ENEMIES neutralized/32`; restart restores fresh quotas and one initial enemy in each lane.
+The queue is a compact `Array[int]` of color identities and uses front-pop FIFO semantics; it does not scan the queue per frame. With lossless recycling plus a required independent fresh source, an indefinitely full-throughput no-match run introduces one new color for each group of up to three returns. The stored queue can therefore grow over unlimited time. This is intentional and documented: live/offscreen geometry remains bounded, and exited colors are never silently dropped. Matches create additional capacity and let the return-priority policy service the backlog.
 
 ## Regression coverage
 
-Added `tests/p015_gravity_finite_enemies_test.gd` — PASS (587 checks):
+Added `tests/p016_speed_auto_recycle_test.gd` — PASS (72 checks):
 
-- Reproduces a formerly persistent FEED gap with same-color groups, proves rigid rightward fall, physical closure, and no passive match.
-- Verifies the source-supported rear train remains at `-34 px/s`, CAUSAL contact alone cascades, match order and 100+150 scoring remain staged, and different-color contact only merges.
-- Exercises two simultaneous CAUSAL gaps plus FIFO arrival, FIFO ordering, insertion during gravity, restart during a fall, eventual closure, and continuous non-overlap.
-- Compares contact timing at 30/60/120 Hz and a `0.08 s` caller delta; runs a 60-second 120 Hz infinite-source soak with bounded live/offscreen population.
-- Verifies initial quota accounting, capacity deferral, exact eight-spawn exhaustion, no ninth spawn across ten simulated minutes, and neutralization accounting for tier 1, tier 2, tier 3, and emergency clears.
-- Verifies no premature win during a temporarily empty encounter, exact victory emission, defeat precedence, WAVE CLEARED/final score/HUD state, freeze, and complete restart.
+- Exact 102×delta source movement at 120/60/30 Hz and larger deltas; unchanged shot, enemy, and gravity tuning.
+- Known RED/GREEN/BLUE sequence exits and automatically re-enters FIFO without any shot, match, or `return_cached()` call.
+- Multiple exits in one update, queued returns waiting for a legal slot, repeat compatibility calls, exactly-once bookkeeping, no negative/phantom quota, unique UIDs, and zero overlap.
+- A player match while returns are pending cannot double-book them; natural seven-color FEED reconnection closes physically without a passive match.
+- Two-minute seeded no-match stream and two-minute frequent-match stream at 60 Hz. Both preserve bounded live/offscreen population, nonzero automatic returns, continuing fresh supply, exact `exited = returned + queued` reconciliation, stable geometry, and eventual gap closure.
+- Terminal defeat freezes stream counters and restart restores the 102 px/s seed, empty recycle state, and four one-of-eight enemy lanes.
 
-Older assertions in P002, P009, P011, P012, and P014 were updated only where the approved unified-gravity behavior supersedes the retired gap-specific motors and tail recoil.
+Updated P007, P008, P009, P013, P014, and P015 assertions only where 102 px/s or automatic eligibility superseded their earlier speed/quota assumptions. P011/P012/P015 invariant, insertion, gravity, and encounter coverage remains active.
 
 ## Validation
 
@@ -52,23 +49,25 @@ Godot 4.7.2 headless, all passing:
 - P007 playtest revision — PASS (49 checks).
 - P008 gamefeel/SFX — PASS (82 checks).
 - P009 Zuma rollback — PASS (46 checks).
-- P010 staged cascade — PASS (179 checks).
-- P011 segment stress — PASS (16,493 checks; seed `5011CAFE`; 2,400 operations; 2,460 insertions; 636 matches; 670 fresh balls; 6 cache activities).
-- P012 forward insertion — PASS (372 checks).
+- P010 staged cascade — PASS (162 checks).
+- P011 segment stress — PASS (16,485 checks; seed `5011CAFE`; 2,400 operations; 2,460 insertions; 636 matches; 679 fresh; 58 cache activities).
+- P012 forward insertion — PASS (364 checks).
 - P013 shooter preview/mask — PASS (50 checks).
 - P014 causal rollback/feed — PASS (289 checks).
-- P015 gravity/finite enemies — PASS (587 checks).
+- P015 gravity/finite enemies — PASS (523 checks).
+- P016 speed/automatic recycle — PASS (72 checks).
+- `git diff --check` — PASS.
 
-Bounded main-scene startup also completed without script/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`. Each was intentionally terminated after three seconds. The sandbox cannot create/rotate `user://logs/godot.log`, so Godot prints a log-file warning before otherwise successful test and startup runs.
+Bounded main-scene startup completed without script/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`; each was intentionally terminated after three seconds. The sandbox cannot create/rotate `user://logs/godot.log`, so Godot prints a log-file warning before otherwise successful test and startup runs. Web/Android export artifacts and physical-device QA remain unverified because this task did not install or exercise those external toolchains.
 
-## Suggested visual playtest
+## Manual playtest
 
-1. Create a middle match and confirm the LEFT/front segment accelerates RIGHT as one rigid group while the rightmost train continues LEFT at normal speed. Create multiple gaps and a separated incoming/FIFO group; every unsupported segment should eventually reconnect without overlap.
-2. Confirm only a player-caused reconnection cascades. A same-color FEED reconnection must join without popping.
-3. Confirm insertion still pushes only the preceding LEFT/front balls LEFT, including while a segment is falling RIGHT, and the settled ball remains visible for 50 ms before the first match.
-4. Play through all eight spawns in one lane and then all 32. Confirm the counter, WAVE CLEARED/final score, frozen gameplay, and restart. Separately allow a breach and confirm GAME OVER still wins.
+1. Watch the top conveyor and incoming balls move at the new 102 px/s speed. Confirm vertical shots, enemies, 50 ms settlement and rightward gravity still look unchanged.
+2. Do not shoot. Note several colors leaving LEFT, then watch the same color sequence enter fully offscreen RIGHT. In F3, `X` and `A` should rise and `Q` and `P` should agree; the model's total returned plus `Q` equals `X`.
+3. Make rapid matches while returns are entering. Confirm the P012 insertion push remains LEFT, unsupported groups fall RIGHT, FEED joins never self-match, and `I` stays zero.
+4. Finish or lose the 32-enemy encounter, confirm the stream freezes, then restart and verify the original chain plus zeroed `Q/P/X/R` counters.
 
 ## Limitations
 
-- Headless tests validate state, ordering, timing, geometry, and generated PCM data, but do not replace visual/touch/audio QA in desktop, Web, and Android builds.
-- The enemy counter communicates total progress, not per-lane quota. Per-lane budget details are available through the combat models and deterministic tests but are not separately drawn in the HUD.
+- Visual speed, touch behavior and synthesized audio still require desktop/Web/Android playtesting.
+- The FIFO queue's deliberate long-run growth follows from combining lossless recycling with perpetual fresh introduction. It stores only integer colors, while live/offscreen balls remain capped.

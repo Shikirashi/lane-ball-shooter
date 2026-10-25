@@ -66,7 +66,7 @@ func _test_noncausal_gravity_closure() -> void:
 	var left_delta_a := _position(model, left_uids[0]) - float(left_before[0])
 	var left_delta_b := _position(model, left_uids[1]) - float(left_before[1])
 	_check(left_delta_a > 0.0 and absf(left_delta_a - left_delta_b) < 0.001, "unsupported FEED-side yellows fall RIGHT as one rigid segment")
-	_check(absf(_position(model, right_uid) - right_before + model.speed * 0.1) < 0.002, "rightmost pusher train moves LEFT at 34 px/s")
+	_check(absf(_position(model, right_uid) - right_before + model.speed * 0.1) < 0.002, "rightmost pusher train moves LEFT at 102 px/s")
 	_check(model.unsupported_segment_count == 1 and model.gravity_gap_count == 1 and model.max_gravity_speed > ChainModel.GRAVITY_INITIAL_RIGHT_SPEED, "support diagnostics expose one accelerating unsupported segment")
 	var joined_at := 0.1 + _advance_until_joined(model, 3.0)
 	_check(model.segment_gaps.is_empty() and model.segments.size() == 1 and joined_at < 3.1, "formerly persistent noncausal yellow gap physically closes")
@@ -91,7 +91,7 @@ func _test_causal_gravity_and_cascade() -> void:
 	var rear_before := [_position(ordinary, rear_uids[0]), _position(ordinary, rear_uids[1])]
 	ordinary.advance(0.1)
 	_check(_position(ordinary, front_uids[0]) > float(front_before[0]) and absf((_position(ordinary, front_uids[0]) - float(front_before[0])) - (_position(ordinary, front_uids[1]) - float(front_before[1]))) < 0.001, "causal front reds fall RIGHT rigidly")
-	_check(absf(_position(ordinary, rear_uids[0]) - float(rear_before[0]) + 3.4) < 0.002 and absf(_position(ordinary, rear_uids[1]) - float(rear_before[1]) + 3.4) < 0.002, "causal rear blues remain source-pushed at -34 px/s")
+	_check(absf(_position(ordinary, rear_uids[0]) - float(rear_before[0]) + ordinary.speed * 0.1) < 0.002 and absf(_position(ordinary, rear_uids[1]) - float(rear_before[1]) + ordinary.speed * 0.1) < 0.002, "causal rear blues remain source-pushed at -102 px/s")
 	_advance_until_joined(ordinary)
 	_check(ordinary.total_match_events == 1 and ordinary.identities() == [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.BLUE], "different-color authorized contact joins without cascade")
 

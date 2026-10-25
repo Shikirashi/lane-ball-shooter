@@ -34,7 +34,7 @@ func _run() -> void:
 	_finish()
 
 func _test_shot_travel_all_layouts() -> void:
-	_check(is_equal_approx(ChainModel.DEFAULT_SPEED, 34.0), "conveyor remains 34 px/s independently of projectile travel")
+	_check(is_equal_approx(ChainModel.DEFAULT_SPEED, 102.0), "P016 conveyor is 102 px/s independently of projectile travel")
 	_check(is_equal_approx(ShooterView.SHOT_TRAVEL_TIME, 0.20), "shot travel target is exactly 0.20 seconds")
 	for viewport_size in [Vector2(960, 540), Vector2(1280, 720), Vector2(1600, 720), Vector2(2400, 1080)]:
 		var layout := LayoutCalculator.calculate(viewport_size, Rect2(Vector2.ZERO, viewport_size))

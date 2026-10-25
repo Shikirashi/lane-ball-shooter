@@ -94,7 +94,7 @@ func _test_actual_segment_velocities() -> void:
 		var rear_delta_a := _position(model, rear_uids[0]) - float(rear_before[0])
 		var rear_delta_b := _position(model, rear_uids[1]) - float(rear_before[1])
 		_check(front_delta_a > 0.0 and absf(front_delta_a - front_delta_b) < 0.001, "front reds move RIGHT together over %.2fs" % duration)
-		_check(absf(rear_delta_a + model.speed * duration) < 0.002 and absf(rear_delta_a - rear_delta_b) < 0.001, "rear blues retain only -34 px/s baseline over %.2fs" % duration)
+		_check(absf(rear_delta_a + model.speed * duration) < 0.002 and absf(rear_delta_a - rear_delta_b) < 0.001, "rear blues retain only the baseline conveyor speed over %.2fs" % duration)
 		_check(int(model.segment_gaps[0].id) == gap_id and int(model.segment_gaps[0].left_segment_id) == left_segment_id and int(model.segment_gaps[0].right_segment_id) == right_segment_id, "causal edge binding survives %.2fs integration" % duration)
 		_check(model.unsupported_segment_count == 1 and model.gravity_gap_count == 1 and model.last_gravity_displacement > 0.0, "diagnostics report one unsupported segment and positive gravity motion")
 		var front_motion := _motion(model, left_segment_id)
@@ -133,13 +133,13 @@ func _test_feed_during_causal_rollback() -> void:
 	model.advance(0.1)
 	_check(_position(model, front_uid) > front_before, "front rollback persists while an entrant is offscreen")
 	_check(_position(model, rear_uid) > rear_before, "intermediate rear segment is unsupported by the separated entrant and also falls right")
-	_check(absf(_position(model, entrant_uid) - entrant_before + 3.4) < 0.002, "offscreen entrant stays at baseline 34 px/s")
+	_check(absf(_position(model, entrant_uid) - entrant_before + model.speed * 0.1) < 0.002, "offscreen entrant stays at baseline 102 px/s")
 	_check(model.unsupported_segment_count == 2 and model.segment_gaps.any(func(gap): return int(gap.id) == causal_gap_id and int(gap.type) == ChainModel.GapType.CAUSAL), "unified gravity preserves causal authorization while both gaps close")
 	model.advance(2.0)
 	if model._ball_index_by_uid(entrant_uid) >= 0:
 		var visible_before := _position(model, entrant_uid)
 		model.advance(0.1)
-		_check(absf(_position(model, entrant_uid) - visible_before + 3.4) < 0.002, "entrant has no 34-to-154 velocity jump after becoming visible")
+		_check(absf(_position(model, entrant_uid) - visible_before + model.speed * 0.1) < 0.002, "entrant has no speed jump after becoming visible")
 	_check(_invariants_hold(model), "feed/causal coexistence remains non-overlapping")
 
 func _test_two_causal_gaps_and_fifo() -> void:
