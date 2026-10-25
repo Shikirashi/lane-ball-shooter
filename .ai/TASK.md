@@ -1,37 +1,41 @@
-# ACTIVE TASK: LBS-P023 — Simplify victory subtitle and raise enemy speed by 30%
+# ACTIVE TASK: LBS-P022 — Deploy verified Godot Web build to Mintbase
 
-**Status:** READY FOR CODEX / ONLY ACTIVE IMPLEMENTATION TASK
-**Branch:** `master`
-**Requested:** 2026-10-25, after user played the real P021 Web build. The game feels too easy; increase ALL MOVING enemy horizontal movement speeds by **30% of CURRENT values**, and remove only the word "scheduled" from the WAVE CLEARED subtitle.
-**Baseline:** P021 Web menu/export `f21e3637ab29bd067006f06b4e5ba0c06565e821`, P020 special enemies `8f37cb8`. Read `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, `.ai/TASK.md`, latest `.ai/CODEX_HANDOFF.md`. Implement only P023; P022 Mintbase deployment is STILL QUEUED and NOT ACTIVE. No GUI/mouse automation.
+**Status:** READY FOR CODEX / ONLY ACTIVE TASK. User requested Mintbase hosting after the Web build and established the follow-on automatic-update requirement. ChatGPT has reviewed and accepted P023. Codex is authorized to configure the INITIAL Mintbase static Web hosting in P022, but NOT the future P024 CI/CD automation or unapproved public exposure.
+**Goal:** Make the **P023-updated static, single-threaded Godot Web export** from source commit `0378d45f60bb00a54ad278a11bed7c4b2ae2b156` reachable at `http://<Mintbase-reachable-IP>:<chosen-port>/` by devices on the intended network, using Mintbase (user's Linux Mint desktop) as the static HTTP host.
 
-## A. Victory subtitle — exact copy change
-- In `scripts/ui/game_over_overlay.gd`, change **only** the WAVE CLEARED supporting subtitle from `All scheduled enemies neutralized` to exactly **`All enemies neutralized`**.
-- Preserve the title `WAVE CLEARED`, score formatting, `RESTART [R]`, 3.0-second delayed victory reveal, and the distinct immediate defeat subtitle `The lane was breached`.
-- Check any tests or documentation that assert the old subtitle and update them accordingly. The word "scheduled" may still exist in internal spawn descriptions; do not globally strip it.
+**Forward compatibility:** The user has explicitly requested fully automatic build/deploy for all later approved changes after first Mintbase hosting. **P024 remains QUEUED** at `.ai/TASKS/LBS-P024.md` and must not be implemented yet. P022 should create a deployment-friendly stable static service, versioned release directory, atomic `current` pointer and clean logs/rollback hooks so that P024 can later install the auto-update pipeline without downtime. Do not install a CI runner or enable automatic deployments in P022 unless ChatGPT/user explicitly expands scope.
 
-## B. Movement balance — 1.30× current baseline
-- Existing authoritative `LaneCombatModel.DEFAULT_ENEMY_SPEED` is **0.24** units/s for Hopper; `EnemyTypes.SPEED_MULTIPLIERS` supplies Heavy 0.7, Snake 2.0, Healyzard 0.0. Prefer raising the **single base speed** to **0.312** (= 0.24×1.30) so relative archetype speeds remain intact, rather than scattering four overrides.
-- Exact resulting enemy linear-average horizontal speeds:
-  | Enemy | Before | After | Behavior |
-  | Hopper | 0.24 | **0.312** | Keep existing 0.55s grounded / 0.75s airborne cycle and hop displacement; 30% faster travel, not shorter animation timings |
-  | Heavy | 0.168 | **0.2184** | Ground slide, 4HP, 70% Hopper speed |
-  | Sickle Snake | 0.48 | **0.624** | Ground slide, standard 2HP, 2× Hopper speed |
-  | Healyzard | 0.0 | **0.0** | Remains stationary in rear support slot |
-- The phrase "30% faster" means new speed=old×1.30, not old+0.30 world-units/s or old/(1.30).
-- Preserve all other game rules: no change to HP, spawn percentages 50/20/20/10, 5 live enemies/lane, 8 lifetime spawns/lane (32 total), one Snake globally, 15s post-Snake-death respawn limit, 0.5s Snake post-hit stun and 0.3s adjacent-lane transfer animation, 15s Healyzard healing, 3s victory delay, 102px/s ball conveyor, shooting, scoring, input or web menu/fullscreen behavior.
-- Preserve swept projectile collision with faster hopper air velocity, faster sliding Snake/Heavy, stationary Healyzard. Pay attention to large delta / 30Hz & collision not tunneling. Defender contact/emergency lane clear and breach must still register.
+## Prerequisites
 
-## C. Tests and Web build refresh
+- Confirm user has a verified CURRENT P023 `exports/web/` directory or `exports/lane-ball-shooter-web.zip` produced by the P023 Web refresh on their local development machine; ZIP root contains `index.html` plus JS/WASM/PCK files. Source repository `exports/` is ignored: do not assume `git pull` alone transfers exported binary assets. Don't use a stale build if code changed since export.
+- Confirm Mintbase hostname/reachable LAN IP or Tailscale IP at **deployment time**, web port the user wants, proper access and relevant mounted file locations. Earlier IPs might have changed. Avoid revealing unrelated private data.
+- Clarify what "anyone" means: by default `http://mintbaseIP:PORT` is reachable only from same LAN or Tailscale tailnet, **not automatically all public internet users**. Expose publicly only after explicit scope/security decision (HTTPS/reverse proxy/Tailscale Funnel or tunnel, firewall and DNS), never port-forward indiscriminately.
+- For initial copy, `scp`, `rsync` or same-user LAN transfer; validate SHA256/archive contents and put build in e.g. `~/srv/lane-ball-shooter-web` under a non-privileged user. Don't overwrite unrelated directories or services.
 
-1. Add `tests/p023_enemy_speed_victory_copy_test.gd` with assertions for exact new 0.312/0.2184/0.624/0.0 speeds, relative multipliers, 1.30× displacement for moving types under fixed dt (including hop cycle), unchanged hop timing, Snake stun/transfer timing and Healyzard immobility.
-2. Assert exact new WAVE CLEARED subtitle `All enemies neutralized` and unchanged defeat copy and existing 3.0s end presentation (validate scene/UI if possible, not only source-text search).
-3. Audit existing P001–P021 suites for hardcoded old speed assertions/assumptions (notably `tests/p019_enemy_roster_spawning_test.gd` and P020 Snake movement tests). Update expected movement numbers where they are NOW intentionally obsolete; retain substantive test coverage.
-4. Re-run ALL P001–P021 regression suites plus P023 under Godot 4.7.2 headless, bounded native and web entry startup, `git diff --check`. Do not quietly skip stress test P011.
-5. IMPORTANT: User is currently PLAYING THE WEB VERSION; the old P021 exported `exports/web` binaries and portable ZIP are STALE after source changes. **Run `./scripts/build_web.sh` again** to regenerate a REAL updated `exports/web/index.html` and `exports/lane-ball-shooter-web.zip` in the user's working checkout; verify exported index/JS/WASM/PCK and all nine runtime files, test local HTTP requests, report artifact sizes and SHA-256 of updated ZIP. If the matching Web export templates/toolchain are unexpectedly unavailable, document blocker and executable build instructions—never imply updated assets exist when they do not. Generated compiled assets stay `.gitignore`d, NOT committed, so the user must rebuild on a machine other than the original Codex workspace.
-6. Include explicit short manual verification: new text in WAVE CLEARED, visibly faster Hopper/Heavy/Snake but stationary Healyzard, still functioning hit/damage/Snake lane swap/heal, and Web main menu YES/NO.
+## Deployment steps (P022 is now authorized; do NOT enable future auto-deployment)
 
-## D. Completion
-- Update README for new canonical speeds and exact victory subtitle, while preserving prior details.
-- Update `.ai/CODEX_HANDOFF.md`: implementation commit, changed files, actual test suite outcomes, Web export command/status/ZIP SHA, manual test, limitations.
-- Commit and push code, tests, README and handoff to `master`; **STOP**. Do not alter ChatGPT-owned `.ai/TASK.md`, `.ai/TASK_LEDGER.md`, `.ai/DECISIONS.md`, `.ai/PROTOCOL.md`. Do NOT self-activate queued P022 or deploy to Mintbase. Keep scope limited to copy/speed rebalance and refreshed web build.
+1. Verify correct exported `index.html` and companion files. Test locally on Mintbase with `python3 -m http.server 8765 --bind 0.0.0.0 --directory <deploy-dir>` (or configured port) in a bounded way. Check status 200, MIME `application/wasm`, actual browser load from another device via `http://mintbaseIP:PORT/`, then both START GAME > YES fullscreen and NO windowed flows.
+2. Once smoke-tested, create a supervised startup configuration (a simple dedicated systemd user service or a minimal stable static server). Use a chosen appropriate bind/interface, restart policy, unprivileged directory permissions, system security defaults, and verified service logs. Avoid a root Python web server; use Caddy/nginx only if already installed or otherwise justified. Do NOT block or conflict with other apps on Mintbase, including its photo background removal website.
+3. Configure network/firewall only with explicit user approval and only for the selected interface/access scope. Check remote LAN reachability; if using Tailscale, prefer tailnet-only binding/access restrictions for private distribution. Set exact IP and port dynamically from host rather than guessing.
+4. Provide a reusable non-root, idempotent **deploy script for validated runtime files** with versioned release directories, preflight validation and an atomic live-release pointer. Keep prior release for rollback and do not overwrite live files in place. A static server serving a stable symlink generally need not restart on content updates. Document start/stop/status and rollback commands. Make the script safe for the P024 GitHub push → build → deploy automation, but DO NOT activate that automation during P022.
+5. Don't enable PWA/cross-origin isolation headers unless export actually requires them. For single-thread default Godot Web build, static server with correct file MIME is normally sufficient; don't add unnecessary SharedArrayBuffer headers. Avoid caching stale .pck/.wasm aggressively during dev iteration.
+6. Report correct URLs for LAN/Tailscale where verified, browser requirements (WebGL2/WebAssembly), any platform failures, and exactly which client(s) were actually tested. No assumption that `http://privateIP:PORT` is publicly accessible.
+7. Prefer directly SSH/scp or rsync to Mintbase from the existing user's development environment when authorized access exists; code and terminal only, NO GUI/mouse control. Do not invent credentials or host aliases. Confirm correct user account and host using the current SSH config/session before copying. If SSH access is unavailable, implement scripts and handoff clear minimal user commands, and report the exact blocker rather than claiming deployment succeeded.
+8. Port 8765 is occupied on the DEVELOPMENT machine, not necessarily Mintbase; check actual Mintbase listeners before choosing the game port. Do not stop/reconfigure other app services. Verify one or more separate clients can load the game menu from LAN/Tailscale and use NO and YES; if unavailable, report which interaction remains untested.
+9. Verify the deployed `index.pck` comes from the new P023 build, NOT P021, by comparing the current verified ZIP hash (`08a8d52201b1d3fd03c983267bd54659a5350db109a07bc31e6f09526e5dfccb`) when possible. If build recreated deterministically but ZIP hash differs due to metadata, inspect source export and assets carefully rather than assuming failure. Use safe new-release directory and retain previous version for rollback.
+
+## Future pipeline handoff to P024 (no implementation in P022)
+
+- Record service type/name, serving user, listen interface/port, live pointer, release staging paths, updater permissions, Web build provenance and exact deploy/rollback commands; protect unrelated Mintbase services.
+- Confirm whether Mintbase can support the build toolchain locally or if external trusted GitHub CI plus a secure transfer method is preferable. Do not run an untrusted webhook or publicly expose a CI runner.
+- A later **P024** will trigger automatic Godot Web builds on each approved `master` push, validate, deploy atomically and report status. Git push triggers deployment, so binaries aren't pushed to GitHub, and there is no automatic commit of unsaved working-directory changes.
+
+## Test and handoff
+
+- Verify HTTP 200 on index and every generated asset from Mintbase, MIME types and console errors if browser testing available, fullscreen request initiated only by YES button, NO windowed. Avoid claiming public internet reachability without external test.
+- Keep ordinary game mechanics P017–P020 unchanged. Deployment only, no new game rules.
+- Update README with hosting/how to update, `.ai/CODEX_HANDOFF.md`, commit/push source and documentation, STOP. Do not commit generated WASM/PCK to repository or edit ChatGPT-owned mailbox unless explicitly tasked.
+
+## P022 completion discipline
+
+Run project P001–P023 applicable tests as appropriate, plus deployment smoke and runtime service checks. Update README and `.ai/CODEX_HANDOFF.md`, commit/push only source/configuration/scripts/docs, then STOP. Do not edit ChatGPT-owned mailbox files, run P024, install a CI runner, or change Internet exposure. Report service status and the actual tested Mintbase URL only after verified access.
