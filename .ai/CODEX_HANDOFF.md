@@ -1,37 +1,37 @@
-# Codex Handoff — LBS-P012
+# Codex Handoff — LBS-P013
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** `412b18e` (`Fix P012 insertion displacement direction`)
+**Implementation commit:** `11816ab` (`Implement P013 shooter preview and conveyor masking`)
 
-**Mailbox:** remains on LBS-P012; task, ledger, decision and protocol files were not changed.
+**Mailbox:** remains on LBS-P013; task, ledger, decision and protocol files were not changed.
 
 ## Implemented
 
-- Corrected authoritative segment insertion to expand in conveyor direction. For insertion at segment-local index `k`, the contacted segment and every earlier/LEFT segment translate exactly `-spacing` (−58 px), then the new member is inserted at `k`.
-- This single anchor transformation gives the required per-UID result: old members before `k` move LEFT 58 px; old members at/after `k` retain their exact world X; all later/right segments remain pinned. No existing ball is pushed RIGHT.
-- Front insertion (`k=0`) places the shot one slot left while all old members remain fixed. Tail insertion (`k=N`) shifts the complete old train left and places the shot at the old tail X. Interior insertion shifts only the old prefix while preserving the old suffix.
-- At FEED or CAUSAL seams, every preceding segment receives the same −58 px translation. Therefore all intervening typed gap IDs, types, widths and motor speeds remain unchanged; the new endpoint is derived normally from segment membership. Active rollback remains valid and terminates without motor reversal or deadlock.
-- Near-left members displaced beyond the exit are not deleted during insertion. The existing ordered rollover event collects them into FIFO on the next simulation update; tests verify RED/GREEN/BLUE exit and return order.
-- Preserved P011 segment authority and non-overlap constraints. Logical/rendered centers remain derived from segment anchors at exact 58 px internal spacing; the 50 ms 72%→100% scale settle remains unchanged.
-- Kept insertion and rollback direction deliberately separate: insertion advances the front prefix LEFT; only a match-created causal gap drives the left/front segment RIGHT with the existing 60/900/420 rollback profile.
-- Updated P002's near-edge fixture to avoid intentionally rolling off before its three-ball match, P009's superseded rightward-insertion position assertions, and P011's FIFO fixture isolation. No regression coverage was removed.
-- Updated README with the forward insertion policy, seam behavior, end cases, manual direction checks, and P012 command.
+- Moved the real `MagazineState.next_identity` onto `ShooterView` as a 9 px symbol-bearing ball directly below the existing 19 px loaded ball. Both centers follow shooter X and remain inside the landscape safe area at both track extremes. Fire and swap update both identities through one `set_ammunition` call.
+- Replaced the old loaded/next magazine panel with a single circular two-arrow swap button. Its logical and hit target is 56×56, it remains in the upper-right safe HUD outside `playfield_rect`, and existing Space/right-click/touch ownership, cooldown, game-over and one-SFX behavior are unchanged.
+- Added authoritative offscreen entry at `lane_width + radius + ENTRY_MARGIN` (`ENTRY_MARGIN = 4`). Fresh and FIFO-returned balls therefore begin with their entire 22 px circle beyond the right boundary.
+- Added an event deadline for the next legal feed slot. Normal continuous entrants attach at exact segment spacing and move left at 34 px/s, producing the same physical position at 30/60/120 fps and with a single large delta. Admission remains capped at 24 live automatic balls and cannot create an unbounded invisible tail.
+- FIFO return batches use the same offscreen staging point and retain exact color order. A separated typed FEED segment moves at normal speed until its first member is fully visible; only then may the existing feed catch-up motor close its physical gap.
+- Split chain drawing into three explicit layers: the panel/background; an exact `lane_rect` clipping parent containing established conveyor artwork; and an unclipped sibling overlay that draws only pending inserted UIDs. Loaded/next/in-flight balls remain in the independent unmasked shooter view.
+- The inserted ball is excluded from established drawing for 49 ms, then atomically transfers to the clipped layer when its model settlement retires at 50 ms. Both render classifications use the same authoritative UID, identity and segment-derived position. Game over hides the pending overlay and restart clears pending UIDs before restoring it.
+- Updated superseded P001/P002/P011 assertions for shooter-owned ammo, delayed offscreen return entry and the circular 56×56 control. P012 insertion direction, segment invariants, FIFO, staged cascades, balance and procedural SFX were not changed.
+- Updated README with the new ammunition UI, offscreen geometry, mask ownership, regression command and manual checks.
 
-## P012 regression coverage
+## P013 regression coverage
 
-Added `tests/p012_forward_insert_test.gd` — PASS (377 checks):
+Added `tests/p013_shooter_preview_mask_test.gd` — PASS (50 checks):
 
-- Position-by-UID checks for insertion indices 0, 1, middle, before-last and N.
-- Documented `[R][R][Y][Y] | [B][B]` seam insertion: four front UIDs move −58, both trailing UIDs remain fixed, GREEN occupies the opened slot and FEED edge identity/distance survives.
-- Insertion on both sides of an accelerating CAUSAL seam preserves gap ID, type, distance and motor speed.
-- Two accepted shots within one 50 ms settle window and rollback-time endpoint shots preserve UID order, retire once and never overlap.
-- Near-left insertion push performs normal FIFO rollover and exact ordered return without ghost balls.
-- Explicit direction sequence verifies insertion LEFT, yellow pop at 50 ms, causal rollback RIGHT, physical reconnection, then one RED size-4 cascade.
-- Independent segment/logical/render invariant checks run after every 1/120-second microstep.
-- Full-width shooter and nonblocking compact swap geometry remain valid at all four landscape sizes.
+- Shooter loaded/next alignment and safe-area containment at both track edges for 960×540, 1280×720, 1600×720 and 2400×1080, including inset safe rectangles.
+- Actual magazine identity synchronization after swap and fire; 56×56 control and non-overlapping playfield geometry.
+- Fresh entry starts fully beyond the right edge, moves at exactly 34 px/s, remains invisible until circle-edge crossing, then partially intersects rather than popping in.
+- Identical entry positions at 30/60/120 fps and one 0.5-second update.
+- FIFO RED/GREEN/BLUE offscreen admission, typed FEED topology, normal-speed initial transit and invariant checks.
+- One simulated minute of continuous feed remains bounded, replenishing and overlap-free.
+- Dedicated mask hierarchy and exact conveyor window bounds.
+- Exclusive unmasked ownership at insertion time and 49 ms, exclusive clipped ownership at 50 ms, plus game-over hiding and restart cleanup.
 
 ## Validation
 
@@ -45,25 +45,26 @@ Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 - P006 platform/input QA — PASS (69 checks).
 - P007 playtest revision — PASS (49 checks).
 - P008 gamefeel/SFX — PASS (82 checks).
-- P009 rollback — PASS (59 checks).
+- P009 rollback — PASS (46 checks).
 - P010 staged cascade — PASS (190 checks).
-- P011 segment stress — PASS (16,258 checks; seed `0x5011CAFE`, 2,400 operations, 2,460 insertions, 635 matches, zero invariant violations).
+- P011 segment stress — PASS (16,258 checks; seed `0x5011CAFE`, 2,400 operations, 2,460 insertions, 636 matches, 670 fresh, 6 cache activity).
 - P012 forward insertion — PASS (377 checks).
+- P013 shooter preview/mask — PASS (50 checks).
 - Bounded startup at 960×540, 1280×720, 1600×720 and 2400×1080 — all exit 0.
-- `git diff --check`, export-binary scan and credential-pattern scan — PASS.
+- `git diff --check`, external-binary scan and credential-pattern scan — PASS.
 
-Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable; every suite and startup returned exit 0. No Web/Android export or physical-device playtest was attempted.
+Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable; all suites and startups returned exit 0. No Web/Android export or physical-device playtest was attempted.
 
 ## Manual QA
 
-1. Insert into the middle of a visible train. Existing balls left of the shot should move one slot LEFT with the conveyor; balls right of it must not move RIGHT. Repeat at the first and last ball.
-2. Insert at a visible gap/seam and again while the front segment is rolling back. The gap width should not snap or collapse, and no ball should overlap, reorder or deadlock. F3 should remain `I0`.
-3. Reproduce RED RED / YELLOW YELLOW / RED RED. Observe the insertion push LEFT first, the 50 ms yellow settle/pop, then—and only then—the front red pair reversing RIGHT into physical contact for the later four-red cascade.
-4. Insert repeatedly near the left exit and let displaced balls recycle. Confirm exit/cache/return order remains exact and no life/score penalty occurs.
-5. Recheck extreme-left/right aiming, HUD swap touch, SFX, combo/tiers, revival and BLUE/GREEN distinction; none were intentionally changed.
+1. Move the shooter to both extremes at each supported landscape size. Confirm the small NEXT ball stays below the loaded ball and both swap instantly after the HUD button, Space or right click.
+2. Tap the circular control: it should swap once, play one swap sound and never shoot. Drag/release directly below it and at both playfield edges; firing should remain full width and occur exactly once.
+3. Watch the right boundary after a slot opens. A new circle should reveal progressively from nothing at 34 px/s rather than appearing whole. Returned cache colors should use the same entrance and order.
+4. Insert near every conveyor boundary. The shot should remain visible during the 50 ms settle even outside the lane window, then join the masked conveyor without a ghost, duplicate or blink. Established incoming/outgoing balls, including outline/shadow/symbol, should clip exactly at the lane rectangle.
+5. Recheck rapid insertion, simultaneous rollback/cascade, FIFO rollover, SFX, combo/fever, defender attacks and restart. F3 should continue to report `I0`.
 
 ## Limitations
 
-- The one-slot insertion displacement is immediate and authoritative, while the inserted ball retains P011's non-overlapping scale settle. No separate positional tween was added because interpolating front centers independently would weaken the zero-overlap invariant.
-- Visual feel, palette perception and procedural audio still require human desktop/Web/Android review.
+- Headless state tests verify render ownership and clipping hierarchy, but exact edge antialiasing, high-DPI appearance and the procedural SFX still require human desktop/Web/Android review.
+- A distant FIFO test batch deliberately remains a separate FEED segment while it crosses the mask at normal speed; its faster physical gap closure begins only after the batch is fully visible.
 - Pre-existing local editor-generated changes in `project.godot`, `scenes/main.tscn`, and generated untracked `.uid` files were preserved and intentionally excluded.
