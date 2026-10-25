@@ -1,6 +1,6 @@
 # ACTIVE TASK: LBS-P027 — Android APK release and matching portfolio download card
 
-**Status:** ACTIVE — ANDROID SDK COMMAND-LINE TOOLS / LICENSE CHECKPOINT. Codex installed Android templates, Temurin JDK 17 and a dedicated release-signing identity in commit `5567572`; user confirms the signing key + credential files have been backed up to root-protected `/var/backups/lane-ball-shooter/`. Google Android SDK CLI tools and personal license acceptance are the remaining prerequisites before building a signed APK and publishing the card. No APK, GitHub Release or portfolio download card yet.
+**Status:** ACTIVE — USER REPORTS ANDROID CLI TOOLS/SDK LICENSE STEP COMPLETED (2026-10-25 23:43); CODEX MUST VERIFY TOOLCHAIN LOCALLY AND PROCEED TO APK BUILD WITHOUT REPEATING USER INSTRUCTIONS. JDK17, Android export templates, release-signing key and user's protected backup already in place. No APK, GitHub Release or portfolio download card yet.
 
 ## Repositories / present styling (actually inspected)
 
@@ -8,6 +8,12 @@
 - Portfolio: `Shikirashi/Shikirashi.github.io`, `master`. The homepage is root `index.html`. Existing card structure lives in `<div id="portfolio-grid" class="row no-gutter">...</div>` and uses Bootstrap `item mobile col-sm-6 col-md-4 col-lg-4 mb-4`, a full-tile `a.item-wrap.fancybox`, child `div.work-info` with `h3` game title and `span` uppercase platform label, and an `img.img-fluid` thumbnail. `assets/css/style.css` styles hover darkening/zoom/title overlay, `assets/js/main.js` handles Isotope filters. **REUSE that exact card system and existing CSS conventions**. Example current `Wash Your Hands` card is `item desktop` linking to GameJolt and its thumbnail is `assets/img/washYourHands.png`; current mobile card is `Happi` with `assets/img/Happi-logo.png`. The user's requested reference title `Hompimpaa` was NOT found in current portfolio homepage markup; do not fabricate or edit it.
 - The portfolio already hosts nine Web files under `lane-ball-shooter/`. The P024 task will eventually auto-refresh ONLY those nine Web assets. Keep APK/card changes isolated from P024's auto-publication.
 - User says they own a Google developer account that has been unused for years. This is NOT a request to submit to Google Play. **Do not access Play Console or change their developer account.** The goal is public portfolio APK download without store publication.
+
+## User SDK checkpoint update — proceed (2026-10-25 23:43)
+
+- User explicitly says **"I've already done the CLI thing"**: treat official Android command-line tools installation and personal `sdkmanager --licenses` as USER-REPORTED COMPLETE, not independently verified. **Do not ask to re-download/reinstall or re-accept licenses by default.** Check `$HOME/Android/Sdk/cmdline-tools/latest/bin/sdkmanager`, SDK licenses, `platform-tools/adb`, build-tools 35.0.1 and platforms/android-35; run existing `./scripts/setup_android_toolchain.sh` idempotently only as needed to finish package installation, and report specific failing command if any prerequisite is actually missing.
+- After successful SDK verification, use the EXISTING backed-up release JKS and protected signing environment (NEVER regenerate, disclose or commit) to build non-debuggable ARM64 APK from a separate clean snapshot; verify signature/manifest/ABI, test physical Android device if connected and report manual QA limits honestly. Publish actual asset as GitHub Release; then add the portfolio Android download card matching existing card styling, with a tested valid download link and actual game screenshot. Preserve all existing pages and Web game files.
+- Fix the P024 Chrome verifier temp-profile deletion race `ENOTEMPTY` without weakening game initialization checks, test cleanup and report rerun status. No further user action unless an actual technical/permission blocker appears.
 
 ## Latest verified status and next Codex action (2026-10-25 23:39)
 
