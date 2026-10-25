@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The active task is in `.ai/TASK.md`. P009 was source-reviewed and accepted; P010 is now active for theatrical settle timing and accelerating cascades. Only ChatGPT advances this ledger.
+The active task is in `.ai/TASK.md`. P009 and P010 have been source-reviewed and accepted; awaiting hands-on playtest. Historical `LBS` prefixes are internal identifiers, not branding. Only ChatGPT advances this ledger.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -13,6 +13,6 @@ The active task is in `.ai/TASK.md`. P009 was source-reviewed and accepted; P010
 | LBS-P007 | COMPLETE — code `ab5359f`, handoff `5b0e7c8`; desktop visual playtest pending | Double conveyor speed to 68 px/s; perpetual fresh + FIFO-fed top chain; tier-2 one-hit kills and tier-3 two-adjacent-lane clears; hop-driven enemies with grounded pauses; tests and visual feedback |
 | LBS-P008 | IMPLEMENTED — code `327077e`, speed correction `d1df357`, handoff `eeff275`; final QA continuing in P009 | 0.20s shooter travel, enemy average speed 0.24, weighted same-color clusters incl. seven, seven synthesized SFX, 34 px/s conveyor correction |
 | LBS-P009 | COMPLETE — code `d5cd73b`, handoff `81fa461`; graphical playtest pending | Zuma-style gap rollback: move existing LEFT/front ball section right after player clear; physical reconnection and delayed causal cascades; preserve right-only infinite feed/FIFO and P008 systems |
-| LBS-P010 | ACTIVE | Player shot settles visibly for 0.05s before first match; whole front segment accelerates backward into rear segment; cascades trigger only on physical collision, sequenced match sounds/attacks |
+| LBS-P010 | COMPLETE — code `891ad0d`, handoff `80020c0`; graphical playtest pending | Player shot settles visibly for 0.05s before first match; whole front segment accelerates backward into rear segment; cascades trigger only on physical collision, sequenced match sounds/attacks |
 
-Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010. P010 is the ONLY active task; the implemented brief is `.ai/TASK.md` (archival queued copy `.ai/TASKS/LBS-P010.md`). Web/Android exported artifacts and physical-device testing remain pending toolchains.
+Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010. No active Codex task; `.ai/TASK.md` holds the playtest checklist (original brief archived at `.ai/TASKS/LBS-P010.md`). Web/Android exported artifacts and physical-device testing remain pending toolchains.
