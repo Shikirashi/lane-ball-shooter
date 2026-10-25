@@ -1,4 +1,21 @@
-# ACTIVE TASK: LBS-P027 — Android APK release and matching portfolio download card
+# COMPLETED TASK: LBS-P027 — Android APK release and matching portfolio download card
+
+**Final status:** RELEASED AND VERIFIED (2026-10-25 23:53 UTC); **physical-device acceptance testing still pending**. This completion notice supersedes the historical task instructions and old "ACTIVE" checkpoint text preserved below. Codex implementation finished; do not rerun P027 without a new request.
+
+**GitHub release:** https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.1.0
+
+**Direct APK:** https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.1.0/lane-ball-shooter-android.apk
+
+**APK provenance:** tag `android-v0.1.0` points to exact game source `0e77dbdeadcab4fce4f4b3bf054d721ef479c5bf`; release is public, non-draft, non-prerelease; asset is 26,807,776 bytes, GitHub SHA256 `cf390a1abbbbe3e8e937710e46a32aede297ddf43c0c41507d29549e8450ea26`, matching Codex's downloaded-and-verified build. Package `com.shikirashi.laneballshooter`, 0.1.0 (versionCode 1), ARM64 only, Android SDK min 24, target 36. Codex `apksigner` and `aapt` tests verified v2/v3 release signer, not debuggable, no runtime permission requests, zip alignment and landscape mode. **These APK signature checks were run by Codex locally and reported in handoff; this GitHub review independently checked release metadata, digest, tag commit and code diffs but not Android device runtime.**
+
+**Portfolio:** `Shikirashi/Shikirashi.github.io` commit `94c5e77a19ee3c9cf1411bb2f08d763ce8ffc15b` changed only root `index.html`, `assets/css/style.css`, `assets/img/laneBallShooter.png`. Added exactly one `item mobile` Lane Ball Shooter download card, linking to the immutable signed APK asset and displaying a captured gameplay image, accessible focus treatment, mobile-friendly visible DOWNLOAD APK label. Existing cards and Web runtime remain intact. GitHub Pages run `40246539248` SUCCESS.
+
+**Web publishing / P024:** CI Chrome profile teardown fix commit `3a2d212`; Actions `40246262499` completed both jobs SUCCESS, including exact public HTTPS bytes and secure live Godot canvas. P024 auto-publish now works and has user-scoped token configured; no missing credential remains.
+
+**Remaining user-only acceptance:** install APK on physical ARM64 Android 7+ hardware, verify landscape boot, touch drag/release shooting, swap, sound, restart, device safe-area/performance and ability to install later same-signed incremental version. Codex had no attached device and did NOT claim on-device success. Signing JKS plus protected credentials backed up as confirmed by user in `/var/backups/lane-ball-shooter/`. Do not create, replace or leak signing credentials. Future release should increment versionCode and preserve signing key; APK is not auto-updated from GitHub Releases.
+
+---
+## Historical task brief (superseded)
 
 **Status:** ACTIVE — USER REPORTS ANDROID CLI TOOLS/SDK LICENSE STEP COMPLETED (2026-10-25 23:43); CODEX MUST VERIFY TOOLCHAIN LOCALLY AND PROCEED TO APK BUILD WITHOUT REPEATING USER INSTRUCTIONS. JDK17, Android export templates, release-signing key and user's protected backup already in place. No APK, GitHub Release or portfolio download card yet.
 
