@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: prototype design baseline, corrected for physical offscreen-LEFT gravity-driven reentry 2026-10-25 (P017). Later playtest decisions supersede conflicting earlier prototype tuning. Parameters labeled "initial" are playtest values; mechanics are authoritative until changed via task mailbox.
+Status: prototype baseline, updated with enemy death animation/audio and 3-second victory presentation delay (P018, 2026-10-25). Later playtest decisions supersede conflicting earlier prototype tuning. Parameters labeled "initial" are playtest values; mechanics are authoritative until changed via task mailbox.
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
@@ -119,3 +119,9 @@ If necessary, implement conservative and configurable defaults and report decisi
 - Preserve accepted speed 102 px/s, gravity initial/right acceleration/max 60/900/420, 0.20s vertical shot, 0.05s settle, insertion pushes LEFT, scoring/combos, four lanes of eight finite enemies, and victory/defeat/restart.
 
 **Supersession:** The above overrides P016's automatic right-side FIFO recirculation gameplay policy, as well as the abandoned early P017 banked color-return proposal. Old documentation and tests for exit→right-return should be explicitly updated rather than coexisting as live alternative semantics.
+
+## P018 enemy death feedback + delayed WAVE CLEARED (2026-10-25)
+- User won a 32-enemy encounter and saw WAVE CLEARED overlay with apparently standing enemies still visible. Source examination shows immediate victory signaling sets combat models' `game_over`; `LaneActor._process` returns before `_sync_visuals` can remove stale enemy instances and before existing death sparks finish.
+- **Enemy death feedback is required** for normal projectile kills, tier-3 multi-lane wipe and emergency clear: brief visually recognizable explosion/sparks, then the actual 3D enemy body falls sideways to a horizontal position and fades away (initial tune ~0.8–1.2s); distinct synthesized enemy death sound plays once per removed enemy, with multi-kill sound management.
+- Immediately on final legitimate neutralization, stop/lock gameplay and logical combat, preserve correct win-over-breach precedence; allow cosmetic death VFX and final SFX to continue. Wait **3.0 seconds from that last enemy death** before revealing WAVE CLEARED/final score/restart; don't freeze or overlay the screen during the death sequence. Restart cancels pending presentation, cleans VFX/SFX. GAME OVER remains immediate on breach.
+- This is cosmetic/timing only: preserve 102 px/s conveyor, P017 offscreen-LEFT physical UID retention/reentry under gravity, shoot/match/cascade, and finite eight enemies per lane (32 total) encounter.
