@@ -1,40 +1,37 @@
-# Codex Handoff — LBS-P011
+# Codex Handoff — LBS-P012
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** `696a1f0` (`Rebuild P011 conveyor with rigid segments`)
+**Implementation commit:** `412b18e` (`Fix P012 insertion displacement direction`)
 
-**Mailbox:** remains on LBS-P011; task, ledger, decision and protocol files were not changed.
+**Mailbox:** remains on LBS-P012; task, ledger, decision and protocol files were not changed.
 
-## Architecture and implementation
+## Implemented
 
-- Rebuilt `ChainModel` around authoritative ordered rigid segments. Each segment owns one X anchor and ordered persistent UID/color members; every member center is derived as `anchor + index * 58`. The public `balls` array is now a flattened compatibility/render snapshot, never the physics authority.
-- Added typed FEED and CAUSAL edges between segments plus UID-derived rollback diagnostics. All normal 34 px/s travel, feeder catch-up, 60/900/420 accelerated causal rollback and bounded tail recoil produce one desired translation per segment. One constraint solver clamps those translations before application, so no segment can cross or overlap a neighbor and no ball receives competing motor movement.
-- Stable per-step event order is: integrate all segment translations and solve constraints; clamp/merge physical contacts and resolve eligible causal cascades; process legitimate left rollover; admit right-edge FIFO/fresh balls or empty recovery; expire 50 ms insertion checks; rebuild/validate the snapshot. `advance()` remains bounded to 1/60 second and exact pending-settle deadlines.
-- Insertion contacts actual rendered centers using the documented 22 px chain radius + 12 px projectile radius. Inserting opens one exact slot in the contacted segment and coherently moves every following segment by the same slot width, preserving all external gaps. The new member is physically legal immediately and scales from 72% to 100% during its 50 ms settle, avoiding both logical and visual overlap.
-- Match removal splits the authoritative segment while preserving every survivor position. The resulting causal edge moves only its immediate left/front rigid segment. At exact spacing, segments merge in UID order; only matching ends on a causal edge run one local cascade. FEED contacts and passive seeded 3–7+ groups never auto-clear.
-- Fresh weighted runs and requested cached colors now share one far-right segment admission interface. Admission occurs only when an exact legal slot exists, never inside internal clear gaps. Distant noncontinuous/FIFO returns form a FEED segment and reconnect physically; FIFO order, 24 automatic-live cap, infinite fresh generation and linear legitimate cache storage remain intact.
-- Added bounded diagnostics: segment and typed-gap counts, maximum match events per substep, historical minimum logical/render spacing and invariant violations. F3 displays these alongside settle/rollback state.
-- Moved loaded/next and the 64×56 swap button into a compact safe-area HUD-right panel above the chain. The shooter track now spans chain coordinates with symmetric 24 px margins at all four landscape sizes. The panel is outside the firing playfield, so extreme-left/right touch drags remain available and swap taps cannot fire.
-- Updated the canonical palette to saturated BLUE `#3677E8` and emerald GREEN `#37C45A`, neutralized 3D ambient lighting, named palette-derived lane materials for verification, and enlarged lane status labels. Balls, shooter/magazine, stripes, defender bodies, effects and projectiles continue to derive from `TeamData`; square/diamond redundancy is unchanged.
-- Preserved the 0.20-second shot, 0.4-second cooldown, 0.05-second settle, P010 staged event/SFX/score/attack timing, enemy 0.24 hop pace, tier/revival/game-over rules and all seven procedural cues.
+- Corrected authoritative segment insertion to expand in conveyor direction. For insertion at segment-local index `k`, the contacted segment and every earlier/LEFT segment translate exactly `-spacing` (−58 px), then the new member is inserted at `k`.
+- This single anchor transformation gives the required per-UID result: old members before `k` move LEFT 58 px; old members at/after `k` retain their exact world X; all later/right segments remain pinned. No existing ball is pushed RIGHT.
+- Front insertion (`k=0`) places the shot one slot left while all old members remain fixed. Tail insertion (`k=N`) shifts the complete old train left and places the shot at the old tail X. Interior insertion shifts only the old prefix while preserving the old suffix.
+- At FEED or CAUSAL seams, every preceding segment receives the same −58 px translation. Therefore all intervening typed gap IDs, types, widths and motor speeds remain unchanged; the new endpoint is derived normally from segment membership. Active rollback remains valid and terminates without motor reversal or deadlock.
+- Near-left members displaced beyond the exit are not deleted during insertion. The existing ordered rollover event collects them into FIFO on the next simulation update; tests verify RED/GREEN/BLUE exit and return order.
+- Preserved P011 segment authority and non-overlap constraints. Logical/rendered centers remain derived from segment anchors at exact 58 px internal spacing; the 50 ms 72%→100% scale settle remains unchanged.
+- Kept insertion and rollback direction deliberately separate: insertion advances the front prefix LEFT; only a match-created causal gap drives the left/front segment RIGHT with the existing 60/900/420 rollback profile.
+- Updated P002's near-edge fixture to avoid intentionally rolling off before its three-ball match, P009's superseded rightward-insertion position assertions, and P011's FIFO fixture isolation. No regression coverage was removed.
+- Updated README with the forward insertion policy, seam behavior, end cases, manual direction checks, and P012 command.
 
-## Regression coverage and measured stress run
+## P012 regression coverage
 
-Added `tests/p011_segment_chain_stress_test.gd`. Independent assertions reconstruct every ball from segment anchors and verify unique ordered UIDs, exact internal 58 px slots, at least physical-diameter spacing across all neighbors, identical legal rendered centers, typed edge cardinality and zero model-recorded violations after every tiny update.
+Added `tests/p012_forward_insert_test.gd` — PASS (377 checks):
 
-Reproduction seed: `0x5011CAFE`.
-
-- 16,258 checks across 2,400 seeded rapid operations.
-- 2,460 accepted physical insertions, including concurrent settles and moving-endpoint shots.
-- 635 real staged match events.
-- 669 fresh admissions and 6 cache/return activities, plus a 45-second rollover/feed tail.
-- Mixed external deltas: 1/120, 1/60, 1/30, 0.08 and repeated 0.21-second long updates.
-- Zero logical/rendered overlap, duplicate UID, ordering, segment-spacing or edge-count violations.
-- Automatic live population remained bounded; maximum events per internal substep remained within the asserted bound of four.
-- Runtime was under one second in this environment.
+- Position-by-UID checks for insertion indices 0, 1, middle, before-last and N.
+- Documented `[R][R][Y][Y] | [B][B]` seam insertion: four front UIDs move −58, both trailing UIDs remain fixed, GREEN occupies the opened slot and FEED edge identity/distance survives.
+- Insertion on both sides of an accelerating CAUSAL seam preserves gap ID, type, distance and motor speed.
+- Two accepted shots within one 50 ms settle window and rollback-time endpoint shots preserve UID order, retire once and never overlap.
+- Near-left insertion push performs normal FIFO rollover and exact ordered return without ghost balls.
+- Explicit direction sequence verifies insertion LEFT, yellow pop at 50 ms, causal rollback RIGHT, physical reconnection, then one RED size-4 cascade.
+- Independent segment/logical/render invariant checks run after every 1/120-second microstep.
+- Full-width shooter and nonblocking compact swap geometry remain valid at all four landscape sizes.
 
 ## Validation
 
@@ -48,26 +45,25 @@ Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 - P006 platform/input QA — PASS (69 checks).
 - P007 playtest revision — PASS (49 checks).
 - P008 gamefeel/SFX — PASS (82 checks).
-- P009 rollback — PASS (58 checks).
+- P009 rollback — PASS (59 checks).
 - P010 staged cascade — PASS (190 checks).
-- P011 segment stress — PASS (16,258 checks and counters above).
+- P011 segment stress — PASS (16,258 checks; seed `0x5011CAFE`, 2,400 operations, 2,460 insertions, 635 matches, zero invariant violations).
+- P012 forward insertion — PASS (377 checks).
 - Bounded startup at 960×540, 1280×720, 1600×720 and 2400×1080 — all exit 0.
 - `git diff --check`, export-binary scan and credential-pattern scan — PASS.
 
-Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable; every suite and startup returned exit 0. No Web/Android export or physical-device run was attempted because those external toolchains/devices remain unavailable.
+Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable; every suite and startup returned exit 0. No Web/Android export or physical-device playtest was attempted.
 
 ## Manual QA
 
-1. Rapidly make several matches before earlier 50 ms settles/rollbacks finish, including shots directly at a moving seam. Watch every ball: none should overlap or pass through another; connected runs should remain rigid. F3 should keep `I0` and show logical/display minimum spacing at 58.
-2. Reproduce RED RED / YELLOW YELLOW / RED RED. Verify insert scale-in, 50 ms yellow pause/pop, accelerating rigid left-red rollback, physical contact, then the separate four-red cascade with correctly ordered cues, score and attacks.
-3. Exercise mismatched reconnection, a seven-plus-shot clear, multi-stage cascades, two independent gaps, left/tail/full clears and restart during settle/rollback. Confirm no passive clear, stale motor, duplicate event or reordered identity.
-4. Let the stream run through rollover and trigger returns. Confirm new balls enter only at far right, cached order is exact, no incoming ball fills an internal match hole and visible objects remain bounded.
-5. At all four target sizes, drag/fire from the extreme left and right. Confirm both edge balls are targetable. Tap the compact HUD swap button and verify it swaps only; Space/right-click remain functional.
-6. At 960×540 and 1280×720, visually compare lane 2 BLUE with lane 4 GREEN across stripe, defender, projectile/status and chain/magazine balls. BLUE should remain saturated blue and GREEN clearly emerald, with square versus diamond symbols readable.
+1. Insert into the middle of a visible train. Existing balls left of the shot should move one slot LEFT with the conveyor; balls right of it must not move RIGHT. Repeat at the first and last ball.
+2. Insert at a visible gap/seam and again while the front segment is rolling back. The gap width should not snap or collapse, and no ball should overlap, reorder or deadlock. F3 should remain `I0`.
+3. Reproduce RED RED / YELLOW YELLOW / RED RED. Observe the insertion push LEFT first, the 50 ms yellow settle/pop, then—and only then—the front red pair reversing RIGHT into physical contact for the later four-red cascade.
+4. Insert repeatedly near the left exit and let displaced balls recycle. Confirm exit/cache/return order remains exact and no life/score penalty occurs.
+5. Recheck extreme-left/right aiming, HUD swap touch, SFX, combo/tiers, revival and BLUE/GREEN distinction; none were intentionally changed.
 
-## Limitations / assumptions
+## Limitations
 
-- The insertion settle uses non-overlapping scale-in rather than horizontal center interpolation; its center occupies a legal physical slot immediately. This preserves the requested visible settle while making overlap impossible by construction.
-- Headless tests verify canonical palette distance and palette-derived material colors, but cannot certify perceived color under a real display. BLUE/GREEN contrast and procedural audio still require the requested human desktop/Web/Android check.
-- The flattened `balls` snapshot remains publicly readable for compatibility. Direct external mutation is unsupported; P007's former private snapshot mutation was replaced by the explicit `add_test_segment` fixture helper.
+- The one-slot insertion displacement is immediate and authoritative, while the inserted ball retains P011's non-overlapping scale settle. No separate positional tween was added because interpolating front centers independently would weaken the zero-overlap invariant.
+- Visual feel, palette perception and procedural audio still require human desktop/Web/Android review.
 - Pre-existing local editor-generated changes in `project.godot`, `scenes/main.tscn`, and generated untracked `.uid` files were preserved and intentionally excluded.
