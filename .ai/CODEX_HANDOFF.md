@@ -1,65 +1,51 @@
-# Codex Handoff — LBS-P006
+# Codex Handoff — LBS-P007
 
-**Status:** COMPLETE (platform exports configured; artifact generation blocked by missing local export toolchains)
+**Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** `2ffcf3f` (`Prepare Web and Android platform readiness`)
+**Implementation commit:** `ab5359f` (`Implement P007 playtest revisions`)
 
-**Mailbox:** remains on LBS-P006; task/ledger/decision/protocol files were not changed.
+**Mailbox:** remains on LBS-P007; task/ledger/decision/protocol files were not changed.
 
 ## Implemented
 
-- Added Godot 4.7.2 `Web` and `Android Debug` export presets. Web is non-threaded Compatibility/WebGL 2; Android is ARM64 debug, immersive, provisional package `com.shikirashi.laneballshooter`, and project orientation is sensor-landscape. No signing secret, machine path, or generated artifact is tracked.
-- Added a pure responsive layout calculator and used it for 960×540, 1280×720, 1600×720 and 2400×1080 composition. HUD, chain, 3D region, shooter track, magazine, and playfield now derive from the platform safe rectangle.
-- Converts native `DisplayServer.get_display_safe_area()` coordinates into logical viewport coordinates, with a full-canvas fallback and 10–18 logical-pixel inner edge padding. GAME OVER text and the 220×54 RESTART button center within the safe rectangle.
-- Keeps the swap target at 64×56 logical pixels, updates its hit geometry on resize, and prevents the shooter track from extending beneath the magazine.
-- Uses integer SubViewport downscaling above 1600×720 render dimensions and modest aspect-aware orthographic camera sizing. Gameplay coordinates/models are unchanged.
-- Hardened touch ownership: one finger owns a playfield gesture; unrelated fingers cannot steal/release it; canceled/focus-lost touches clear without firing; gestures beginning outside never arm; game over/restart clear ownership and cooldown. Touch-to-mouse emulation remains disabled, and GUI swap input does not route into a shot.
-- Added `tests/p006_platform_qa_test.gd` with layout/safe-region tests, synthetic Viewport input for touch/mouse/no-accidental-shot cases, restart-release and repeated cleanup coverage, plus enemy/projectile/history boundedness checks.
-- Expanded README with export prerequisites/commands, Web local serving/browser notes, Android debug install/package/signing notes, tunable locations, and the requested end-to-end playtest checklist.
-- Preserved all P001–P005 chain, FIFO/cache adjacency, progression, magazine, combat, survival and restart behavior.
+- Doubled `ChainModel.DEFAULT_SPEED` from 34 to 68 px/s with unchanged delta-based movement.
+- Added an independent deterministic four-color shuffle-bag feeder. It admits fresh balls only into physically open right-edge slots, runs for the lifetime of the session, keeps live balls capped by `max_auto_population`, and never builds an offscreen-right node backlog.
+- Preserved FIFO rollover without deletion. Match requests become pending cache-return quota; returns drain in FIFO batches as slots open, with a fresh ball scheduled between return batches so neither source starves. Legitimate unreturned exits remain linear cache storage by design. Restart clears cache, pending quota, bag state, counters and ball IDs.
+- Tier 1 remains one locked 1-damage projectile against standard 2-HP enemies. Tier 2 remains a two-shot spaced burst, with each projectile locked to 2 damage at creation. Tier 3/FEVER creates no ordinary projectile.
+- Centralized tier-3 resolution in `Battlefield`: the origin plus exactly one seeded-RNG-selected adjacent lane are cleared immediately, with correct edge neighbors, bounded metadata history (`origin_lane`, `adjacent_lane`, targets and actual kill count), and primitive wave feedback on both lanes. Clears do not spend emergency charges or alter defenders. DOWN-origin revival takes precedence.
+- Replaced constant enemy translation/cosmetic bounce with a 0.55 s grounded dwell plus 0.75 s airborne hop. Air speed is derived so full cycles still average 0.48 world units/s. Logical X, visual height/squash/shadow and piecewise swept projectile collision share the same hop phase. Large-step defender-contact/emergency/breach ordering remains intact.
+- Updated only superseded P004/P005 expectations, added `tests/p007_playtest_revision_test.gd` (49 checks), and updated README mechanics/test/playtest documentation.
 
 ## Validation
 
 Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 
-- `godot --headless --path . --script res://tests/headless_smoke.gd` — `P001 headless smoke: PASS`.
-- `godot --headless --path . --script res://tests/p002_logic_test.gd` — `P002 gameplay logic: PASS (59 checks)`.
-- `godot --headless --path . --script res://tests/p003_logic_test.gd` — `P003 progression and magazine: PASS (72 checks)`.
-- `godot --headless --path . --script res://tests/p004_combat_test.gd` — `P004 lane combat: PASS (44 checks)`.
-- `godot --headless --path . --script res://tests/p005_survival_test.gd` — `P005 survival loop: PASS (63 checks)`.
-- `godot --headless --path . --script res://tests/p006_platform_qa_test.gd` — `P006 platform QA: PASS (66 checks)`.
-- Bounded runtime startup at `--resolution 960x540`, `1280x720`, `1600x720`, and `2400x1080` — exit 0 with no runtime diagnostics.
-- Bounded headless editor import — completed; only sandbox-denied local TCP listener diagnostics occurred.
-- `git diff --check`, tracked-artifact scan, export credential scan, and runtime external-URL scan — PASS.
+- `godot --headless --path . --script res://tests/headless_smoke.gd` — P001 PASS.
+- `godot --headless --path . --script res://tests/p002_logic_test.gd` — P002 PASS (59 checks).
+- `godot --headless --path . --script res://tests/p003_logic_test.gd` — P003 PASS (72 checks).
+- `godot --headless --path . --script res://tests/p004_combat_test.gd` — P004 PASS (42 checks).
+- `godot --headless --path . --script res://tests/p005_survival_test.gd` — P005 PASS (63 checks).
+- `godot --headless --path . --script res://tests/p006_platform_qa_test.gd` — P006 PASS (66 checks).
+- `godot --headless --path . --script res://tests/p007_playtest_revision_test.gd` — P007 PASS (49 checks).
+- `godot --headless --path . --resolution 1280x720 --quit-after 5` — exit 0.
+- `godot --headless --path . --resolution 1600x720 --quit-after 5` — exit 0.
+- `git diff --check` / staged diff check — PASS.
 
-### Export attempts
-
-- `godot --headless --path . --export-debug Web /tmp/lbs-p006-export/web/index.html` — exit 1, BLOCKED: matching Standard `web_nothreads_debug.zip` / `web_nothreads_release.zip` templates are absent. No Web files were produced.
-- `godot --headless --path . --export-debug "Android Debug" /tmp/lbs-p006-export/android/lane-ball-shooter-debug.apk` — exit 1, BLOCKED: matching Standard `android_debug.apk` / `android_release.apk` templates are absent; Godot has no configured Java/Android SDK paths; installed `/usr/lib/android-sdk` contains only `platform-tools` and lacks SDK platforms, build-tools, and `apksigner`. No APK was produced.
-- Local tools found: OpenJDK 21 and `adb` 34.0.4. The only Godot templates present are `4.7.2.stable.mono` Windows templates, which do not satisfy this Standard GDScript editor.
-
-After installing the matching Godot 4.7.2 Standard templates and configuring complete SDK paths, reproduce with:
-
-```sh
-godot --headless --path . --export-release Web exports/web/index.html
-godot --headless --path . --export-debug "Android Debug" exports/android/lane-ball-shooter-debug.apk
-```
-
-Validate Web output includes `index.html` plus generated JS/WASM/PCK files, serve via `cd exports/web && python3 -m http.server 8000`, and install Android with `adb install -r exports/android/lane-ball-shooter-debug.apk`.
+Every Godot invocation printed a non-fatal sandbox diagnostic because `user://logs` was not writable. All suites and both bounded startups returned exit 0 with no script/runtime failures. No Web/Android artifact export or physical-device playtest was repeated; P006 documented the missing templates/SDK components.
 
 ## Manual playtest
 
-1. Resize through 960×540, 1280×720, 1600×720 and 2400×1080. Confirm chain balls, all four lanes/status labels, shooter travel, magazine/HUD and GAME OVER/RESTART are unclipped; repeat on a notched landscape device.
-2. Desktop: move with mouse X, left-click only in the playfield to fire, right-click/Space to swap, and F3 for diagnostics. Clicking magazine UI must not fire.
-3. Touch: press/drag/release in the playfield for exactly one shot. Swap tap must only swap. Test a second finger, canceled gesture, outside-to-inside gesture, game-over touch, and restart-button release; none may add an unintended shot.
-4. Reproduce match -> timely tier burst -> fourth-match FEVER -> defender knockdown/emergency -> two separate same-color revival matches -> next-match attack -> later terminal breach -> restart. Confirm P001–P005 behavior and clean entities/effects after restart.
-5. Repeat in a served Web build and on a physical Android device. Synthetic input and headless rendering do not establish real-browser/on-device touch, notch, thermal, or FPS results.
+1. Watch the upper chain for several minutes: it should move at 68 px/s and keep receiving normally spaced fresh balls without becoming permanently empty. F3 shows bounded live population and FIFO cache growth.
+2. Make matches while rollover cache exists. Confirm requested balls return from the right in original FIFO order while fresh balls continue to appear, with no distant-gap match.
+3. Against fresh 2-HP enemies, verify tier 1 needs two hits, while either tier-2 projectile kills and the second can hit the next enemy.
+4. Trigger tier 3 and FEVER from every color. Edge lanes must clear their sole neighbor; either inner neighbor may be chosen. Confirm both targeted lanes flash, other lanes remain alive, and emergency-charge indicators do not change.
+5. Down a defender and produce tier-3-valued matches of its color: the first advances revival, the second revives, and neither clears enemies. The next active tier-3 match should clear normally.
+6. Watch enemies pause fully on the ground, jump left, land, and pause again. Recheck first-contact emergency clear, later knockdown, terminal breach and clean restart.
 
-## Known limitations / follow-up
+## Notes / assumptions
 
-- Web/Android artifacts and their file formats could not be validated until the missing templates and Android SDK components are installed.
-- No browser or physical-device test was performed, and no FPS/thermal profiling is claimed.
-- Team identity continues to use centralized color plus DOT/SQUARE/TRIANGLE/DIAMOND geometry in both 2D and 3D. A runtime high-contrast palette toggle was deliberately left as an accessibility follow-up to avoid risky material replacement during final stabilization.
-- Before store submission, replace the provisional package ID and configure a private release keystore outside Git.
+- Right-edge scheduling uses up to the configured three-return batch followed by at least one fresh ball when both sources are pending. Simultaneous live balls are bounded; cached exits are never silently discarded and therefore use linear memory over a no-return survival run.
+- Initial enemies use deterministic per-lane/per-enemy hop staggering; restart resets IDs and reproduces the initial phases. Tier-3 neighbor RNG varies in normal play and resets to its run seed on restart; tests inject explicit seeds.
+- A pre-existing local `project.godot` edit was preserved and intentionally excluded from the P007 implementation commit.
