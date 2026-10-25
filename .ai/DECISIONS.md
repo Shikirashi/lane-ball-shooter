@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: P021 Web main menu and real local browser export source/handoff accepted, browser fullscreen QA pending; P022 Mintbase static hosting QUEUED and NOT ACTIVE (2026-10-25). Earlier completed P020 enemy abilities preserved.
+Status: P021 Web menu/export accepted; P023 +30% moving enemy speed and simplified victory subtitle ACTIVE; P022 Mintbase hosting QUEUED and NOT ACTIVE (2026-10-25).
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
@@ -142,3 +142,9 @@ If necessary, implement conservative and configurable defaults and report decisi
 - Browser fullscreen requires a direct user gesture (YES handler, not delayed). On Esc/browser exit, layout should update normally. Touch/keyboard/mouse accessibility and full landscape responsiveness required.
 - `export_presets.cfg` already includes Godot Compatibility-renderer Web preset at `exports/web/index.html`, configured single-threaded. Produce **actual Web static output** at that path and portable ZIP (root has index.html and companion JS/WASM/PCK files), not merely a script. Compiled `exports/` ignored/untracked in repository; do not commit huge binaries. Must serve over HTTP; `file://` cannot be relied upon.
 - **P021 scope: browser build & localhost smoke test only.** P022 queued for later Mintbase deployment. When requested, static host serves output at `http://mintbaseIP:PORT/`. That URL is reachable only by intended LAN/Tailscale peers by default; world-wide public access needs separate deliberate secure exposure. Never assume a particular Mintbase IP or port until deployment.
+
+## P023: Victory subtitle cleanup and enemy movement rebalance (user 2026-10-25)
+- Victory overlay under `WAVE CLEARED` shows exactly `All enemies neutralized` (remove `scheduled`). Retain final score, RESTART, and 3.0-second victory delay. Defeat overlay unchanged.
+- Speed up MOVING enemies by **30% of present speed**, setting authoritative baseline Hopper `LaneCombatModel.DEFAULT_ENEMY_SPEED` from `0.24` to `0.312` world-units/second. Existing `EnemyTypes` multipliers remain: Hopper 1.0 => **0.312**, Heavy 0.7 => **0.2184**, Sickle Snake 2.0 => **0.624**, Healyzard 0 => **0** stationary. Hopper maintains 0.55s ground/0.75s air hop timings; Snake 0.5s nonlethal stun/0.3s lane transition and 15s post-death respawn gate unchanged. No changes to HP, spawn distribution, healing, combo/conveyor, victory rules, web menu, or input.
+- The user is playtesting the P021 browser build. P023 must regenerate the actual Godot Web release under ignored `exports/web/` and updated portable ZIP locally, and test the assets over HTTP. **Generated binaries remain local and ignored**, not pushed to GitHub. A different clone must rebuild because a code pull cannot bring the ZIP or WASM/PCK.
+- P022 Mintbase static hosting remains QUEUED, NOT ACTIVE; no server deployment/network exposure until user requests it.
