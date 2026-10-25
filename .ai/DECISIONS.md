@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: prototype baseline, updated for four-enemy roster, weighted spawning and special abilities, with P019 active and P020 queued (2026-10-25). Latest user instructions supersede earlier concept notes; rejected vector art must not be used.
+Status: prototype baseline, P019 four-enemy roster source-reviewed and complete; P020 Sickle Snake hit-stun/lane switching and Healyzard healing/glow ACTIVE (2026-10-25). Latest user instructions supersede rejected vector art and older gameplay notes.
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
