@@ -79,7 +79,9 @@ func _test_boundary_cascade_order() -> void:
 	]
 	model.set_test_state(identities)
 	model.try_insert_shot(TeamData.Identity.RED, 284.0)
-	_check(model.event_log.size() == 2, "insertion and gap closure produce two distinct events")
+	_check(model.event_log.size() == 1 and model.rollback_gaps.size() == 1, "insertion clears first group and starts one physical rollback")
+	model.advance(1.0)
+	_check(model.event_log.size() == 2, "physical reconnection produces a distinct delayed cascade event")
 	if model.event_log.size() == 2:
 		_check(int(model.event_log[0].identity) == TeamData.Identity.RED and int(model.event_log[0].size) == 3, "inserted red group resolves first")
 		_check(int(model.event_log[1].identity) == TeamData.Identity.GREEN and int(model.event_log[1].size) == 3, "newly connected green group cascades second")

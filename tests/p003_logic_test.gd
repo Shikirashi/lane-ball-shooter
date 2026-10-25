@@ -62,8 +62,10 @@ func _test_score_and_same_tick_events() -> void:
 	]
 	chain.set_test_state(identities)
 	chain.try_insert_shot(TeamData.Identity.RED, 284.0)
-	_check(cascade_results.size() == 2, "two same-tick cascade groups produce two results")
-	_check(cascade_progression.combo_count == 2 and cascade_progression.tier == 2, "same-tick cascade advances combo in emission order")
+	_check(cascade_results.size() == 1, "inserted group resolves before physical cascade reconnection")
+	chain.advance(1.0)
+	_check(cascade_results.size() == 2, "delayed physical cascade produces a second result")
+	_check(cascade_progression.combo_count == 2 and cascade_progression.tier == 2, "delayed cascade advances combo in emission order")
 	_check(cascade_progression.score == 200, "two 3-ball cascade events award 200 total")
 	if cascade_results.size() == 2:
 		_check(int(cascade_results[0].identity) == TeamData.Identity.RED and int(cascade_results[0].combo_count) == 1, "inserted group result is locked first")
