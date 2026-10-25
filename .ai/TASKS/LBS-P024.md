@@ -1,6 +1,7 @@
-# QUEUED TASK: LBS-P024 — Automatically publish future Lane Ball Shooter Web builds to portfolio GitHub Pages
+# ACTIVE TASK: LBS-P024 — Automatically build and publish future Web updates to portfolio GitHub Pages
 
-**Status:** QUEUED / NOT ACTIVE. Activate ONLY after P026 has successfully published and the user has verified HTTPS gameplay. **P026** is the only active Codex task at time of drafting.
+**Status:** READY FOR CODEX / ONLY ACTIVE TASK. User confirmed on 2026-10-25 22:39 that the public GitHub Pages Web game ACTUALLY WORKS in a normal browser, although gameplay is quite challenging. P026 public portfolio release is accepted. This task implements future automated builds and publication; NO gameplay difficulty/balance changes in P024.
+**Security approval:** The user's standing request authorizes designing and implementing an auto-publish workflow, but **does not authorize silently creating a new Personal Access Token, installing credentials, authorizing a third-party app, or granting additional repository/account permissions**. If cross-repo publishing requires user-granted credentials, implement all safe scaffolding, explain the exact minimal approval/setup and STOP at that action. Never request tokens or keys in chat, store them only in appropriate GitHub secrets through the user's explicit action. Do not claim the workflow is fully functional without this.
 **User standing goal:** After initial hosting works, every future APPROVED gameplay code update should automatically test/build the latest Godot Web export and publish it to the same browser URL without manually exporting, copying files, or restarting a server.
 
 ## Current target (supersedes prior Mintbase automation proposal)
@@ -13,7 +14,7 @@
 ## Automatic update contract
 
 1. Codex/user intentionally implements an active approved task and tests, **commits and pushes** the game source to trusted `master`.
-2. A trusted CI event triggers a pinned Godot 4.7.2 Web build from **that exact source commit**; run relevant/full regression suites, validate generated static assets and package metadata, and ensure no stale exported binaries are used.
+2. A trusted CI event triggers a pinned Godot 4.7.2 Web build from **that exact source commit**; run relevant/full regression suites, validate generated static assets and package metadata, and ensure no stale exported binaries are used. Restrict automatic triggers to game source/build/workflow changes; do not republish ~40MB for unrelated mailbox-only documentation edits. Allow manually dispatched rebuilds for maintenance.
 3. Via a secure, minimal-privilege cross-repository deployment mechanism, publish all *nine* generated static Web files as a coherent release to `Shikirashi.github.io/lane-ball-shooter/`; rest of public portfolio tree stays exactly unchanged. Normal GitHub Pages publication makes the new game available on the SAME HTTPS URL (reload for an update).
 4. Maintain logs showing source SHA, build/test results, publishing commit/artifact SHA and Pages HTTPS smoke result; never claim published until online. A failing test/build/deploy must leave the prior good public game functional.
 5. Don't automatically commit unreviewed working-tree changes; no force pushes or untrusted PR execution, and no generated binaries in GAME SOURCE repository Git history.
@@ -24,8 +25,8 @@
 
 ## Verification and handoff
 
-- Create reproducible workflow/script and minimal doc commands for manual trigger and rollback.
-- Demonstrate at least one nontrivial but safe new source push initiating full workflow and updating exactly the nine Pages game assets without changing other portfolio files. Test failure path without damaging production.
+- Create reproducible workflow/script and minimal doc commands for manual trigger and rollback. Before editing portfolio publishing settings, inspect actual existing GitHub Pages configuration and branch deployment workflow. Keep the original portfolio's published root/homepage and every other existing demo intact. Keep automatic workflow source in GAME repository; avoid unnecessary new files on portfolio except intended game release. Pin trusted CI actions by full commit SHA when practical.
+- Demonstrate at least one safely authorized game source push that runs full workflow and updates exactly nine Pages game assets without changing other portfolio files. Test failure path without damaging production. If the deploy permission/credential is not yet authorized, perform dry-run build/test and document BLOCKED deploy step instead of pretending full automation has been verified.
 - Test public Pages URL, ensure `window.isSecureContext === true` and launch goes past Godot splash screen. Stop for real browser QA if browser automation unavailable.
 - Update GAME `README.md` and `.ai/CODEX_HANDOFF.md` with true source and portfolio deployment identifiers, job links/status, security limitations and operational instructions; push and STOP.
 - Do not edit ChatGPT-owned task/ledger/decision documents; do not configure unrelated Tailscale or Mintbase services.
