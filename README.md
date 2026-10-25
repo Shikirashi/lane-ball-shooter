@@ -58,12 +58,14 @@ Enemy HP is logical and intentionally has no bar, pip, number or health-driven m
 
 | Enemy | HP | Movement | Primitive appearance |
 |---|---:|---|---|
-| Hopper | 2 | Original grounded pause/airborne hop averaging 0.24 units/s | Original gray silhouette with exactly two permanent orange top horns |
-| Heavy | 4 | Continuous ground slide at 0.168 units/s (0.7×) | Wider dark-orange Hopper construction, no horns |
-| Sickle Snake | 2 | Continuous ground slide at 0.48 units/s (2×) | Taller strong-yellow construction, no horns |
+| Hopper | 2 | Original grounded pause/airborne hop averaging 0.312 units/s | Original gray silhouette with exactly two permanent orange top horns |
+| Heavy | 4 | Continuous ground slide at 0.2184 units/s (0.7×) | Wider dark-orange Hopper construction, no horns |
+| Sickle Snake | 2 | Continuous ground slide at 0.624 units/s (2×) | Taller strong-yellow construction, no horns |
 | Healyzard | 2 | Stationary in a reserved rear support slot | Green 0.7-scale construction, no horns |
 
 Only Hopper receives hop height and landing squash; projectile collision uses the matching piecewise-hop, constant-slide or stationary swept model. All variants remain hittable throughout their movement, retain ordinary hit flash and use the existing explosion, sideways fall, fade and death cue. Healyzards use distinct rear X slots so multiple supports do not overlap each other or the right-edge entrance, and their presence does not stop normal spawns.
+
+P023 raises the single authoritative moving-enemy baseline by 30%, from 0.24 to 0.312 units/s. Heavy and Sickle Snake retain their 0.7× and 2× multipliers, while Healyzard remains at zero. Hopper's 0.55-second grounded dwell and 0.75-second airborne phase are unchanged; only horizontal travel during the airborne phase is faster.
 
 Live-game spawning is directed once at Battlefield level with a separately seeded/reseeded RNG. Base type weights are Hopper 50%, Heavy 20%, Sickle Snake 20% and Healyzard 10%, including the four initial enemies. At most one Sickle Snake may live across all four lanes. After it is neutralized by projectile, tier-3 or emergency clear, another becomes eligible exactly 15 gameplay seconds later. While Snake is ineligible it is removed from the draw and the remaining original weights renormalize to 50:20:10; therefore a finite 32-enemy encounter is not guaranteed to exhibit the raw base percentages. Spawn IDs are globally unique while combat/visual UIDs remain stable within their lane.
 
@@ -73,7 +75,7 @@ Each Healyzard owns an independent 15-second simulation timer. Every pulse targe
 
 Each lane has a configurable encounter budget, initially eight enemy spawns including its starting enemy: 32 scheduled enemies overall. A full lane defers its remaining quota instead of consuming it, and no lane spawns a ninth enemy. The HUD reports neutralized enemies against the scheduled total. When an enemy reaches an active defender, that defender falls and spends its one emergency discharge to clear the lane. The charge is once per run. A down defender needs two separate matches of its own color to revive; those matches still score and build combo but launch no attack. Later knockdowns do not clear enemies. Any live enemy crossing the far-left boundary ends the run immediately and shows GAME OVER. Every normal, tier-3 or emergency neutralization transfers the actual enemy mesh into a one-second cosmetic actor: a small primitive explosion and sparks lead into a roughly 85-degree sideways fall, then body and shadow fade completely. Logical collision ends immediately, while this visual layer continues updating even after combat freezes.
 
-Once all four spawn budgets are exhausted and all remaining enemies are neutralized, authoritative victory immediately freezes shooting, swapping, chain motion, combat, spawning, attacks and scoring. WAVE CLEARED remains hidden for exactly 3.0 seconds of deterministic game time so the last death animation and synthesized cue can finish, then displays the final score and restart control. A breach still shows GAME OVER immediately. Restart cancels any pending victory countdown and removes transient death actors.
+Once all four spawn budgets are exhausted and all remaining enemies are neutralized, authoritative victory immediately freezes shooting, swapping, chain motion, combat, spawning, attacks and scoring. WAVE CLEARED remains hidden for exactly 3.0 seconds of deterministic game time so the last death animation and synthesized cue can finish, then displays `All enemies neutralized`, the final score and restart control. A breach still shows GAME OVER immediately with `The lane was breached`. Restart cancels any pending victory countdown and removes transient death actors.
 
 Eight soft-arcade SFX are synthesized in memory as 22.05 kHz, mono, 16-bit PCM: shoot, successful insert, swap, match, tier-aware defender attack, knockdown, revival, and a distinct 0.38-second enemy-death explosion/pop/crunch. They use short sine/triangle tones with gentle envelopes, a -15 dB playback level, a 0.28 PCM peak cap, and a bounded ten-voice stealing pool that controls multi-kill polyphony. The neutralization event is emitted once per enemy before terminal victory can disable gameplay audio, including tier-3 and emergency groups. No audio files, plugins, or runtime dependencies are required. Headless runs generate and validate the clips but skip device playback; actual timbre and loudness still require listening on desktop, Web, and Android.
 
@@ -127,6 +129,7 @@ godot --headless --path . --script res://tests/p018_enemy_death_victory_delay_te
 godot --headless --path . --script res://tests/p019_enemy_roster_spawning_test.gd
 godot --headless --path . --script res://tests/p020_special_enemy_abilities_test.gd
 godot --headless --path . --script res://tests/p021_web_menu_export_test.gd
+godot --headless --path . --script res://tests/p023_enemy_speed_victory_copy_test.gd
 ```
 
 For a manual end-to-end smoke test:

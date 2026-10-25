@@ -1,85 +1,39 @@
-# Codex Handoff — LBS-P021 Web menu and portable export
+# Codex Handoff — LBS-P023 enemy-speed rebalance and victory copy
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** this scoped P021 commit.
+**Implementation commit:** this scoped P023 commit.
 
-**Mailbox:** remains on LBS-P021. P022 was not implemented or activated, and ChatGPT-owned mailbox files were not edited.
+**Mailbox:** remains on LBS-P023. P022 hosting was not implemented or activated, and ChatGPT-owned mailbox files were not edited.
 
-## Web bootstrap and fullscreen lifecycle
+## Implementation
 
-`project.godot` now starts at `scenes/boot.tscn`. Its lightweight `scripts/boot.gd` checks platform features before creating anything from `scenes/main.tscn`:
+- Raised the single authoritative `LaneCombatModel.DEFAULT_ENEMY_SPEED` from `0.24` to `0.312` units/s, exactly `old × 1.30`.
+- Retained `EnemyTypes.SPEED_MULTIPLIERS`, yielding Hopper `0.312`, Heavy `0.2184`, Sickle Snake `0.624`, and stationary Healyzard `0.0`.
+- Hopper still has a 0.55-second grounded dwell and 0.75-second airborne phase. Only airborne horizontal displacement changed; animation timing did not.
+- Sliding movement, piecewise Hopper/projectile sweeps, large-delta collision, defender contact, emergency clearing, and breach detection continue to use the authoritative per-enemy speeds.
+- Snake's 0.5-second post-hit stun and 0.3-second adjacent-lane transfer remain unchanged; it resumes at `0.624` units/s only after transfer.
+- Changed only the WAVE CLEARED supporting copy to exact `All enemies neutralized`. Title, score, restart copy, three-second delay, and defeat subtitle `The lane was breached` remain unchanged.
+- Added `GameOverOverlay.title_text()` and `subtitle_text()` as the same authoritative strings consumed by `_draw()`, allowing UI-state tests without brittle source-text matching.
 
-- Web creates only a responsive dark menu with `LANE BALL SHOOTER` and `START GAME`; no chain, enemies, score, timers, SFX, or gameplay scene exist underneath it.
-- START GAME reveals one blocking prompt with exact text `Play in fullscreen?`, plus finger-sized, keyboard-focusable `YES` and `NO` buttons.
-- YES calls `DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)` synchronously from the actual `pressed` handler, before any await/defer/timer or scene transition, then starts Main exactly once. An injected requester verifies call ordering headlessly.
-- NO starts Main exactly once without touching the fullscreen API. Choice locking, disabled buttons, and hiding the menu prevent duplicates and shooter click-through.
-- Desktop and native Android bypass the menu and change to Main on the next safe idle tick. This avoids mutating the SceneTree while the bootstrap itself is entering it while preserving immediate native startup. `scenes/main.tscn` remains directly loadable by every older fixture.
-- `--web-menu-preview` forces the menu on desktop for manual inspection. Normal browser fullscreen exit simply resizes the viewport; both menu and existing Main layouts remain safe-area responsive.
+Updated obsolete P008, P016, P019, and P020 speed assertions while retaining their existing movement, collision, conveyor, roster, and ability coverage. README now documents the canonical speeds, unchanged hop timing, exact terminal copy, and P023 command.
 
-## Repeatable Web build
+## P023 regression coverage
 
-Added executable `scripts/build_web.sh`. It clears only `exports/web/`, performs the release export, verifies HTML/WASM/PCK presence, and packages the runtime files with `index.html` at the ZIP root. `export_presets.cfg` keeps the Web preset single-threaded (`variant/thread_support=false`), non-PWA, and Compatibility-rendered; `exports/**` is now explicitly excluded to prevent a prior build from being scanned back into its own PCK.
+Added `tests/p023_enemy_speed_victory_copy_test.gd` — PASS (38 checks):
 
-The installed Godot binary is `4.7.2.stable.official.ed1daf0bf`. Initially only mismatched `4.7.2.stable.mono` Windows templates were present. I downloaded the official `Godot_v4.7.2-stable_export_templates.tpz` release asset, verified its SHA-256 `f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011` against GitHub release metadata, and installed only these matching files:
+- exact `0.312 / 0.2184 / 0.624 / 0.0` speeds, unchanged relative multipliers, and exact 1.30× former moving speeds;
+- whole-cycle Hopper and fixed-delta slide displacement;
+- unchanged 0.55/0.75/1.30-second hop phase timing and Healyzard immobility across heal intervals;
+- exact Snake 0.5-second stun, 0.3-second transfer, and resumed 0.624-unit/s movement;
+- Hopper/Heavy/Snake swept projectile hits at 30 Hz and 0.08-second steps, plus defender contact/emergency and boundary breach;
+- actual overlay state for exact victory/defeat title, subtitle, score/restart copy, and unchanged 3.0-second reveal boundary.
 
-- `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/version.txt`
-- `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/web_nothreads_debug.zip`
-- `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/web_nothreads_release.zip`
+## Full validation
 
-Exact build command:
-
-```sh
-./scripts/build_web.sh
-```
-
-Local ignored output:
-
-| File | Bytes |
-|---|---:|
-| `exports/web/index.html` | 5,447 |
-| `exports/web/index.js` | 279,815 |
-| `exports/web/index.wasm` | 39,514,754 |
-| `exports/web/index.pck` | 337,612 |
-| `exports/web/index.audio.worklet.js` | 7,298 |
-| `exports/web/index.audio.position.worklet.js` | 2,973 |
-| `exports/web/index.png` | 21,443 |
-| `exports/web/index.icon.png` | 5,700 |
-| `exports/web/index.apple-touch-icon.png` | 11,944 |
-
-`exports/lane-ball-shooter-web.zip` contains exactly those nine files at archive root. Final ZIP SHA-256:
-
-`aea1571db05a3f82de2b741855a041d391ba2a92076b4349fef0b55773c75490`
-
-The entire `exports/` tree remains gitignored and uncommitted.
-
-## HTTP/browser verification
-
-Documented server command:
-
-```sh
-python3 -m http.server 8765 --bind 127.0.0.1 --directory exports/web
-```
-
-Port 8765 was already occupied locally by an unrelated uvicorn process, so the actual bounded smoke used the same command on port 8766. Every one of the nine runtime resources returned HTTP 200. Relevant MIME results were `text/html`, `text/javascript`, `application/wasm`, `application/octet-stream` for PCK, and `image/png`.
-
-Headless Google Chrome requested and loaded the exported HTML, JS, PCK, WASM, splash, and icon without an HTML failure notice. Its noninteractive screenshot mode exited while the Godot loading splash remained visible, so I do not claim automated proof of rendered menu interaction or a successful browser fullscreen transition. Those user-gesture and visual paths remain in the manual checklist below.
-
-Godot's exporter also printed expected environment noise about absent Android build-tools, denied local editor-settings writes, and sandbox socket creation; the Web release export itself completed and all requested artifacts were verified.
-
-## Automated validation
-
-Added `tests/p021_web_menu_export_test.gd` — PASS (46 checks):
-
-- no gameplay creation before selection; exact title/button/prompt labels;
-- single modal, no click-through, direct fullscreen-before-game ordering, NO without fullscreen, and duplicate guards;
-- Web/native/Android platform gating and direct native Main handoff;
-- safe bounds and >=60px controls at 960×540, 1280×720, 1600×720, 2400×1080, and 640×360;
-- keyboard focus, relayout without restart, bootstrap/preset/Compatibility/threadless/PWA/export-helper configuration.
-
-Godot 4.7.2 headless, all passing:
+Godot `4.7.2.stable.official.ed1daf0bf`, all passing:
 
 - P001 smoke — PASS.
 - P002 gameplay logic — PASS (66 checks).
@@ -91,7 +45,7 @@ Godot 4.7.2 headless, all passing:
 - P008 gamefeel/SFX — PASS (84 checks).
 - P009 Zuma rollback — PASS (46 checks).
 - P010 staged cascade — PASS (162 checks).
-- P011 segment stress — PASS (16,485 checks).
+- P011 segment stress — PASS (16,485 checks; seed `5011CAFE`, 2,400 operations).
 - P012 forward insertion — PASS (366 checks).
 - P013 shooter preview/mask — PASS (50 checks).
 - P014 causal rollback/feed — PASS (289 checks).
@@ -102,20 +56,49 @@ Godot 4.7.2 headless, all passing:
 - P019 typed roster/spawning — PASS (117 checks).
 - P020 special enemy abilities — PASS (67 checks).
 - P021 Web menu/export — PASS (46 checks).
+- P023 enemy speed/victory copy — PASS (38 checks).
 - `git diff --check` — PASS.
 
-Bounded native bootstrap/Main startup passed without project/runtime errors at 960×540, 1280×720, 1600×720, and 2400×1080; each was intentionally stopped after three seconds (exit 124). The recurring sandbox denial for `user://logs/godot.log` is harmless.
+Bounded native gameplay startup and forced Web-menu startup both passed at `960×540`, `1280×720`, `1600×720`, and `2400×1080`; all eight runs were intentionally stopped after three seconds (exit 124). The sandbox's recurring denial for `user://logs/godot.log` is harmless.
 
-## Manual browser playtest
+## Refreshed Web build
 
-1. Run the localhost server and open `http://127.0.0.1:8765/` in a current WebGL 2/WebAssembly browser. Confirm only the dark title and START GAME appear; enemies/chain/audio must not run behind it.
-2. Press START GAME. Confirm exact prompt and YES/NO labels, touch target sizes, keyboard focus/Enter/Space, and no shooter click-through.
-3. Choose NO: gameplay starts once in-page and never enters fullscreen. Reload, choose YES: the browser fullscreen request occurs from that click; if denied, gameplay still starts in-page.
-4. Exit fullscreen with Escape/browser controls and resize through target landscapes. Confirm shooter, ball chain, HUD, and hitboxes remain aligned. Restart must restart the current run rather than return to the menu.
-5. Recheck procedural SFX after the first gesture. Browser audio/fullscreen policy, touch behavior, and perceived visuals still require this real interactive pass.
+Executed:
+
+```sh
+./scripts/build_web.sh
+```
+
+The installed matching `4.7.2.stable` single-thread Web templates produced a real Compatibility-renderer build. Refreshed ignored local artifacts:
+
+| File | Bytes |
+|---|---:|
+| `exports/web/index.html` | 5,447 |
+| `exports/web/index.js` | 279,815 |
+| `exports/web/index.wasm` | 39,514,754 |
+| `exports/web/index.pck` | 345,804 |
+| `exports/web/index.audio.worklet.js` | 7,298 |
+| `exports/web/index.audio.position.worklet.js` | 2,973 |
+| `exports/web/index.png` | 21,443 |
+| `exports/web/index.icon.png` | 5,700 |
+| `exports/web/index.apple-touch-icon.png` | 11,944 |
+
+`exports/lane-ball-shooter-web.zip` contains exactly those nine files at archive root.
+
+SHA-256: `08a8d52201b1d3fd03c983267bd54659a5350db109a07bc31e6f09526e5dfccb`
+
+The complete artifact set was served temporarily on loopback port 8766 (8765 remains occupied by an unrelated local service). Every asset returned HTTP 200 with correct HTML, JavaScript, `application/wasm`, PCK `application/octet-stream`, and PNG MIME types. The server was stopped after verification. `exports/` remains gitignored and no compiled output is committed.
+
+The exporter printed the known environment warnings for absent Android build-tools, sandbox socket creation, and denied editor-settings writes; Web export itself completed successfully.
+
+## Manual verification
+
+1. Compare a fresh Web run with the prior build: Hopper, Heavy, and Snake should traverse 30% faster, while Healyzard remains fixed at its rear support position.
+2. Shoot moving enemies at different hop/slide phases; confirm hits, HP, Heavy durability, Snake stun/lane transfer, Healyzard pulse, emergency clear, and breach still behave normally.
+3. Clear all 32 enemies. After the unchanged three-second presentation delay, verify WAVE CLEARED says exactly `All enemies neutralized`; defeat still says `The lane was breached` immediately.
+4. Recheck Web START GAME → YES fullscreen and NO windowed paths. P023 does not alter the menu or browser gesture handling.
 
 ## Limitations
 
-- No deployment, Mintbase connection, firewall change, persistent server, or public exposure was performed; that is P022 and remains unauthorized.
-- Chrome's bounded noninteractive load verified resource fetching but not post-splash canvas rendering or a genuine transient-user-activation fullscreen grant.
-- Android export was not attempted; its SDK/build-tools are absent and unrelated to the completed Web build.
+- Relative difficulty and perceived speed still require user playtesting in the interactive Web build.
+- No Mintbase deployment, firewall work, persistent server, or P022 hosting action was performed.

@@ -35,7 +35,7 @@ func _test_typed_stats_and_motion() -> void:
 	model.clear_for_test()
 	model.max_enemies = 8
 	var expected_hp := [2, 4, 2, 2]
-	var expected_speed := [0.24, 0.168, 0.48, 0.0]
+	var expected_speed := [0.312, 0.2184, 0.624, 0.0]
 	for enemy_type in range(EnemyTypesScript.Type.HEALYZARD + 1):
 		var uid := model.spawn_enemy(5.0 + enemy_type * 0.1, -1, false, enemy_type, 100 + enemy_type)
 		var enemy := _enemy_by_uid(model, uid)

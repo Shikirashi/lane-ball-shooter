@@ -87,7 +87,7 @@ func _test_shot_travel_all_layouts() -> void:
 	await process_frame
 
 func _test_enemy_half_speed() -> void:
-	_check(is_equal_approx(LaneCombatModel.DEFAULT_ENEMY_SPEED, 0.24), "enemy average speed is exactly 0.24 units/s")
+	_check(is_equal_approx(LaneCombatModel.DEFAULT_ENEMY_SPEED, 0.312), "enemy average speed is exactly 0.312 units/s after P023 rebalance")
 	var grounded := LaneCombatModel.new(TeamData.Identity.RED)
 	grounded.clear_for_test()
 	grounded.spawn_enemy(5.0, 2)
@@ -103,7 +103,7 @@ func _test_enemy_half_speed() -> void:
 	_set_hop_clock(cycle, 0.0)
 	var duration := LaneCombatModel.HOP_CYCLE_DURATION * 8.0
 	cycle.update(duration)
-	_check(is_equal_approx((6.0 - float(cycle.enemies[0].x)) / duration, 0.24), "complete hop cycles average 0.24 units/s")
+	_check(is_equal_approx((6.0 - float(cycle.enemies[0].x)) / duration, 0.312), "complete hop cycles average 0.312 units/s")
 
 	var one_step := LaneCombatModel.new(TeamData.Identity.GREEN)
 	var split_step := LaneCombatModel.new(TeamData.Identity.GREEN)
@@ -114,7 +114,7 @@ func _test_enemy_half_speed() -> void:
 	one_step.update(5.7)
 	for unused in range(57):
 		split_step.update(0.1)
-	_check(is_equal_approx(float(one_step.enemies[0].x), float(split_step.enemies[0].x)), "half-speed hop is subdivision independent")
+	_check(is_equal_approx(float(one_step.enemies[0].x), float(split_step.enemies[0].x)), "rebalance-speed hop is subdivision independent")
 
 	var collision := LaneCombatModel.new(TeamData.Identity.YELLOW)
 	collision.clear_for_test()
@@ -122,14 +122,14 @@ func _test_enemy_half_speed() -> void:
 	_set_hop_clock(collision, LaneCombatModel.HOP_GROUND_DURATION + 0.2)
 	collision.fire_attack(_result(TeamData.Identity.YELLOW))
 	collision.update(2.0)
-	_check(collision.total_killed == 1, "piecewise swept projectile still hits half-speed hopper")
+	_check(collision.total_killed == 1, "piecewise swept projectile still hits faster hopper")
 
 	var emergency := LaneCombatModel.new(TeamData.Identity.RED)
 	emergency.clear_for_test()
 	emergency.spawn_enemy(LaneCombatModel.DEFENDER_X + 0.2, 2)
 	_set_hop_clock(emergency, LaneCombatModel.HOP_GROUND_DURATION)
 	emergency.update(2.0)
-	_check(emergency.defender_state == LaneCombatModel.DefenderState.DOWN and emergency.enemies.is_empty(), "half-speed hop crossing resolves emergency before breach")
+	_check(emergency.defender_state == LaneCombatModel.DefenderState.DOWN and emergency.enemies.is_empty(), "hop crossing resolves emergency before breach at the current speed")
 
 	var breach := LaneCombatModel.new(TeamData.Identity.BLUE)
 	breach.clear_for_test()
@@ -138,7 +138,7 @@ func _test_enemy_half_speed() -> void:
 	breach.spawn_enemy(LaneCombatModel.LEFT_BOUNDARY + 0.1, 2)
 	_set_hop_clock(breach, LaneCombatModel.HOP_GROUND_DURATION)
 	breach.update(1.0)
-	_check(breach.game_over, "half-speed living hop still triggers terminal breach")
+	_check(breach.game_over, "living hop at the current speed still triggers terminal breach")
 
 func _draw_sequence(seed_value: int, count: int) -> Array[int]:
 	var model := ChainModel.new()

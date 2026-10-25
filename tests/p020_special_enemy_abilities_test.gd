@@ -80,7 +80,7 @@ func _test_snake_stun_transfer_frame_rates() -> void:
 		_check(int(arrived.lane_index) == 1 and StringName(arrived.enemy.special_state) == &"moving" and absf(float(arrived.enemy.transfer_visual_z)) < 0.001, "Snake completes smooth transfer in %.2fs" % Battlefield.SNAKE_TRANSFER_DURATION)
 		var arrived_x := float(arrived.enemy.x)
 		_step(battlefield, 0.25)
-		_check(absf(float(_location(battlefield, spawn_id).enemy.x) - (arrived_x - 0.12)) < 0.001, "Snake resumes 0.48-unit/s slide only after transfer")
+		_check(absf(float(_location(battlefield, spawn_id).enemy.x) - (arrived_x - 0.156)) < 0.001, "Snake resumes 0.624-unit/s slide only after transfer")
 		_check(battlefield.lanes[0].combat_model.spawned_this_encounter == 1 and battlefield.lanes[1].combat_model.spawned_this_encounter == 0 and battlefield.encounter_live() == 1, "transfer consumes no destination quota and never duplicates live count")
 		battlefield.queue_free()
 		await process_frame

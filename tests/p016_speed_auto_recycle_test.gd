@@ -48,7 +48,7 @@ func _test_triple_speed_determinism() -> void:
 		_check(absf(float(model.balls[0].x) - before + 102.0 * delta) < 0.002, "source-supported train advances exactly 102*delta at %.5fs" % delta)
 		_check(_invariants_hold(model), "speed sample %.5fs remains rigid and non-overlapping" % delta)
 	_check(is_equal_approx(ShooterView.SHOT_TRAVEL_TIME, 0.20), "vertical shot travel remains 0.20 seconds")
-	_check(is_equal_approx(LaneCombatModel.DEFAULT_ENEMY_SPEED, 0.24), "enemy average movement remains 0.24 units/s")
+	_check(is_equal_approx(LaneCombatModel.DEFAULT_ENEMY_SPEED, 0.312), "enemy average movement uses approved P023 0.312 units/s")
 	_check(is_equal_approx(ChainModel.GRAVITY_INITIAL_RIGHT_SPEED, 60.0) and is_equal_approx(ChainModel.GRAVITY_ACCELERATION, 900.0) and is_equal_approx(ChainModel.GRAVITY_MAX_RIGHT_SPEED, 420.0), "virtual-gravity profile remains 60/900/420")
 
 func _test_superseded_recycle_is_physical_retention() -> void:
