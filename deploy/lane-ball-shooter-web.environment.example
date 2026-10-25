@@ -1,0 +1,3 @@
+# Bind only to Mintbase's private Tailscale address; do not use 0.0.0.0 here.
+LBS_WEB_BIND=100.79.250.8
+LBS_WEB_PORT=8770

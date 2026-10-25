@@ -92,7 +92,36 @@ python3 -m http.server 8765 --bind 127.0.0.1 --directory exports/web
 
 The build helper runs the equivalent export command `godot --headless --path . --export-release "Web" exports/web/index.html`, verifies the HTML/WASM/PCK set, and creates `exports/lane-ball-shooter-web.zip`. The ZIP root contains `index.html` and all companion runtime files, with no extra `web/` directory. Both `exports/web/` and the ZIP are local ignored build artifacts and are deliberately not committed.
 
-Open `http://127.0.0.1:8765/`. Do not open `index.html` directly with a `file://` URL: WASM/PCK loading requires an HTTP server. The preset uses Godot's single-threaded Web template and Compatibility renderer, so cross-origin-isolation headers are not required. A current browser with WebAssembly and WebGL 2 is required; fullscreen remains subject to browser/OS user-gesture policy. Copy the complete directory or ZIP to a static host later—building locally does not deploy it to Mintbase or make it public. The game has no remote URLs or runtime network dependency.
+Open `http://127.0.0.1:8765/`. Do not open `index.html` directly with a `file://` URL: WASM/PCK loading requires an HTTP server. The preset uses Godot's single-threaded Web template and Compatibility renderer, so cross-origin-isolation headers are not required. A current browser with WebAssembly and WebGL 2 is required; fullscreen remains subject to browser/OS user-gesture policy. The game has no remote URLs or runtime network dependency.
+
+### Private Mintbase hosting
+
+The validated P022 build is hosted on Mintbase at **`http://100.79.250.8:8770/`**. The server binds only Mintbase's Tailscale address, so this URL is available to authorized devices on the same tailnet and is not exposed to the LAN or public Internet. The unrelated rembg service and its existing 8765/8766 path are untouched.
+
+Hosting uses the unprivileged systemd user service `lane-ball-shooter-web.service`, with user lingering enabled for restart persistence. Files live under `~/srv/lane-ball-shooter-web/releases/<release-id>/`; `~/srv/lane-ball-shooter-web/current` is the atomically promoted live symlink and `previous` is populated on the second deployment for one-command rollback. The initial release is `cca99ba-p022`. Its manifest records source commit `cca99ba`, Web archive SHA-256 `5711dbb5341d6546e564e96ab059801cf8df389687687942b583cc392b2749d4`, and PCK SHA-256 `887b08c77b71283a388836c054294042cc84ff755852d38c9de5e039634ce619`.
+
+Build and atomically deploy a later manually approved release:
+
+```sh
+./scripts/build_web.sh
+archive_sha=$(sha256sum exports/lane-ball-shooter-web.zip | cut -d' ' -f1)
+source_revision=$(git rev-parse --short HEAD)
+LBS_SOURCE_REVISION="$source_revision" LBS_ARCHIVE_SHA256="$archive_sha" \
+  ./scripts/deploy_web_release.sh deploy exports/web "$source_revision" "$HOME/srv/lane-ball-shooter-web"
+curl -I http://100.79.250.8:8770/index.wasm
+```
+
+The deploy helper refuses incomplete runtime sets and existing release IDs, stages into a new directory, writes per-file hashes, then atomically switches `current` without restarting the static server. It retains the former target as `previous` after the next promotion. Operational commands:
+
+```sh
+systemctl --user status lane-ball-shooter-web.service
+journalctl --user -u lane-ball-shooter-web.service -n 50 --no-pager
+systemctl --user stop lane-ball-shooter-web.service
+systemctl --user start lane-ball-shooter-web.service
+./scripts/deploy_web_release.sh rollback "$HOME/srv/lane-ball-shooter-web"
+```
+
+The committed service template is `deploy/lane-ball-shooter-web.service`; its private bind settings are in `deploy/lane-ball-shooter-web.environment.example` and installed at `~/.config/lane-ball-shooter-web/environment`. P024 automatic build/deployment is not active: later source pushes do not update this host until that separate task is authorized and installed.
 
 Android debug export requires matching Android export templates plus a JDK and Android SDK configured under Godot's Editor Settings (`Java SDK Path` and `Android SDK Path`). The SDK must include `platform-tools`, a supported platform, build-tools and its `apksigner`. Then run:
 
