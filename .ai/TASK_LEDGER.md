@@ -17,6 +17,7 @@ The active task is in `.ai/TASK.md`. P009 and P010 have been source-reviewed and
 
 | LBS-P011 | COMPLETE — code `696a1f0`, handoff `2414e57`; graphical/mobile QA pending | Rebuild the conveyor using authoritative rigid connected segments/slots and deterministic physical contact; eliminate visual/logical overlaps during quick matches, FIFO and cascades; move compact touch swap UI out of shooter path; test full-width aiming |
 
-| LBS-P012 | ACTIVE | On ball insertion, displace existing front/LEFT section LEFT one slot rather than shoving trailing/RIGHT balls RIGHT; preserve P011 segment solver, rigid spacing, staged Zuma rollback and full regression suite |
+| LBS-P012 | COMPLETE — implementation `412b18e`, handoff `198d7cb`; visual QA pending | On ball insertion, displace existing front/LEFT section LEFT one slot rather than shoving trailing/RIGHT balls RIGHT; preserve P011 segment solver, rigid spacing, staged Zuma rollback and full regression suite |
+| LBS-P013 | ACTIVE | Move next-ball preview beneath loaded shooter ball, compact nonblocking touch swap icon; admit fresh/FIFO conveyor balls fully offscreen-right and reveal smoothly through conveyor-only visual mask; settling insert ball remains unmasked until 50ms handoff |
 
-Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012. P011 implementation complete; P012 is the ONLY active task; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
+Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013. P012 source-reviewed and accepted; P013 is the ONLY active task; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
