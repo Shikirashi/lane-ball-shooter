@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The active task is in `.ai/TASK.md`. P001–P021 are source/handoff reviewed; P023 is the ONLY ACTIVE Codex task for the victory subtitle edit, +30% moving-enemy speed adjustment and refreshed Web build. P022 Mintbase deployment stays QUEUED / NOT ACTIVE until a later explicit hosting request.
+The active task is in `.ai/TASK.md`. P001–P021 are source/handoff reviewed; **P023 remains the ONLY ACTIVE Codex task** for faster moving enemies, victory subtitle and updated Web export. P022 Mintbase hosting is QUEUED; P024 subsequent automatic build/deployment on each trusted master push is ALSO QUEUED and NOT ACTIVE.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -30,5 +30,6 @@ The active task is in `.ai/TASK.md`. P001–P021 are source/handoff reviewed; P0
 | LBS-P021 | COMPLETE — source/handoff `f21e363`, browser interaction QA pending | Web-only dark main menu START GAME -> modal 'Play in fullscreen?' with YES (request browser fullscreen in click handler) and NO (in-page); real single-thread Godot Web export to ignored `exports/web/` + portable ZIP, local HTTP smoke tests, README/handoff, no Mintbase deployment yet |
 | LBS-P022 | QUEUED — NOT ACTIVE; `.ai/TASKS/LBS-P022.md` | After P021 is reviewed and user requests deployment, transfer verified exported Web build to Mintbase and host over static HTTP at mintbaseIP:PORT on permitted LAN/Tailscale interface with supervised service, access/testing and update workflow; public exposure only if separately authorized |
 | LBS-P023 | ACTIVE — `.ai/TASK.md`; archived `.ai/TASKS/LBS-P023.md` | Change WAVE CLEARED subtitle to 'All enemies neutralized'; multiply base moving-enemy speed ×1.30 (Hopper 0.312, Heavy 0.2184, Sickle Snake 0.624, Healyzard 0), preserve all other mechanics; update tests and regenerate real local Web export/ZIP |
+| LBS-P024 | QUEUED — NOT ACTIVE; `.ai/TASKS/LBS-P024.md` | AFTER P022 Mintbase hosting works: every deliberate trusted master commit/push automatically triggers pinned Godot Web release build/test and safe atomic static deployment on Mintbase, no routine service restart, with SHA/status, failure rollback and no generated binaries committed |
 
-Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017 -> P018 -> P019 -> P020 -> P021 -> P023. P022 Mintbase static hosting is intentionally queued after user review/authorization, not an active prerequisite to P023. Web P021 browser interaction and Android physical-device QA remain outstanding.
+Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017 -> P018 -> P019 -> P020 -> P021 -> P023. P022 Mintbase static hosting is queued after user review/authorization, not an active prerequisite to P023. P024 automatic post-push build/test/deploy is queued after P022 successfully hosts the game. Web P021 browser interaction and Android physical-device QA remain outstanding.
