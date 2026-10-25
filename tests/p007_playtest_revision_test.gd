@@ -101,16 +101,20 @@ func _test_projectile_damage_locking() -> void:
 	var first := tier_two.spawn_enemy(-2.0, 2)
 	var second := tier_two.spawn_enemy(0.0, 2)
 	tier_two.fire_attack(_result(TeamData.Identity.BLUE, 2))
-	_check(int(tier_two.projectiles[0].damage) == 2 and int(tier_two.projectiles[1].damage) == 2, "each tier-2 projectile locks two damage")
+	_check(tier_two.projectiles.size() == 1 and int(tier_two.projectiles[0].damage) == 1 and bool(tier_two.projectiles[0].piercing), "tier-2 locks one 1-damage penetrating projectile")
 	tier_two.projectile_damage = 1
 	tier_two.update(1.0)
-	_check(tier_two.total_killed == 2 and tier_two.active_enemy_count() == 0, "tier-2 burst kills two spaced default enemies")
-	_check([int(tier_two.hit_history[0].enemy_uid), int(tier_two.hit_history[1].enemy_uid)] == [first, second], "tier-2 projectiles preserve first-target ordering")
+	_check(tier_two.total_killed == 0 and tier_two.active_enemy_count() == 2 and tier_two.enemies.all(func(enemy: Dictionary) -> bool: return int(enemy.hp) == 1), "tier-2 penetration wounds both spaced enemies once")
+	_check([int(tier_two.hit_history[0].enemy_uid), int(tier_two.hit_history[1].enemy_uid)] == [first, second], "tier-2 projectile preserves encounter ordering")
 
 func _spawn_one_per_lane(battlefield: Battlefield) -> void:
 	for lane in battlefield.lanes:
 		lane.combat_model.clear_for_test()
 		lane.combat_model.spawn_enemy(1.0, 2)
+
+func _advance_battlefield_projectiles(battlefield: Battlefield, delta := 1.0) -> void:
+	for lane in battlefield.lanes:
+		lane.combat_model.update(delta)
 
 func _test_tier_three_routing() -> void:
 	var battlefield := Battlefield.new()
@@ -121,15 +125,18 @@ func _test_tier_three_routing() -> void:
 	for lane in battlefield.lanes:
 		charges.append(lane.combat_model.emergency_available)
 	var edge_top: Dictionary = battlefield.handle_match(_result(0, 3)).get("attack", {})
-	_check(int(edge_top.adjacent_lane) == 1 and int(edge_top.killed_count) == 2, "lane 0 tier-3 clears lanes 0 and 1")
-	_check(battlefield.get_lane(2).combat_model.active_enemy_count() == 1 and battlefield.get_lane(3).combat_model.active_enemy_count() == 1, "top-edge clear preserves uninvolved lanes")
-	_check(battlefield.get_lane(0).combat_model.active_projectile_count() == 0, "tier-3 clear creates no ordinary projectiles")
+	_check(int(edge_top.adjacent_lane) == 1 and int(edge_top.killed_count) == 0, "lane 0 tier-3 selects lanes 0 and 1 without an instant clear")
+	_check(battlefield.get_lane(0).combat_model.active_enemy_count() == 1 and battlefield.get_lane(1).combat_model.active_enemy_count() == 1, "tier-3 targets remain alive before physical projectile contact")
+	_check(battlefield.get_lane(0).combat_model.active_projectile_count() == 1 and battlefield.get_lane(1).combat_model.active_projectile_count() == 1, "tier-3 uses one visible shot plus one adjacent collision proxy")
+	_advance_battlefield_projectiles(battlefield)
+	_check(int(battlefield.get_lane(0).combat_model.enemies[0].hp) == 1 and int(battlefield.get_lane(1).combat_model.enemies[0].hp) == 1, "tier-3 wave deals one damage in each selected lane")
+	_check(battlefield.get_lane(2).combat_model.active_enemy_count() == 1 and battlefield.get_lane(3).combat_model.active_enemy_count() == 1, "top-edge wave preserves uninvolved lanes")
 	for index in range(battlefield.lanes.size()):
 		_check(battlefield.lanes[index].combat_model.emergency_available == charges[index], "tier-3 clear does not consume lane %d emergency charge" % index)
 
 	_spawn_one_per_lane(battlefield)
 	var edge_bottom: Dictionary = battlefield.handle_match(_result(3, 3)).get("attack", {})
-	_check(int(edge_bottom.adjacent_lane) == 2 and int(edge_bottom.killed_count) == 2, "lane 3 tier-3 clears lanes 3 and 2")
+	_check(int(edge_bottom.adjacent_lane) == 2 and int(edge_bottom.killed_count) == 0, "lane 3 tier-3 fixes lanes 3 and 2 without instant kills")
 
 	for origin in [1, 2]:
 		var chosen := {}
@@ -143,7 +150,8 @@ func _test_tier_three_routing() -> void:
 	_spawn_one_per_lane(battlefield)
 	battlefield.get_lane(0).combat_model.enemies.clear()
 	var empty_outcome := battlefield.handle_match(_result(0, 3))
-	_check(int(empty_outcome.attack.killed_count) == 1, "tier-3 empty origin is a safe no-op while neighbor still clears")
+	_advance_battlefield_projectiles(battlefield)
+	_check(int(empty_outcome.attack.killed_count) == 0 and int(battlefield.get_lane(1).combat_model.enemies[0].hp) == 1, "tier-3 empty origin is a safe miss while neighbor takes one damage")
 	battlefield.get_lane(0).combat_model.spawn_enemy(2.0, 2)
 	_check(battlefield.get_lane(0).combat_model.active_enemy_count() == 1, "tier-3 does not affect future spawns")
 	_check(battlefield.attack_history.size() <= LaneCombatModel.HISTORY_LIMIT and battlefield.attack_history[-1].has("origin_lane"), "bounded attack history records tier-3 lane metadata")
@@ -169,7 +177,7 @@ func _test_down_defender_tier_three_precedence() -> void:
 	_check(origin.active_enemy_count() == 1 and neighbor.active_enemy_count() == 1 and not origin.emergency_available, "revival preserves enemies and spent emergency state")
 	battlefield.set_attack_rng_seed(3)
 	var active := battlefield.handle_match(_result(1, 3))
-	_check(str(active.action) == "attack" and int(active.attack.killed_count) >= 1, "active post-revival tier-3 clear works")
+	_check(str(active.action) == "attack" and int(active.attack.projectile_count) == 1 and bool(active.attack.wide), "active post-revival tier-3 wide shot works")
 	battlefield.queue_free()
 
 func _test_hop_translation_and_subdivision() -> void:

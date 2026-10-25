@@ -25,10 +25,9 @@ const LEFT_BOUNDARY := -7.25
 const RIGHT_BOUNDARY := 7.6
 const PROJECTILE_RIGHT_BOUNDARY := 8.25
 const DEFAULT_ENEMY_SPEED := 0.312
-const DEFAULT_ENEMY_HP := 2
+const DEFAULT_ENEMY_HP := 6
 const DEFAULT_PROJECTILE_SPEED := 9.0
 const DEFAULT_PROJECTILE_DAMAGE := 1
-const TIER_TWO_PROJECTILE_DAMAGE := 2
 const DEFAULT_SPAWN_INTERVAL := 5.5
 const DEFAULT_MAX_ENEMIES := 5
 const DEFAULT_ENEMIES_PER_LANE := 8
@@ -82,8 +81,10 @@ func fire_attack(match_result: Dictionary) -> Dictionary:
 	if game_over or defender_state != DefenderState.ACTIVE:
 		return {}
 	var locked_tier := clampi(int(match_result.get("tier", 1)), 1, 3)
-	var projectile_count := 1 if locked_tier == 1 else (2 if locked_tier == 2 else 0)
-	var locked_damage := projectile_damage if locked_tier == 1 else (TIER_TWO_PROJECTILE_DAMAGE if locked_tier == 2 else 0)
+	var projectile_count := 1
+	var locked_damage := DEFAULT_PROJECTILE_DAMAGE
+	var piercing := locked_tier >= 2
+	var wide := locked_tier >= 3
 	var attack := {
 		"uid": _next_attack_uid,
 		"identity": team_identity,
@@ -92,12 +93,16 @@ func fire_attack(match_result: Dictionary) -> Dictionary:
 		"group_size": int(match_result.get("group_size", 3)),
 		"projectile_count": projectile_count,
 		"projectile_damage": locked_damage,
+		"piercing": piercing,
+		"wide": wide,
+		"origin_lane": int(match_result.get("origin_lane", team_identity)),
+		"adjacent_lane": int(match_result.get("adjacent_lane", -1)),
+		"target_lanes": match_result.get("target_lanes", [team_identity]).duplicate(),
 	}
 	_next_attack_uid += 1
 	attack_history.append(attack.duplicate(true))
 	_trim_history(attack_history)
-	for burst_index in range(projectile_count):
-		_spawn_projectile(int(attack.uid), burst_index * BURST_INTERVAL, locked_damage, locked_tier)
+	_spawn_projectile(int(attack.uid), 0.0, locked_damage, locked_tier, piercing, wide, false, {}, attack)
 	return attack.duplicate(true)
 
 func handle_match(match_result: Dictionary) -> Dictionary:
@@ -130,16 +135,16 @@ func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1, counts_toward_bud
 		return -1
 	var resolved_type := enemy_type if EnemyTypes.valid_type(enemy_type) else EnemyTypes.Type.HOPPER
 	var canonical_hp := EnemyTypes.max_hp(resolved_type)
-	var resolved_hp := canonical_hp if hp_value < 0 else maxi(1, hp_value)
+	var resolved_hp := canonical_hp if hp_value < 0 else clampi(hp_value, 1, canonical_hp)
 	var enemy := {
 		"uid": _next_enemy_uid,
-		"spawn_id": spawn_id if spawn_id >= 0 else _next_enemy_uid,
+		"spawn_id": spawn_id if spawn_id >= 0 else team_identity * 1000000 + _next_enemy_uid,
 		"type": resolved_type,
 		"origin_lane": team_identity,
 		"lane_index": team_identity,
 		"x": x_position,
 		"hp": resolved_hp,
-		"max_hp": resolved_hp,
+		"max_hp": canonical_hp,
 		"speed": EnemyTypes.speed(resolved_type, enemy_speed),
 		"hop_clock": fmod(float(_next_enemy_uid - 1) * 0.31 + float(team_identity) * 0.17, HOP_CYCLE_DURATION),
 		"hop_airborne": false,
@@ -231,7 +236,7 @@ func active_enemy_count() -> int:
 func active_projectile_count() -> int:
 	return projectiles.size()
 
-func _spawn_projectile(attack_uid: int, launch_delay: float, locked_damage: int, locked_tier: int) -> void:
+func _spawn_projectile(attack_uid: int, launch_delay: float, locked_damage: int, locked_tier: int, piercing := false, wide := false, collision_proxy := false, shared_hit_spawn_ids := {}, attack_metadata := {}) -> Dictionary:
 	var projectile := {
 		"uid": _next_projectile_uid,
 		"attack_uid": attack_uid,
@@ -240,10 +245,33 @@ func _spawn_projectile(attack_uid: int, launch_delay: float, locked_damage: int,
 		"tier": locked_tier,
 		"age": 0.0,
 		"launch_delay": launch_delay,
+		"piercing": piercing,
+		"wide": wide,
+		"collision_proxy": collision_proxy,
+		"hit_spawn_ids": shared_hit_spawn_ids,
+		"origin_lane": int(attack_metadata.get("origin_lane", team_identity)),
+		"adjacent_lane": int(attack_metadata.get("adjacent_lane", -1)),
+		"target_lanes": attack_metadata.get("target_lanes", [team_identity]).duplicate(),
 	}
 	_next_projectile_uid += 1
 	projectiles.append(projectile)
 	projectile_spawned.emit(projectile.duplicate(true))
+	return projectile
+
+func spawn_wide_projectile_proxy(source_projectile: Dictionary) -> Dictionary:
+	if source_projectile.is_empty():
+		return {}
+	return _spawn_projectile(
+		int(source_projectile.get("attack_uid", -1)),
+		float(source_projectile.get("launch_delay", 0.0)),
+		int(source_projectile.get("damage", DEFAULT_PROJECTILE_DAMAGE)),
+		int(source_projectile.get("tier", 3)),
+		true,
+		true,
+		true,
+		source_projectile.get("hit_spawn_ids", {}),
+		source_projectile
+	)
 
 func _update_projectiles(delta: float, enemy_starts: Dictionary) -> void:
 	var survivors: Array[Dictionary] = []
@@ -257,12 +285,23 @@ func _update_projectiles(delta: float, enemy_starts: Dictionary) -> void:
 			continue
 
 		var projectile_start := float(projectile.x)
-		var hit := _first_swept_hit(projectile_start, active_start, active_delta, enemy_starts)
-		if not hit.is_empty():
-			var impact_time := float(hit.time)
-			var impact_x := projectile_start + projectile_speed * impact_time
-			_damage_enemy(int(hit.enemy_uid), int(projectile.damage), impact_x)
-			continue
+		var hit_spawn_ids: Dictionary = projectile.get("hit_spawn_ids", {})
+		var hits := _swept_hits(projectile_start, active_start, active_delta, enemy_starts, hit_spawn_ids)
+		if not hits.is_empty():
+			if not bool(projectile.get("piercing", false)):
+				var first_hit: Dictionary = hits[0]
+				var first_impact_x := projectile_start + projectile_speed * float(first_hit.time)
+				_damage_enemy(int(first_hit.enemy_uid), int(projectile.damage), first_impact_x, &"projectile", int(projectile.attack_uid), int(projectile.tier))
+				continue
+			for hit in hits:
+				var spawn_id := int(hit.spawn_id)
+				if hit_spawn_ids.has(spawn_id):
+					continue
+				hit_spawn_ids[spawn_id] = true
+				var impact_x := projectile_start + projectile_speed * float(hit.time)
+				var cause := &"tier3" if int(projectile.tier) >= 3 else &"projectile"
+				_damage_enemy(int(hit.enemy_uid), int(projectile.damage), impact_x, cause, int(projectile.attack_uid), int(projectile.tier))
+			projectile.hit_spawn_ids = hit_spawn_ids
 
 		projectile.x = projectile_start + projectile_speed * active_delta
 		projectile.age = float(projectile.age) + active_delta
@@ -271,10 +310,16 @@ func _update_projectiles(delta: float, enemy_starts: Dictionary) -> void:
 	projectiles = survivors
 
 func _first_swept_hit(projectile_x: float, active_start: float, active_delta: float, enemy_starts: Dictionary) -> Dictionary:
-	var best_time := INF
-	var best_uid := -1
+	var hits := _swept_hits(projectile_x, active_start, active_delta, enemy_starts)
+	return {} if hits.is_empty() else hits[0]
+
+func _swept_hits(projectile_x: float, active_start: float, active_delta: float, enemy_starts: Dictionary, excluded_spawn_ids := {}) -> Array[Dictionary]:
+	var hits: Array[Dictionary] = []
 	for enemy in enemies:
 		var uid := int(enemy.uid)
+		var spawn_id := int(enemy.get("spawn_id", team_identity * 1000000 + uid))
+		if excluded_spawn_ids.has(spawn_id) or not enemy_starts.has(uid):
+			continue
 		if not EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER))):
 			var slide_speed := float(enemy.get("speed", enemy_speed))
 			if int(enemy.get("type", EnemyTypes.Type.HOPPER)) == EnemyTypes.Type.SICKLE_SNAKE:
@@ -285,9 +330,7 @@ func _first_swept_hit(projectile_x: float, active_start: float, active_delta: fl
 			var relative_end := relative_start - closing_speed * active_delta
 			if relative_start >= -HIT_DISTANCE and relative_end <= HIT_DISTANCE:
 				var contact_time := clampf((relative_start - HIT_DISTANCE) / maxf(closing_speed, 0.0001), 0.0, active_delta)
-				if contact_time < best_time:
-					best_time = contact_time
-					best_uid = uid
+				hits.append({"enemy_uid": uid, "spawn_id": spawn_id, "time": contact_time})
 			continue
 		var clock_at_active_start := float(enemy.hop_clock) + active_start
 		var hopper_speed := float(enemy.get("speed", enemy_speed))
@@ -308,30 +351,31 @@ func _first_swept_hit(projectile_x: float, active_start: float, active_delta: fl
 			if relative_start >= -HIT_DISTANCE and relative_end <= HIT_DISTANCE:
 				var contact_in_segment := clampf((relative_start - HIT_DISTANCE) / closing_speed, 0.0, segment_duration)
 				var contact_time := elapsed + contact_in_segment
-				if contact_time < best_time:
-					best_time = contact_time
-					best_uid = uid
+				hits.append({"enemy_uid": uid, "spawn_id": spawn_id, "time": contact_time})
 				break
 			enemy_x += enemy_velocity * segment_duration
 			elapsed += segment_duration
-	if best_uid < 0:
-		return {}
-	return {"enemy_uid": best_uid, "time": best_time}
+	hits.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if not is_equal_approx(float(a.time), float(b.time)):
+			return float(a.time) < float(b.time)
+		return int(a.spawn_id) < int(b.spawn_id)
+	)
+	return hits
 
-func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
+func _damage_enemy(enemy_uid: int, damage: int, impact_x: float, cause := &"projectile", attack_uid := -1, tier := 1) -> void:
 	for index in range(enemies.size()):
 		if int(enemies[index].uid) != enemy_uid:
 			continue
 		var enemy := enemies[index]
 		enemy.hp = int(enemy.hp) - damage
 		enemy.hit_flash = 0.16
-		hit_history.append({"enemy_uid": enemy_uid, "damage": damage, "impact_x": impact_x, "remaining_hp": maxi(0, int(enemy.hp))})
+		hit_history.append({"enemy_uid": enemy_uid, "spawn_id": int(enemy.get("spawn_id", enemy_uid)), "damage": damage, "impact_x": impact_x, "remaining_hp": maxi(0, int(enemy.hp)), "attack_uid": attack_uid, "tier": tier})
 		_trim_history(hit_history)
 		if int(enemy.hp) <= 0:
 			enemies.remove_at(index)
 			total_killed += 1
-			enemy_neutralized_detail.emit(enemy.duplicate(true), &"projectile", impact_x)
-			enemy_neutralized.emit(enemy_uid, impact_x, &"projectile")
+			enemy_neutralized_detail.emit(enemy.duplicate(true), cause, impact_x)
+			enemy_neutralized.emit(enemy_uid, impact_x, cause)
 			enemy_killed.emit(enemy_uid, impact_x)
 			encounter_state_changed.emit()
 		else:

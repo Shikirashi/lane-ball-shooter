@@ -34,7 +34,7 @@ func _test_typed_stats_and_motion() -> void:
 	var model := LaneCombatModel.new(TeamData.Identity.RED)
 	model.clear_for_test()
 	model.max_enemies = 8
-	var expected_hp := [2, 4, 2, 2]
+	var expected_hp := [6, 12, 6, 6]
 	var expected_speed := [0.312, 0.2184, 0.624, 0.0]
 	for enemy_type in range(EnemyTypesScript.Type.HEALYZARD + 1):
 		var uid := model.spawn_enemy(5.0 + enemy_type * 0.1, -1, false, enemy_type, 100 + enemy_type)
@@ -45,7 +45,7 @@ func _test_typed_stats_and_motion() -> void:
 	var historical := LaneCombatModel.new(TeamData.Identity.BLUE)
 	historical.clear_for_test()
 	var default_uid := historical.spawn_enemy()
-	_check(int(historical.enemies[0].type) == EnemyTypesScript.Type.HOPPER and int(historical.enemies[0].hp) == 2 and default_uid > 0, "historical no-type spawn remains a 2 HP Hopper")
+	_check(int(historical.enemies[0].type) == EnemyTypesScript.Type.HOPPER and int(historical.enemies[0].hp) == 6 and default_uid > 0, "historical no-type spawn now uses canonical 6 HP Hopper")
 
 	var starts := {}
 	for enemy in model.enemies:
@@ -84,7 +84,7 @@ func _test_visual_roster_and_hidden_hp() -> void:
 	var hopper_visual: Dictionary = lane.get("_enemy_visuals")[uids[0]]
 	lane.combat_model.call("_damage_enemy", uids[0], 1, 1.0)
 	lane.call("_sync_visuals")
-	_check(hopper_visual.horns.size() == 2 and hopper_visual.horns[0].visible and hopper_visual.horns[1].visible, "Hopper's two orange horns remain visible at 1 HP")
+	_check(hopper_visual.horns.size() == 2 and hopper_visual.horns[0].visible and hopper_visual.horns[1].visible, "Hopper's two orange horns remain visible after damage")
 	_check(_mesh_color(hopper_visual.root, "HopperHorn").r > 0.9, "Hopper horns use permanent orange decoration")
 	var heavy_visual: Dictionary = lane.get("_enemy_visuals")[uids[1]]
 	var snake_visual: Dictionary = lane.get("_enemy_visuals")[uids[2]]
@@ -112,11 +112,11 @@ func _test_swept_hits_for_all_motion_types() -> void:
 		var heavy := _simulate_attack(EnemyTypesScript.Type.HEAVY, 4, step, 1)
 		_check(heavy.active_enemy_count() == 1 and int(heavy.enemies[0].hp) == 3 and heavy.hit_history.size() == 1, "Heavy swept hit works at dt %.4f and survives one damage" % step)
 		var snake := _simulate_attack(EnemyTypesScript.Type.SICKLE_SNAKE, 2, step, 2)
-		_check(snake.total_killed == 1 and snake.hit_history.size() == 1, "sliding Snake swept hit works at dt %.4f" % step)
+		_check(snake.total_killed == 0 and int(snake.enemies[0].hp) == 1 and snake.hit_history.size() == 1, "sliding Snake swept piercing hit works at dt %.4f" % step)
 		var healer := _simulate_attack(EnemyTypesScript.Type.HEALYZARD, 2, step, 2)
-		_check(healer.total_killed == 1 and healer.hit_history.size() == 1, "stationary Healyzard swept hit works at dt %.4f" % step)
+		_check(healer.total_killed == 0 and int(healer.enemies[0].hp) == 1 and healer.hit_history.size() == 1, "stationary Healyzard swept piercing hit works at dt %.4f" % step)
 	var heavy_burst := _simulate_attack(EnemyTypesScript.Type.HEAVY, 4, 1.0 / 60.0, 2)
-	_check(heavy_burst.total_killed == 1 and heavy_burst.hit_history.size() == 2, "two tier-2 projectiles remove a 4 HP Heavy")
+	_check(heavy_burst.total_killed == 0 and int(heavy_burst.enemies[0].hp) == 3 and heavy_burst.hit_history.size() == 1, "one tier-2 projectile damages a Heavy once")
 
 func _test_weighted_sampler_and_seed_reset() -> void:
 	var battlefield := Battlefield.new()
@@ -173,7 +173,7 @@ func _test_global_snake_gate_and_cooldown_causes() -> void:
 		if cause == &"projectile":
 			battlefield.lanes[0].combat_model.call("_damage_enemy", uid, 1, 1.0)
 			_check(not battlefield.snake_spawn_eligible(), "nonfatal Snake damage does not release global occupancy")
-			battlefield.lanes[0].combat_model.call("_damage_enemy", uid, 1, 1.0)
+			battlefield.lanes[0].combat_model.call("_damage_enemy", uid, 5, 1.0)
 		elif cause == &"tier3":
 			battlefield.lanes[0].combat_model.clear_enemies_for_tier3()
 		else:

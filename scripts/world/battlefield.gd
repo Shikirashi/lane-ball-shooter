@@ -80,6 +80,11 @@ func handle_match(result: Dictionary) -> Dictionary:
 	if identity < 0 or identity >= lanes.size():
 		return {"action": "ignored"}
 	var locked_result := result.duplicate(true)
+	if int(locked_result.get("tier", 1)) >= 3:
+		var adjacent_lane := _choose_adjacent_lane(identity)
+		locked_result.origin_lane = identity
+		locked_result.adjacent_lane = adjacent_lane
+		locked_result.target_lanes = [identity, adjacent_lane]
 	var outcome := lanes[identity].handle_match(locked_result)
 	if str(outcome.get("action", "")) == "attack":
 		var attack: Dictionary = outcome.get("attack", {})
@@ -387,25 +392,36 @@ func _on_encounter_state_changed() -> void:
 	_evaluate_terminal_state()
 
 func _resolve_tier3_attack(origin_lane: int, attack: Dictionary) -> Dictionary:
+	var adjacent_lane := int(attack.get("adjacent_lane", _choose_adjacent_lane(origin_lane)))
+	var origin_model := lanes[origin_lane].combat_model
+	var source_projectile: Dictionary
+	for index in range(origin_model.projectiles.size() - 1, -1, -1):
+		if int(origin_model.projectiles[index].get("attack_uid", -1)) == int(attack.get("uid", -2)):
+			source_projectile = origin_model.projectiles[index]
+			break
+	if not source_projectile.is_empty():
+		lanes[adjacent_lane].combat_model.spawn_wide_projectile_proxy(source_projectile)
+	attack.origin_lane = origin_lane
+	attack.adjacent_lane = adjacent_lane
+	attack.target_lanes = [origin_lane, adjacent_lane]
+	attack.killed_count = 0
+	attack.projectile_count = 1
+	attack.piercing = true
+	attack.wide = true
+	var origin_history := lanes[origin_lane].combat_model.attack_history
+	if not origin_history.is_empty():
+		origin_history[-1] = attack.duplicate(true)
+	return attack
+
+func _choose_adjacent_lane(origin_lane: int) -> int:
 	var neighbors: Array[int] = []
 	if origin_lane > 0:
 		neighbors.append(origin_lane - 1)
 	if origin_lane + 1 < lanes.size():
 		neighbors.append(origin_lane + 1)
-	var adjacent_lane := neighbors[_attack_rng.randi_range(0, neighbors.size() - 1)]
-	var origin_killed := lanes[origin_lane].combat_model.clear_enemies_for_tier3()
-	var adjacent_killed := lanes[adjacent_lane].combat_model.clear_enemies_for_tier3()
-	lanes[origin_lane].show_tier3_clear_wave()
-	lanes[adjacent_lane].show_tier3_clear_wave()
-	attack.origin_lane = origin_lane
-	attack.adjacent_lane = adjacent_lane
-	attack.target_lanes = [origin_lane, adjacent_lane]
-	attack.killed_count = origin_killed + adjacent_killed
-	attack.projectile_count = 0
-	var origin_history := lanes[origin_lane].combat_model.attack_history
-	if not origin_history.is_empty():
-		origin_history[-1] = attack.duplicate(true)
-	return attack
+	if neighbors.is_empty():
+		return origin_lane
+	return neighbors[_attack_rng.randi_range(0, neighbors.size() - 1)]
 
 func configure_viewport_aspect(aspect: float) -> void:
 	if _camera == null:

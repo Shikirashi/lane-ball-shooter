@@ -1,0 +1,23 @@
+[Unit]
+Description=Lane Ball Shooter private static Web host
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/lane-ball-shooter-web/environment
+ExecStart=/usr/bin/python3 -m http.server ${LBS_WEB_PORT} --bind ${LBS_WEB_BIND} --directory %h/srv/lane-ball-shooter-web/current
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=default.target

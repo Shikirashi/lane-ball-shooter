@@ -16,10 +16,10 @@ const NAMES := {
 	Type.HEALYZARD: "Healyzard",
 }
 const MAX_HP := {
-	Type.HOPPER: 2,
-	Type.HEAVY: 4,
-	Type.SICKLE_SNAKE: 2,
-	Type.HEALYZARD: 2,
+	Type.HOPPER: 6,
+	Type.HEAVY: 12,
+	Type.SICKLE_SNAKE: 6,
+	Type.HEALYZARD: 6,
 }
 const SPEED_MULTIPLIERS := {
 	Type.HOPPER: 1.0,

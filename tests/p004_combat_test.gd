@@ -30,15 +30,14 @@ func _test_tier_mapping_and_locking() -> void:
 		model.clear_for_test()
 		var group_size := 7 if tier == 3 else 5
 		var attack := model.fire_attack(_result(TeamData.Identity.RED, tier, tier == 3, group_size))
-		_check(int(attack.projectile_count) == tier, "tier %d locks %d projectiles" % [tier, tier])
-		_check(model.active_projectile_count() == tier, "tier %d creates complete delayed burst" % tier)
+		_check(int(attack.projectile_count) == 1, "tier %d locks one projectile" % tier)
+		_check(model.active_projectile_count() == 1, "tier %d creates one physical shot" % tier)
 		_check(int(attack.group_size) == group_size, "large group metadata is retained without extra shots")
-		if tier > 1:
-			_check(float(model.projectiles[1].launch_delay) > float(model.projectiles[0].launch_delay), "burst projectiles have distinct launch times")
+		_check(bool(attack.piercing) == (tier >= 2), "tier %d locks the approved piercing state" % tier)
 	var tier_three := LaneCombatModel.new(TeamData.Identity.RED)
 	tier_three.clear_for_test()
 	var clear_attack := tier_three.fire_attack(_result(TeamData.Identity.RED, 3, true, 7))
-	_check(int(clear_attack.projectile_count) == 0 and tier_three.active_projectile_count() == 0, "tier 3 creates no conventional projectiles")
+	_check(int(clear_attack.projectile_count) == 1 and tier_three.active_projectile_count() == 1 and bool(clear_attack.wide), "tier 3 creates one wide penetrating projectile")
 	_check(int(clear_attack.group_size) == 7, "tier-3 clear retains match metadata")
 
 	var progression := MatchProgression.new()
@@ -50,19 +49,19 @@ func _test_tier_mapping_and_locking() -> void:
 	progression.update(3.0)
 	_check(progression.tier == 0, "global combo can expire after attack creation")
 	_check(locked.attack_history.size() == 1 and int(locked.attack_history[0].tier) == 2, "queued attack retains match-time tier")
-	_check(locked.active_projectile_count() == 2, "timeout does not cancel locked burst")
+	_check(locked.active_projectile_count() == 1, "timeout does not cancel locked penetrating shot")
 
 func _test_empty_lane_despawn() -> void:
 	var model := LaneCombatModel.new(TeamData.Identity.GREEN)
 	model.clear_for_test()
 	model.fire_attack(_result(TeamData.Identity.GREEN, 2, false, 7))
-	_check(model.active_projectile_count() == 2, "empty lane still fires tier-2 burst")
+	_check(model.active_projectile_count() == 1, "empty lane still fires one tier-2 penetrating shot")
 	var start_x := float(model.projectiles[0].x)
 	model.update(0.1)
 	_check(float(model.projectiles[0].x) > start_x, "active 3D projectile advances toward world right")
 	model.update(10.0)
 	_check(model.active_projectile_count() == 0, "empty-lane projectiles despawn at bound/lifetime")
-	_check(model.hit_history.is_empty(), "empty-lane burst fabricates no impacts")
+	_check(model.hit_history.is_empty(), "empty-lane penetrating shot fabricates no impacts")
 
 func _test_damage_kill_and_sweep() -> void:
 	var model := LaneCombatModel.new(TeamData.Identity.RED)
@@ -86,11 +85,11 @@ func _test_first_target_burst() -> void:
 	var second_uid := model.spawn_enemy(0.0, 1)
 	model.fire_attack(_result(TeamData.Identity.YELLOW, 2, false, 5))
 	model.update(1.0)
-	_check(model.total_killed == 2 and model.active_enemy_count() == 0, "tier-2 burst can kill two ordered one-HP enemies")
-	_check(model.hit_history.size() == 2, "each projectile produces at most one hit")
+	_check(model.total_killed == 2 and model.active_enemy_count() == 0, "one tier-2 projectile penetrates two ordered one-HP enemies")
+	_check(model.hit_history.size() == 2, "piercing projectile hits each enemy at most once")
 	if model.hit_history.size() == 2:
 		_check(int(model.hit_history[0].enemy_uid) == first_uid, "first projectile hits nearest enemy")
-		_check(int(model.hit_history[1].enemy_uid) == second_uid, "remaining projectile reaches second enemy after first dies")
+		_check(int(model.hit_history[1].enemy_uid) == second_uid, "same projectile continues to the second enemy after first dies")
 
 func _test_hop_independence_and_lane_isolation() -> void:
 	var low_hop := LaneCombatModel.new(TeamData.Identity.RED)

@@ -69,7 +69,7 @@ func _test_revival_and_second_contact() -> void:
 	_check(model.revival_progress == 0 and model.projectiles.is_empty(), "finishing revival resets progress and still does not attack")
 	_check(not model.emergency_available, "revival never restores emergency charge")
 	var attack := model.handle_match(_result(TeamData.Identity.GREEN, 3))
-	_check(str(attack.action) == "attack" and model.active_projectile_count() == 0, "post-revival tier-3 attack creates no conventional burst")
+	_check(str(attack.action) == "attack" and model.active_projectile_count() == 1, "post-revival tier-3 attack creates one wide projectile")
 
 	model.projectiles.clear()
 	model.spawn_enemy(LaneCombatModel.DEFENDER_X + 0.01, 2)
@@ -102,7 +102,7 @@ func _test_match_routing_and_cascades() -> void:
 	down_lane.emergency_available = false
 	var blue_lane := battlefield.get_lane(TeamData.Identity.BLUE).combat_model
 	battlefield.handle_match(_result(TeamData.Identity.BLUE, 2))
-	_check(blue_lane.active_projectile_count() == 2, "other-color match still attacks its active lane")
+	_check(blue_lane.active_projectile_count() == 1, "other-color match still fires one penetrating shot from its active lane")
 	_check(down_lane.revival_progress == 0, "active other lane attack leaves down lane unchanged")
 	battlefield.queue_free()
 

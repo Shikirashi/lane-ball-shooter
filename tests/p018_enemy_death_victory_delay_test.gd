@@ -81,15 +81,17 @@ func _test_all_neutralization_routes_and_audio() -> void:
 
 	var blue := battlefield.lanes[TeamData.Identity.BLUE].combat_model
 	for x in [2.0, 3.0]:
-		red.spawn_enemy(x - 0.25, 2)
-		blue.spawn_enemy(x, 2)
+		red.spawn_enemy(x - 0.25, 1)
+		blue.spawn_enemy(x, 1)
 	var tier3_before := events.size()
 	var attack_outcome := battlefield.handle_match({"identity": TeamData.Identity.RED, "tier": 3, "fever": false, "group_size": 3})
-	_check(events.size() - tier3_before == 4, "tier-3 two-lane wipe schedules one death actor/cue event for every victim")
+	red.update(1.2)
+	blue.update(1.2)
+	_check(events.size() - tier3_before == 4, "tier-3 wide projectile schedules one death actor/cue for each physically hit 1-HP victim")
 	_check(str(attack_outcome.action) == "attack" and attack_outcome.attack.target_lanes == [0, 1], "edge-lane tier-3 uses the real matched-plus-adjacent routing")
 	for index in range(tier3_before, events.size()):
 		_check(events[index].cause == &"tier3", "tier-3 victim records an unambiguous cause")
-	_check(red.total_killed == 3 and blue.total_killed == 2, "tier-3 victims retain killed accounting semantics alongside the earlier projectile kill")
+	_check(red.total_killed == 3 and blue.total_killed == 2, "tier-3 projectile victims retain killed accounting semantics alongside the earlier projectile kill")
 
 	var green := battlefield.lanes[TeamData.Identity.GREEN].combat_model
 	for x in [1.0, 2.0, 3.0]:

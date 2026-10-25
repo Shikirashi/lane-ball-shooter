@@ -186,12 +186,17 @@ func _sync_visuals() -> void:
 	var live_projectile_ids := {}
 	for projectile in combat_model.projectiles:
 		var uid := int(projectile.uid)
+		if bool(projectile.get("collision_proxy", false)):
+			continue
 		live_projectile_ids[uid] = true
 		if not _projectile_visuals.has(uid):
-			_projectile_visuals[uid] = _create_projectile_visual(uid)
+			_projectile_visuals[uid] = _create_projectile_visual(uid, projectile)
 		var visual: MeshInstance3D = _projectile_visuals[uid]
 		visual.visible = float(projectile.launch_delay) <= 0.0
-		visual.position = Vector3(float(projectile.x), 0.68, 0.0)
+		var visual_z := 0.0
+		if bool(projectile.get("wide", false)):
+			visual_z = signf(float(int(projectile.get("adjacent_lane", lane_index)) - lane_index))
+		visual.position = Vector3(float(projectile.x), 0.68, visual_z)
 	for uid in _projectile_visuals.keys().duplicate():
 		if not live_projectile_ids.has(uid):
 			var projectile_visual: Node = _projectile_visuals[uid]
@@ -368,9 +373,18 @@ func _update_healing_auras(delta: float) -> void:
 			visual.aura_age = -1.0
 		_enemy_visuals[uid] = visual
 
-func _create_projectile_visual(uid: int) -> MeshInstance3D:
+func _create_projectile_visual(uid: int, projectile := {}) -> MeshInstance3D:
 	var color_value := TeamData.color(team_identity).lightened(0.2)
-	var visual := PrimitiveFactory.sphere(0.12, 0.24, color_value)
+	var visual: MeshInstance3D
+	if bool(projectile.get("wide", false)):
+		visual = PrimitiveFactory.box(Vector3(0.5, 0.3, 2.5), color_value)
+		var adjacent_lane := int(projectile.get("adjacent_lane", lane_index))
+		visual.position.z = signf(float(adjacent_lane - lane_index))
+	elif bool(projectile.get("piercing", false)):
+		visual = PrimitiveFactory.sphere(0.17, 0.26, color_value)
+		visual.scale.x = 1.65
+	else:
+		visual = PrimitiveFactory.sphere(0.12, 0.24, color_value)
 	visual.name = "Projectile_%d" % uid
 	add_child(visual)
 	return visual
