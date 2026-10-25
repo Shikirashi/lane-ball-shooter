@@ -12,6 +12,8 @@ fi
 
 printf 'Godot: '
 "$godot_binary" --version
+printf '\n==> Import project and populate the fresh-checkout class cache\n'
+"$godot_binary" --headless --editor --path "$repo_dir" --quit
 for test_file in "${test_files[@]}"; do
 	printf '\n==> %s\n' "$test_file"
 	"$godot_binary" --headless --path "$repo_dir" --script "res://tests/$test_file"
