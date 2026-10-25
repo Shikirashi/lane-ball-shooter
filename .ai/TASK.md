@@ -1,46 +1,53 @@
-# ACTIVE TASK: LBS-P012 — Forward-direction insertion displacement
+# ACTIVE TASK: LBS-P013 — Shooter-mounted next-ball preview, compact touch swap, smooth masked conveyor entry
 
-**Status:** READY FOR CODEX
+**Status:** READY FOR CODEX — P012 has been source-reviewed and accepted
 **Branch:** master
-**Reason:** After playing P011, user confirms the new rigid-segment conveyor is more robust but observes that inserting one ball shoves the balls on its RIGHT toward the RIGHT (backward against conveyor flow). This is incorrect gamefeel. On insertion, the **LEFT/front/exit-side balls must be pushed LEFT**, in the direction of normal conveyor movement. Do not disturb the RIGHT/trailing section for this insertion.
-**Baseline:** P011 code `696a1f0`, handoff `2414e57`. Read `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, this task and latest handoff. Historical LBS IDs are internal, not branding.
+**Dependency:** P012 insertion-direction correction `412b18e`, handoff `198d7cb`, reviewed and accepted; existing P011 segment-authoritative chain architecture.
+**Intent:** User-proposed presentation/UX polish after P012 push review. Keep all mechanics identical. Separate shot visuals from conveyor-only clipping and make next ammunition visible beside the current shot.
 
-## Authoritative direction rule
+## A. Shooter-mounted loaded/next display
 
-The upper conveyor flows RIGHT -> LEFT. Existing balls to the LEFT of an inserted ball are the **front/ahead** section. A newly fired ball inserted between existing neighbors expands chain length by one spacing, by displacing the whole LEFT/front prefix LEFT by one slot (`spacing=58`), **not** by moving the RIGHT/trailing suffix RIGHT. This applies to insertion into the middle of a segment and immediately at a seam or front/tail endpoint.
+- On the shooter itself, draw **current LOADED** ball in its existing large position, and **NEXT** ball directly below it at a clearly smaller size (e.g., 7–10px radius, with miniature identity symbol). This must stay attached to moving shooter X at all viewport widths, including edges, and stay within the safe viewport/bottom region.
+- After firing, immediately update both the loaded-ball visual and smaller next-ball preview using the actual `MagazineState` (never generate a second preview or invent colors). After swapping, exchange both, instant synchronization; proper original four color identities and shape markers.
+- Replace the old large loaded/next/swap HUD panel with a **single recognizable circular two-arrow swap icon** as the touch control. Keep the touch target at least 56x56 logical px. It can sit in a safe screen corner (recommended upper-right HUD if not over score or conveyor); its clickable region must NOT intercept any pointer/touch intended to move or fire from the full-width playfield.
+- `Space` / right mouse button retain swap action; swap during live play makes one swap SFX and no shot, cooldown unaffected; no swap on game over. Finger touch release on button must not produce synthetic duplicate shooting. Multi-touch ownership must remain correct.
+- Ensure `Main._on_magazine_changed` feeds both current and next identities to `ShooterView`; remove redundant old large magazine ball graphics. The touch button may be housed in a minimal `MagazineView` or standalone control; avoid unused text/panel allocations. Keep code/UI responsive at 960x540, 1280x720, 1600x720, 2400x1080, phone landscape safe areas.
 
-Concrete example from left to right:
-- BEFORE: `[R][R][Y][Y] | [B][B]` moving LEFT
-- INSERT GREEN at bar: `[R][R][Y][Y][G][B][B]`
-- Expected: front `[R][R][Y][Y]` shifted **one spacing LEFT**, the new `G` occupies the opened slot and the trailing `[B][B]` keeps its original X (apart from ordinary elapsed-time conveyor travel).
-- Reject current P011 behavior where inserting shifts all following RIGHT-side segments right by one spacing, visibly reversing the train.
-- A front-end insertion adds one ball to the left without moving the existing chain if there is room; a tail-end insertion must make room by pushing the **entire existing left/front train LEFT**, not moving the new right edge farther right. Never teleport through the left exit or cheat the feed boundary.
+## B. Physically enter the conveyor offscreen rather than pop at the boundary
 
-## Implementation
+Current `ChainModel._feed_right_edge` waits until enough room is open and admits newly generated/right-recycled balls at the right-side entry position close to `lane_width - radius`, so they suddenly appear in the conveyor. Correct this by spawning fresh or FIFO returned balls **completely offscreen to the RIGHT** at an X center >= `lane_width + radius + ENTRY_MARGIN` (small tuneable margin). Then have them advance continuously LEFT into visible space at normal chain speed, with no snapping/teleportation to the entry position.
 
-1. Inspect `ChainModel._insert_into_segment()`. It currently shifts `following` segments' anchors **+spacing** on middle insertion; replace with forward-side expansion by **-spacing**. Crucially, if the insertion splits internal members between prefix/suffix, preserve one physical slot between them and keep stable UID/color order. Authoritative rigid segments may need to be split temporarily or updated with a coherent anchor shift, but do not revert to independent per-ball X as physics authority.
-2. For an insertion at segment-local index `k`: preserve the X coordinates of the old members with local index `>= k` (and all balls farther RIGHT). Shift every old member before `k`, including all LEFT neighboring connected segments that need displacement, **-spacing**. Place the inserted ball at the position immediately before old member `k`, or for a tail insertion immediately after old trailing member. Mathematically preserve a one-slot insertion while pinning the RIGHT neighbor/continuation; choose an equivalent coherent segment anchor transformation:
-   - For a single uninterrupted segment at index k < N, new anchor = old anchor - spacing, and insert at k, resulting old prefix shifted left while old suffix retains exact original world X.
-   - For insertion after last member, add new member at `old_end_x + spacing` while shift entire preexisting connected LEFT chain left by spacing, keeping new member at old right edge location where feasible (i.e. no rightward expansion relative to existing trailing endpoint).
-   - At gap boundaries, only displace the physically connected preceding segment(s) as needed; don't collapse a separate rollback gap accidentally, destroy typed FEED/CAUSAL metadata or change its motor target. Maintain legal spacing and no segment crossing after insertion.
-3. **No overlap** in either logical or rendered positions; preserve 58px exact internal slot spacing, at least physical diameter at boundaries, ascending IDs, no teleports, consistent shot hit tests, stable segment UIDs, legal feeder admission. For a near-left-boundary prefix pushed offscreen, let normal left-rollover/cache collect it safely in correct order; no penalty. If another rollback is active, coordinate push displacement with its segment/gap constraints and avoid a motor reversal or duplicated collision.
-4. Keep insertion visual settle at exactly `0.05s` (P011 scales a real inserted ball from 72% to 100%). The push should be visible and feel forward; use a subtle shared front-group nudge/brief tween if easy, **but never** render overlapping balls or independently displace their visual positions. The new ball remains physically placed and match waits until settle ends.
-5. Recheck the larger causal direction distinction: **INSERT** shoves LEFT/front train LEFT in normal flow; **AFTER MATCH CLEAR**, LEFT/front segment may intentionally roll RIGHT through P010 accelerating rollback to join next segment. Do not conflate them.
-6. Right-edge perpetual feeder with weighted same-color runs, FIFO cache return sequence, 24 live auto cap, long naturally occurring 3–7+ runs, physically triggered cascades, 34 px/s conveyor, 0.20s shooter projectile, 0.4s cooldown, 0.24 enemy hopping, 60/900/420 rollback profile, combat tiers/revival, seven procedural SFX, full-width aim and compact HUD swap, distinct BLUE/GREEN palette all remain unchanged.
-7. Change no unrelated gameplay parameters or visuals.
+- Maintain the single authoritative P011 segment topology, fixed spacing, P012 forward insertion direction, physical contact/FEED edges, 24 auto-live ball cap (or documented equally bounded offscreen staging), sorted unique UIDs and no overlaps. The entrance should be a logical continuation of the stream or a typed FEED segment, not an unrelated rendering-only fake.
+- Unbounded *lifetime* generation remains, but do not queue an unbounded number of offscreen balls. Only admit an offscreen ball if a legal slot exists relative to all existing rightmost balls; never allow ball centers to overlap because of admission/catch-up.
+- Ensure infinite feeder still replenishes through matches, left rollover and complete clear. If no visible balls exist, new entries should enter promptly and naturally, but not jump/teleport onscreen. Preserve finite time until next ball and continuous look.
+- Cached FIFO returns must enter from the same offscreen-right staging point, preserving RED/GREEN/BLUE order and existing fair fresh interleaving and request quota. Existing P008 weighted color runs unchanged. Offscreen-right balls are NOT subject to left rollover before they appear.
+- **Important geometry:** Since a ball is radius 22px, a center at `lane_width + radius + margin` starts with its ENTIRE CIRCLE beyond the clip boundary. If there is already a rightmost ball beyond the boundary (or in entry transit), the next spawn position must be at least `spacing` behind it, but scheduling must avoid a constantly growing invisible right backlog.
+- Manage large delta and low FPS without sudden popping after crossing edge; interpolate using real physical positions derived from segments.
 
-## Acceptance tests
+## C. Conveyor-only visual mask (clipping boundary)
 
-Add `tests/p012_forward_insert_test.gd` and update old tests asserting the superseded rightward insertion behavior:
-- Six-ball example with insertion at a chosen middle seam: old LEFT UIDs move -58, old RIGHT UIDs retain original X (within tolerance), new shot UID inserts at correct position/order; no ball is pushed RIGHT.
-- Insert into interior at k=1, k=middle, just before last, k=0, and k=N; verify both segment and cross-segment cases, including typed FEED and active CAUSAL gaps.
-- Two accepted shots within same 50ms settle, and a shot during accelerating rollback/cascade: no overlap or UID reorder, no double match or deadlock.
-- Assert segment-authoritative invariants after EACH microstep: exact within-segment 58px, >=44px cross-neighbor physical clearance, logical/rendered positions identical or consistently derived, strictly increasing ball centers, no invariant violations. Capture before/after positions by UID to prove direction, not merely assert total ball count.
-- FIFO exit order and returns preserved when pushing left near viewport boundary; no ghost offscreen balls.
-- Delayed RED-RED / YELLOW-YELLOW / RED-RED cascade: at insertion pop after 0.05s, LEFT reds roll RIGHT on a causal match-created gap, and then physically reconnect before red size-4 cascade; this is the only justified reversal.
-- Check full-width extreme shots/swaps at all four landscape resolutions, and preservation of headless P001–P011 behavior. Run all previous suites and new P012 suite, bounded starts 960x540/1280x720/1600x720/2400x1080 and `git diff --check`.
-- Report actual test counts and any compatibility assertion updated because it expected trailing-right movement.
+The conveyor is currently drawn in `BallChainView` with `clip_contents=true`, but its current control bounds need not equal the actual visual conveyor strip (`lane_rect = Rect2(0,10,size.x,max(56,size.y-14))`). Make a deliberate mask at the visible **conveyor rectangular window** (left/right/top/bottom), using a dedicated clipping parent/subcontrol or appropriate Godot 4 CanvasItem clip mechanism so conveyor balls genuinely appear progressively through the right edge and disappear through the left edge, including their outline/shadow/symbol.
 
-## Done
+- Mask should affect **ONLY balls which are already part of the conveyor** (admitted chain members after completed insertion), not shooter-loaded ball, shooter-next preview, swap icon, muzzle FX or projectile balls traveling from shooter toward the conveyor.
+- Crucial requested exception: balls in the process of being inserted must stay **UNCLIPPED until finished inserting** (the existing 0.05s settling transition). Arrange rendering into separate layers: `ShooterView` owns loaded/next and launched balls, a temporary **unmasked settling/insertion visual** (with stable UID, correct position and life) appears above the conveyor mask for the 50ms settle, and after settle it moves to the clipped conveyor render path, with no one-frame disappearance, duplicate rendering, coordinate mismatch or overlap. During settlement, the physical chain model already owns the ball and reserves its legal slot; the unmasked overlay is a visual rendering classification only.
+- If preserving the fired ball throughout travel/insertion involves handing off a visual from shooter to chain, use a clear ownership boundary on first physical contact. Missed fired balls should simply expire as before. Don't leave unmasked ghost balls after match, rollback, gameover, resize, or restart.
+- Use a single authoritative model identity/UID and model position for both clipped and unmasked visual; do not fork gameplay state or accidentally double-apply matches. Shot hit/insert/match SFX semantics unchanged. Clip changes must not affect physical collision/hit testing.
+- If parent clip layout might clip the unmasked overlay, make it a sibling above the clipped conveyor panel with proper screen-to-local transform; this is important at resized/high-DPI safe-area layouts.
+- Preserve proper drawing order and accessibility shapes. No generic full-screen clip affecting shooter or bullets.
 
-Update README and `.ai/CODEX_HANDOFF.md` with the changed insertion policy, edge handling, tests/commands and manual examples. Commit and push to master. **STOP**. Do not self-advance P013, do not edit `.ai/TASK_LEDGER.md` or `.ai/DECISIONS.md`. ChatGPT reviews next "check push".
+## D. Test plan
+
+Create `tests/p013_shooter_preview_mask_test.gd`, update old layout tests only for changes explicitly approved here, run P001–P012 and P013.
+1. At all four landscape resolutions and safe-area configurations, loaded main ball tracks shooter X, next-ball preview is beneath it, preview identity changes with fire/swap, and both stay visible on mobile safe areas; swap touch target >=56x56 and unobstructed full-width firing.
+2. Swap via UI/Space/right click triggers exactly once with no shot; touch aim/draw/release right/left edge still fires exactly one; game over and restart clear pending visual handoffs.
+3. Fresh and FIFO ball identities initially appear with X center > right edge + radius, and a ball progressively becomes visible only as it crosses the right boundary; no whole-circle one-frame pop-in. Check 30/60/120 fps and single large delta results.
+4. Render/clip layer behavior: incoming established conveyor balls clipped strictly to lane window; shots in flight, loaded/next balls and pre-settle inserted ball are unaffected. At 49ms insert stays on unmasked overlay, at 50ms it becomes clipped chain member without duplication or frame disappearance. Test coordinate and owner transitions using deterministic state/data checks and practical graphical screenshot/manual QA where available.
+5. Offscreen admission never overlaps or violates P011 geometry, including multiple recent rollbacks, repeated P012 forward inserts, matching/cascades, left rollover, requested cache returns, complete clears. No unbounded offscreen population over very long runs.
+6. Existing P010 color cascade order and timing, P012 insertion-left push, P011 invariant stress, shooter 0.20s travel, conveyor 34px/s, enemies 0.24, SFX, live combo/fever/revival, swipe/drag and safe areas all preserved.
+7. Headless regression P001–P012 and P013 plus bounded startup 960x540/1280x720/1600x720/2400x1080. Report exact results, `git diff --check`, no new external assets, libraries or binaries.
+
+## Finishing notes
+
+Godot 4.7.2 GDScript Compatibility targeting Web and Android landscape. Code-only edits; do NOT take control of the user's GUI. Prefer a small clean HUD and explicit drawing ownership. No new mechanics, arbitrary balance changes, enemy roster, sound changes or branding work.
+
+Now active, after P012 review: update README with shooter ammo preview, swap button and offscreen/mask behavior; update `.ai/CODEX_HANDOFF.md`, run tests, commit/push, STOP. Do not self-advance beyond P013, edit `.ai/TASK_LEDGER.md` or `.ai/DECISIONS.md`.
