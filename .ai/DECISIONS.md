@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: P023 enemy speed/victory subtitle source-reviewed COMPLETE; P022 initial Mintbase LAN/Tailscale Web hosting ACTIVE; P024 automated post-push deployment QUEUED (2026-10-25).
+Status: P023 enemy speed/victory subtitle COMPLETE; P022 ×3 every enemy HP followed by new Web build and Mintbase hosting ACTIVE; P024 automatic post-push build/deploy QUEUED (2026-10-25).
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
@@ -160,3 +160,10 @@ If necessary, implement conservative and configurable defaults and report decisi
 ## P023 completed / P022 activated (2026-10-25)
 - P023 `0378d45` accepted after code review, Codex reports P001–P023 all passing (P023 38 checks) and rebuilt local Web ZIP with SHA-256 `08a8d52201b1d3fd03c983267bd54659a5350db109a07bc31e6f09526e5dfccb`. Game difficulty browser QA remains open.
 - P022 is the ONLY active task: deploy this latest Web build to Mintbase over an existing authorized LAN or Tailscale-accessible HTTP port with versioned releases/atomic promotion and a persistent static server; avoid other app service conflicts. No public Internet exposure until separately requested. P024 automation remains queued pending a working manually tested hosting service.
+
+## P022 update: Triple ALL enemy HP before Mintbase deployment (user 2026-10-25)
+- The user explicitly folded HP rebalance into ACTIVE P022 (not a separate task). **Every enemy's canonical maximum and full spawn HP becomes 3× former values**: Hopper **6** (was 2), Heavy **12** (was 4), Sickle Snake **6** (was 2), Healyzard **6** (was 2). Update canonical `EnemyTypes.MAX_HP`, model defaults and relevant test fixtures. Spawned enemies should receive their respective max HP by default.
+- **Tier 1** remains one shot for 1 damage. **Tier 2** remains two projectiles at 2 damage EACH (up to 4 total if both connect). **Tier 3 remains an unconditional, instant full clear of origin match-color lane AND one neighboring lane, regardless of HP**; emergency lane clear similarly kills regardless of HP. Higher enemy HP must NOT weaken these clearing abilities.
+- Healyzard heals exactly **+1 HP** to every other non-Healyzard in its lane every 15 seconds and caps at their **new maximum**; no self- or other-healer heals. Snake still stuns 0.5s on nonfatal hit, switches adjacent lanes and retains damage and new 6HP max, only one globally and 15s after death before successor.
+- Keep P023 increased movement speeds 0.312/0.2184/0.624/0 and text `All enemies neutralized`, P021 fullscreen prompt, spawn distribution and conveyor, 32 enemies, death/VFX and victory delay unchanged. No visible health indicators, only decorative Hopper orange horns.
+- **P023's previously built Web ZIP is STALE with old HP**. P022 must run full P001–P023 regression and new HP tests, then build **new** local ignored `exports/web/` and ZIP with 6/12/6/6 HP, verify and only deploy that updated package to Mintbase. P024 future push-triggered auto-deploy still queued; P022 must not activate it.
