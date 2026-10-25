@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: prototype design baseline, 2026-10-24. Parameters labeled "initial" are playtest values; mechanics are authoritative until changed via task mailbox.
+Status: prototype design baseline, updated with user playtest changes 2026-10-25 (P007). Parameters labeled "initial" are playtest values; mechanics are authoritative until changed via task mailbox.
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. Endless survival/high score for prototype.
@@ -9,7 +9,7 @@ A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four
 - One Godot 4 GDScript project, Compatibility renderer for Web, Android landscape export; baseline landscape 16:9, adapt layout to other landscape aspect ratios.
 - Upper ball chain, bottom horizontally sliding shooter, magazine, fever/score/pause: **2D**.
 - Combat battlefield: **3D primitive geometry** (cylinders, cubes, spheres/capsules), four fixed horizontal lanes; slightly elevated, fixed orthographic camera; minimalist look inspired by Thronefall, but no copied assets.
-- Enemies advance left using logical 1D positions per lane; animation hops/jumps (smooth arc, squash/stretch, shadow remains on floor); jumping is cosmetic and must **not** accidentally make basic enemies invulnerable.
+- Enemies advance left using logical 1D positions per lane **only during airborne hop travel**, with a grounded no-movement dwell between jumps. 3D arc/squash/stretch must follow the same hop phase; shadow stays on ground; neither airborne nor grounded state grants invulnerability.
 - Defenders stationary unless attacking, knocked down, or reviving. All four begin equivalent mechanically apart from color/symbol. Projectiles travel from defender to right; implement hits against enemies in matching lane.
 
 ## Color and shape identification
@@ -27,9 +27,9 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - One straight horizontal visible lane; chain travels right-to-left, and balls insert into the moving sequence on impact as in Zuma.
 - A successful match = group of >=3 **adjacent balls of one identity**, removed as one match event. After removal, close gap; if it reveals adjacent groups of >=3, cascade until stable.
 - Larger groups grant extra **score only**, not stronger attacks.
-- Balls crossing the screen's **left boundary are NOT destroyed and NOT penalized**: cache them in memory, preserving their relative order. Successful matches re-introduce a small batch (initial tuning suggestion: 3) from the **right**. If all visible balls are cleared or roll off, cached balls must reenter automatically; never leave the board permanently empty/stuck. If cache and visible chain both empty, the generator seeds the stream.
+- Balls crossing the screen's **left boundary are NOT destroyed and NOT penalized**: cache them in FIFO order. Successful matches request cached returns from the **right** (initial batch size 3), admitted when spacing allows. The conveyor also has a **continuous independent source of fresh balls at the right edge**, indefinitely throughout the run—not just on total chain exhaustion. Space pending cache returns among fresh balls without violating FIFO or blocking the new stream. Never strand an empty board or build an offscreen-right backlog.
 - Requirement is to preserve the original visible left-to-right order of cached subsequences when fully restored, **not reverse them inadvertently when inserting at the right**. Implement and test explicit order examples. (FIFO exit from left plus FIFO spawn from right preserves visual order.)
-- Avoid infinite unbounded automatic spawning: limit replenishment by total chain+cached population. Shot balls add to chain. Exact maximum/counts to tune.
+- **Unbounded fresh generation over lifetime is required**, but bounded simultaneously live/offscreen-right balls and non-overlapping spacing are required too. The cache retains legitimate exits without silently dropping them; avoid runaway per-frame work and document linear cache storage, if applicable. Shot balls add to chain. Feed pacing/population are playtest parameters.
 - For v0.1 do not assess score or lives penalties on rollover.
 
 ## Attack progression / fever
@@ -42,11 +42,11 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
   - further on-time matches sustain fever; timeout resets next match to tier 1.
 - Fever bar drains over the 3-second window and refills with each successful match. Attack strength determined at **match time**, not projectile impact.
 - Chain reactions: provisional prototype rule is that **each distinct group cleared** counts as its own match/combo step, even when resolved in one shot. Report playtest implications.
-- Initial attack tiers for prototype: tier 1 = 1 projectile, tier 2 = 2, tier 3/fever = 3. Larger match counts never affect tier; add a unique fever bonus only after playtesting.
+- Playtest revision **P007 attack tiers**: tier 1 = one ordinary projectile for **1 damage** (standard enemy **2 HP**, two hits to kill); tier 2 = two spaced projectiles each dealing **2 damage** (each hit kills a fresh standard enemy); tier 3 and FEVER = **instant lethal clear of all currently living enemies on the matched defender's lane plus ONE randomly selected adjacent lane**, with edge lanes choosing their only neighbor. Tier 3 replaces the earlier three-projectile burst. A match for a DOWN defender still advances revival rather than doing any attack. Larger match counts never affect tier.
 - Active defender fires immediately on color match even if lane is empty (attack can be wasted).
 
 ## Enemy combat, knockdown, recovery, loss
-- Basic enemies spawn on right, hop towards left; multiple can coexist per lane. Enemies have health; defender projectiles deal damage. Initial enemies and projectiles identical across lanes.
+- Basic enemies spawn on right and move left **only by hops**, with stationary grounded intervals; multiple can coexist per lane. Basic enemies have **2 HP**, tier-1 projectile hits deal 1 and tier-2 projectile hits deal 2. Tier-3 area clearing affects exactly the matched lane and one adjacent lane when its origin defender is ACTIVE; does not spend emergency charges.
 - When an enemy touches an **active** defender, knock the defender down.
 - Each lane has an **emergency discharge** available **once per run**. On its first defender knockdown, automatically kill all enemies currently on that lane. The charge never refreshes.
 - Later knockdowns still incapacitate the defender, but do **not** clear enemies.
@@ -56,7 +56,7 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - Emergency-charge availability and revival progress must be legible by lane.
 
 ## Starting balance and prototype scope
-- Four lanes/colors, three-ball match threshold, three-second combo/fever window, two matches to revive, one emergency discharge per lane.
+- Four lanes/colors, three-ball match threshold, three-second combo/fever window, two matches to revive, one emergency discharge per lane. Top-chain base speed **68 px/s** (2x the previous 34 px/s); independent perpetual right-edge stream.
 - Use adjustable debug constants for chain speed, refill count/population, enemy spawn rate, enemy speed, enemy HP, projectile speed/damage, cooldown and revival requirement.
 - Placeholder primitives, flat materials, no external models/SFX needed. Later work: dramatic effects, special enemies, distinct character abilities, accessibility palette menus, audio, richer fever effects.
 - Web and Android export validation is a later mailbox task; do not block core development on Android SDK setup.
@@ -68,3 +68,11 @@ Four ball/team identities: RED (circle/dot), BLUE (square), YELLOW (triangle), G
 - Enemy visual styles, emergency discharge VFX, palette variants.
 
 If necessary, implement conservative and configurable defaults and report decisions; do not invent fundamentally different gameplay.
+
+## P007 user playtest decisions (2026-10-25)
+- Faster top conveyor: base speed 68 px/s rather than 34 px/s.
+- Ball stream never stops replenishing from the right: ongoing fresh generation even before the board empties, integrated with preserving FIFO left-exit cache. Space/cap pertain to **simultaneous** balls, not cumulative ball generation.
+- Tier 1 requires two normal projectile hits for a standard 2-HP enemy. Tier 2 still fires a spaced two-projectile burst, but **each individual tier-2 projectile** kills a standard 2-HP enemy in one hit.
+- Tier 3/FEVER is a two-lane instant clear: matched lane plus randomly chosen directly adjacent lane. For top/bottom edge, only one eligible neighbor. No collateral nonadjacent lane or emergency-charge consumption. DOWN origin defender gets revival progress instead; no tier attack.
+- Enemies pause on ground, then leap forward only while airborne; average advance roughly as before (0.48 units/s). Gameplay X, swept collisions, hop visuals, defender contact and breach use the same displacement model.
+- These decisions supersede any older P002/P004/P005 statements or tests that assume a finite upper ball seed, three ordinary tier-3 projectiles, or constant horizontal enemy speed.
