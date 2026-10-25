@@ -15,7 +15,6 @@ const DEFAULT_EMPTY_RETURN_COUNT := 8
 const DEFAULT_MAX_AUTO_POPULATION := 24
 const MATCH_SIZE := 3
 const DEFAULT_SHOT_RADIUS := 12.0
-const RETURN_CATCHUP_SPEED := 120.0
 const ENTRY_MARGIN := 4.0
 const INSERT_SETTLE_TIME := 0.05
 const ROLLBACK_INITIAL_SPEED := 60.0
@@ -78,6 +77,11 @@ var max_concurrent_events := 0
 var min_logical_spacing := INF
 var min_display_spacing := INF
 var invariant_violations := 0
+var active_causal_motor_count := 0
+var active_feed_motor_count := 0
+var last_causal_reverse_displacement := 0.0
+var total_causal_reverse_distance := 0.0
+var segment_motion_log: Array[Dictionary] = []
 
 var _next_ball_id := 1
 var _next_segment_id := 1
@@ -119,6 +123,11 @@ func reset_run() -> void:
 	min_logical_spacing = INF
 	min_display_spacing = INF
 	invariant_violations = 0
+	active_causal_motor_count = 0
+	active_feed_motor_count = 0
+	last_causal_reverse_displacement = 0.0
+	total_causal_reverse_distance = 0.0
+	segment_motion_log.clear()
 	_next_ball_id = 1
 	_next_segment_id = 1
 	_next_gap_id = 1
@@ -237,6 +246,11 @@ func set_test_state(identities_value: Array[int], start_x := 100.0, cached: Arra
 	min_logical_spacing = INF
 	min_display_spacing = INF
 	invariant_violations = 0
+	active_causal_motor_count = 0
+	active_feed_motor_count = 0
+	last_causal_reverse_displacement = 0.0
+	total_causal_reverse_distance = 0.0
+	segment_motion_log.clear()
 	_next_segment_id = 1
 	_next_gap_id = 1
 	var members: Array[Dictionary] = []
@@ -254,8 +268,11 @@ func add_test_segment(identities_value: Array[int], anchor_x: float, gap_type :=
 	if members.is_empty():
 		return
 	if not segments.is_empty():
-		segment_gaps.append(_new_gap(gap_type))
-	segments.append(_new_segment(members, anchor_x))
+		var added := _new_segment(members, anchor_x)
+		segment_gaps.append(_new_gap(gap_type, 0, int(segments[-1].id), int(added.id)))
+		segments.append(added)
+	else:
+		segments.append(_new_segment(members, anchor_x))
 	_refresh_snapshot()
 
 func identities() -> Array[int]:
@@ -319,7 +336,14 @@ func _insert_into_segment(identity: int, segment_index: int, insert_index: int) 
 
 func _integrate_segments(delta: float) -> void:
 	if segments.is_empty() or delta <= 0.0:
+		active_causal_motor_count = 0
+		active_feed_motor_count = 0
+		last_causal_reverse_displacement = 0.0
+		segment_motion_log.clear()
 		return
+	var before_anchors := {}
+	for segment in segments:
+		before_anchors[int(segment.id)] = float(segment.anchor_x)
 	var adjustments: Array[float] = []
 	adjustments.resize(segments.size())
 	adjustments.fill(0.0)
@@ -328,17 +352,22 @@ func _integrate_segments(delta: float) -> void:
 		segment.anchor_x = float(segment.anchor_x) - speed * delta
 		segments[index] = segment
 
-	# One segment receives at most one special motor: its causal right edge has
-	# priority over feed catch-up at its left edge.
+	active_causal_motor_count = 0
+	# Only the stable LEFT endpoint of a CAUSAL edge owns a special motor. FEED
+	# trains retain the baseline conveyor velocity and never sprint into a gap.
 	for gap_index in range(segment_gaps.size()):
 		var gap := segment_gaps[gap_index]
 		if int(gap.type) == GapType.CAUSAL:
+			var left_index := _segment_index_by_id(int(gap.left_segment_id))
+			var right_index := _segment_index_by_id(int(gap.right_segment_id))
+			if left_index < 0 or right_index != left_index + 1:
+				continue
 			var distance := _accelerated_distance(gap, delta)
 			gap.speed = minf(ROLLBACK_MAX_SPEED, float(gap.speed) + ROLLBACK_ACCELERATION * delta)
 			segment_gaps[gap_index] = gap
-			adjustments[gap_index] = maxf(adjustments[gap_index], distance)
-		elif _segment_has_fully_entered(gap_index + 1) and adjustments[gap_index + 1] <= 0.0:
-			adjustments[gap_index + 1] = -RETURN_CATCHUP_SPEED * delta
+			adjustments[left_index] = maxf(adjustments[left_index], distance)
+			active_causal_motor_count += 1
+	active_feed_motor_count = 0
 
 	for recoil_index in range(tail_recoils.size() - 1, -1, -1):
 		var recoil := tail_recoils[recoil_index]
@@ -357,6 +386,7 @@ func _integrate_segments(delta: float) -> void:
 		var segment := segments[index]
 		segment.anchor_x = float(segment.anchor_x) + adjustments[index]
 		segments[index] = segment
+	_record_segment_motion(before_anchors, delta)
 	for recoil_index in range(tail_recoils.size() - 1, -1, -1):
 		var recoil := tail_recoils[recoil_index]
 		var segment_index := _segment_index_by_id(int(recoil.segment_id))
@@ -373,8 +403,8 @@ func _integrate_segments(delta: float) -> void:
 	_refresh_rollback_snapshot()
 
 func _solve_non_overlap(adjustments: Array[float]) -> void:
-	# Resolve desired segment translations before applying any of them. Causal
-	# leftward-edge motors yield first; feed right-side catch-up yields second.
+	# Clamp causal translations at physical contact without reassigning their
+	# motion to a right-side train.
 	for unused in range(maxi(1, segments.size() * 2)):
 		var changed := false
 		for gap_index in range(segment_gaps.size()):
@@ -395,11 +425,9 @@ func _process_contacts() -> void:
 	var safety := max_auto_population * 2
 	while safety > 0:
 		safety -= 1
-		var contact_index := -1
-		for index in range(segment_gaps.size()):
-			if _gap_distance(index) <= spacing + ROLLBACK_CONTACT_EPSILON:
-				contact_index = index
-				break
+		var contact_index := _first_contact_index(GapType.CAUSAL)
+		if contact_index < 0:
+			contact_index = _first_contact_index(GapType.FEED)
 		if contact_index < 0:
 			break
 		var gap := segment_gaps[contact_index]
@@ -417,6 +445,7 @@ func _process_contacts() -> void:
 		segments[contact_index] = left_segment
 		segments.remove_at(contact_index + 1)
 		segment_gaps.remove_at(contact_index)
+		_bind_gap_endpoints()
 		if was_causal:
 			total_rollbacks_completed += 1
 		if was_causal and matching_ends:
@@ -427,6 +456,12 @@ func _process_contacts() -> void:
 				return_cached(cache_return_batch)
 				_ensure_playable_stream()
 		_refresh_snapshot()
+
+func _first_contact_index(gap_type: int) -> int:
+	for index in range(segment_gaps.size()):
+		if int(segment_gaps[index].type) == gap_type and _gap_distance(index) <= spacing + ROLLBACK_CONTACT_EPSILON:
+			return index
+	return -1
 
 func _remove_group(segment_index: int, start: int, count: int, identity: int) -> void:
 	if segment_index < 0 or segment_index >= segments.size() or count <= 0:
@@ -477,6 +512,7 @@ func _remove_group(segment_index: int, start: int, count: int, identity: int) ->
 		elif has_next:
 			segment_gaps.remove_at(0)
 
+	_bind_gap_endpoints()
 	total_match_events += 1
 	last_match_identity = identity
 	last_match_size = count
@@ -563,6 +599,7 @@ func _roll_off_left() -> bool:
 			first.members = members
 			first.anchor_x = float(first.anchor_x) + spacing
 			segments[0] = first
+	_bind_gap_endpoints()
 	_refresh_snapshot()
 	return rolled_off
 
@@ -606,10 +643,9 @@ func _admit_on_right(identity: int, _force_right_edge: bool) -> void:
 		last.members = members
 		segments[-1] = last
 	else:
-		# The FEED motor stays dormant until the first member is fully visible, so
-		# every new or recycled batch crosses the mask at normal conveyor speed.
-		segment_gaps.append(_new_gap(GapType.FEED))
-		segments.append(_new_segment([_new_member(identity)], spawn_x))
+		var entrant := _new_segment([_new_member(identity)], spawn_x)
+		segment_gaps.append(_new_gap(GapType.FEED, 0, int(last.id), int(entrant.id)))
+		segments.append(entrant)
 
 func _find_contact_index(impact_x: float, tolerance: float) -> int:
 	var closest := -1
@@ -644,9 +680,6 @@ func _segment_index_by_id(segment_id: int) -> int:
 func _segment_end_x(segment: Dictionary) -> float:
 	return float(segment.anchor_x) + float((segment.members as Array).size() - 1) * spacing
 
-func _segment_has_fully_entered(segment_index: int) -> bool:
-	return segment_index >= 0 and segment_index < segments.size() and float(segments[segment_index].anchor_x) + radius <= lane_width + POSITION_EPSILON
-
 func _gap_distance(index: int) -> float:
 	return float(segments[index + 1].anchor_x) - _segment_end_x(segments[index])
 
@@ -678,15 +711,53 @@ func _register_rollback_started() -> void:
 	total_rollbacks_started += 1
 	_refresh_rollback_snapshot()
 
-func _new_gap(type: int, removed_count := 0) -> Dictionary:
+func _new_gap(type: int, removed_count := 0, left_segment_id := -1, right_segment_id := -1) -> Dictionary:
 	var result := {
 		"id": _next_gap_id,
 		"type": type,
 		"speed": ROLLBACK_INITIAL_SPEED if type == GapType.CAUSAL else 0.0,
 		"removed_count": removed_count,
+		"left_segment_id": left_segment_id,
+		"right_segment_id": right_segment_id,
 	}
 	_next_gap_id += 1
 	return result
+
+func _bind_gap_endpoints() -> void:
+	for index in range(segment_gaps.size()):
+		var gap := segment_gaps[index]
+		gap.left_segment_id = int(segments[index].id)
+		gap.right_segment_id = int(segments[index + 1].id)
+		segment_gaps[index] = gap
+
+func _record_segment_motion(before_anchors: Dictionary, delta: float) -> void:
+	segment_motion_log.clear()
+	last_causal_reverse_displacement = 0.0
+	for index in range(segments.size()):
+		var segment := segments[index]
+		var segment_id := int(segment.id)
+		if not before_anchors.has(segment_id):
+			continue
+		var displacement := float(segment.anchor_x) - float(before_anchors[segment_id])
+		var left_gap := segment_gaps[index - 1] if index > 0 else {}
+		var right_gap := segment_gaps[index] if index < segment_gaps.size() else {}
+		var is_causal_front := not right_gap.is_empty() and int(right_gap.type) == GapType.CAUSAL and int(right_gap.left_segment_id) == segment_id
+		if is_causal_front:
+			last_causal_reverse_displacement = maxf(last_causal_reverse_displacement, maxf(0.0, displacement))
+			total_causal_reverse_distance += maxf(0.0, displacement)
+		segment_motion_log.append({
+			"segment_id": segment_id,
+			"before_x": float(before_anchors[segment_id]),
+			"after_x": float(segment.anchor_x),
+			"displacement": displacement,
+			"velocity": displacement / delta,
+			"relative_to_normal": displacement / delta + speed,
+			"members": (segment.members as Array).size(),
+			"left_gap_type": int(left_gap.get("type", -1)),
+			"left_gap_id": int(left_gap.get("id", -1)),
+			"right_gap_type": int(right_gap.get("type", -1)),
+			"right_gap_id": int(right_gap.get("id", -1)),
+		})
 
 func _new_segment(members: Array[Dictionary], anchor_x: float) -> Dictionary:
 	var result := {"id": _next_segment_id, "anchor_x": anchor_x, "members": members}
@@ -735,6 +806,8 @@ func _refresh_rollback_snapshot() -> void:
 		var right_members: Array = segments[index + 1].members
 		rollback_gaps.append({
 			"id": int(gap.id),
+			"left_segment_id": int(gap.left_segment_id),
+			"right_segment_id": int(gap.right_segment_id),
 			"left_uid": int(left_members[-1].uid),
 			"right_uid": int(right_members[0].uid),
 			"tail_remaining": 0.0,
@@ -747,6 +820,8 @@ func _refresh_rollback_snapshot() -> void:
 		var members: Array = segments[segment_index].members
 		rollback_gaps.append({
 			"id": int(recoil.id),
+			"left_segment_id": int(segments[segment_index].id),
+			"right_segment_id": -1,
 			"left_uid": int(members[-1].uid),
 			"right_uid": -1,
 			"tail_remaining": float(recoil.remaining),
@@ -758,6 +833,10 @@ func _validate_invariants() -> void:
 	var step_min_display := INF
 	var seen := {}
 	var valid := segment_gaps.size() == maxi(0, segments.size() - 1)
+	if valid:
+		for gap_index in range(segment_gaps.size()):
+			valid = valid and int(segment_gaps[gap_index].get("left_segment_id", -1)) == int(segments[gap_index].id)
+			valid = valid and int(segment_gaps[gap_index].get("right_segment_id", -1)) == int(segments[gap_index + 1].id)
 	for index in range(balls.size()):
 		var ball := balls[index]
 		var uid := int(ball.uid)

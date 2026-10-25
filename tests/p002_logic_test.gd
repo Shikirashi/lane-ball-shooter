@@ -163,15 +163,16 @@ func _test_recycled_gap_adjacency() -> void:
 	_check(model.total_match_events == 0, "same colors across recycled wide gap do not match")
 	_check(model.identities().slice(0, 4) == [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED], "disconnected same-color runs remain ordered")
 
-	# P013 entries first cross the right mask at normal speed; feeder catch-up
-	# begins only after the returned segment is fully visible.
+	var separated_gap := float(model.balls[2].x) - float(model.balls[1].x)
+	# P014 removes the post-entry FEED sprint. Both rigid sections retain normal
+	# conveyor velocity, so a deliberately distant test batch stays separated.
 	model.advance(8.0)
 	var connected_gap := float(model.balls[2].x) - float(model.balls[1].x)
-	_check(is_equal_approx(connected_gap, model.spacing), "returned segment catches up without overlap or teleport")
+	_check(absf(connected_gap - separated_gap) < 0.001, "returned segment preserves its physical FEED gap at normal speed")
 	var rightmost_red_index := 3
-	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[rightmost_red_index].display_x) + 8.0), "shot inserts after recycled segment reconnects")
+	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[rightmost_red_index].display_x) + 8.0), "shot inserts within the recycled rigid segment")
 	model.advance(ChainModel.INSERT_SETTLE_TIME)
-	_check(model.total_match_events == 1 and model.last_match_size == 5, "reconnected physical run matches with true size")
+	_check(model.total_match_events == 1 and model.last_match_size == 3, "only the local returned run matches; distant front reds remain excluded")
 
 func _test_shot_pipeline() -> void:
 	var packed: PackedScene = load("res://scenes/main.tscn")

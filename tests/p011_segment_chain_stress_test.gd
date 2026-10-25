@@ -116,8 +116,9 @@ func _test_concurrent_gaps_fifo_and_restart() -> void:
 	fifo.set_test_state(fifo_tail, 500.0, cached)
 	fifo.return_cached(3)
 	_check(fifo.identities().slice(-3) == cached, "FIFO return colors retain exact order through segment admission")
-	_advance_checked(fifo, 8.0, 1.0 / 30.0, "FIFO catchup")
-	_check(_invariants_hold(fifo) and fifo.segment_gaps.is_empty(), "feed segment physically reconnects without passive match or overlap")
+	var fifo_gap := fifo._gap_distance(0)
+	_advance_checked(fifo, 8.0, 1.0 / 30.0, "FIFO normal entry")
+	_check(_invariants_hold(fifo) and fifo.segment_gaps.size() == 1 and absf(fifo._gap_distance(0) - fifo_gap) < 0.001, "separated FIFO batch stays rigid at normal speed without passive match or overlap")
 
 	var restart := ChainModel.new()
 	restart.set_test_state(identities, 100.0)
