@@ -1,34 +1,24 @@
-# Codex Handoff — LBS-P009
+# Codex Handoff — LBS-P010
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** `d5cd73b` (`Implement P009 Zuma-style chain rollback`)
+**Implementation commit:** `891ad0d` (`Implement P010 staged insertion cascades`)
 
-**Mailbox:** remains on LBS-P009; task/ledger/decision/protocol files were not changed.
+**Mailbox:** remains on LBS-P010; task, ledger, decision and protocol files were not changed.
 
 ## Implemented
 
-- Replaced synchronous right-suffix left shifting with explicit UID-anchored causal rollback states. Removing a player-matched group now leaves both survivor sections at their current logical/rendered positions and preserves the full spatial hole.
-- Every ball continues normal 34 px/s leftward conveyor travel. Only the contiguous LEFT/front/exit-side section receives additional rightward rollback: 360 px/s for different exposed colors and 480 px/s magnetic rollback for matching ends. Logical and `display_x` positions move together, remain sorted and stop at exact normal spacing without overlap.
-- The trailing/right section is never moved an extra amount to fill a player-cleared gap. Independent feeder/FIFO gaps retain their existing 120 px/s right-suffix catch-up, explicitly skipping causal rollback boundaries.
-- Same-color boundary cascades are deferred until physical contact. On contact, only the causally joined group is evaluated; each qualifying group emits one existing `match_completed` event with true size, then creates its next UID-anchored rollback. Different colors merge without a scan. Passive P008 3–7+ runs remain untouched.
-- Multiple simultaneous rollback states are supported. Stable endpoint UIDs survive index changes; insertions at retracting endpoints transfer the boundary to the inserted ball; removed/rolled-off endpoints prune stale state. Advance uses bounded 1/60 s substeps so large deltas cannot tunnel through contact and approximate subdivided updates.
-- Left-edge clears create no reverse actor. Full clears promptly resume the infinite source. Right-tail clears use a bounded 1.25-spacing recoil, then return to ordinary conveyor motion.
-- Reset/test-state setup clears motors, IDs and counters. F3 diagnostics now show active rollback count.
-- Preserved weighted fresh runs, 24-live-ball cap, far-right feed behavior, FIFO return order, 34 px/s conveyor, 0.20 s player-shot travel, 0.24 enemy average hop pace, combat tiers, survival, input and procedural SFX.
-- Updated P002/P003 only for the approved delayed physical-cascade timing. Added `tests/p009_zuma_rollback_test.gd` with 58 final checks and updated README/manual QA.
-
-## Collision/contact ordering
-
-1. Each bounded step advances every ball left at normal conveyor speed.
-2. Noncausal feed/cache gaps perform ordinary trailing catch-up, excluding active causal boundaries.
-3. Each causal motor moves its current contiguous left section right, capped at exactly one spacing from its right endpoint.
-4. On contact the motor retires; matching ends resolve one boundary group and may create the next motor. Different ends simply become connected.
-5. Display interpolation then settles any insertion-only offset; rollback itself updates logical/rendered X together. Rollover/cache and far-right feed run afterward.
-
-This ordering prevents new right-edge balls from occupying an internal clear hole or causing its cascade, while allowing normal FIFO/fresh scheduling to continue behind the trailing section.
+- Accepted shots now become visible UID-addressed chain balls immediately and register an independent simulation-time settle state. Their display position eases into the moving logical slot; the insert SFX still fires at contact.
+- Matching the inserted UID is deferred until exactly `ChainModel.INSERT_SETTLE_TIME = 0.05` seconds. At 0.049 seconds the full group remains present; at 0.050 seconds the connected group is recomputed and, if eligible, emits one match event. Misses create no timer, unmatched shots retire normally, removed/exited UIDs cancel stale checks, and reset clears all pending states.
+- `advance()` now bounds steps at both 1/60 second and the next settle deadline. Large deltas therefore preserve insertion, initial match, rollback, contact and cascade ordering instead of collapsing them into one handler/timestamp. Match log entries include deterministic simulation timestamps.
+- Replaced P009 constant-speed rollback with one motor per UID-anchored gap: 60 px/s initial speed, 900 px/s² acceleration and 420 px/s cap. The complete connected left/front segment receives the same logical and rendered displacement each substep; the receiving right section retains ordinary 34 px/s conveyor travel. Contact is clamped to exact spacing.
+- Same-color cascades remain causal and occur only when the physical rollback boundary reconnects. Each stage emits one later `match_completed` event. Different-color ends merge without a scan, and passive feeder/cache runs remain untouched.
+- Main now advances the combo timer to each chain event's simulation time while processing a frame, then advances the remainder. This keeps score, combo/fever, match SFX and defender response ordered at their actual yellow/red event times, including a larger frame delta.
+- Game over continues to freeze the model because Main stops advancing it. Restart clears settle clocks, rollback motors, event time and existing SFX/progression/combat state. F3 diagnostics now report pending SETTLE and ROLLBACK counts.
+- Preserved P009 rollback direction, far-right-only fresh/FIFO feed, stable identities, continuous generation, 34 px/s conveyor, 0.20-second player projectile, enemy hop balance, combat tiers, revival and all seven P008 procedural cues.
+- Updated only older assertions whose approved synchronous-match assumption changed. Added `tests/p010_staged_cascade_test.gd` with 190 checks covering exact timing, rigid acceleration, contact-only cascade, 30/60/120 FPS and large deltas, guard cases, concurrent/rollback-time shots, cleanup, and live SFX/score/attack ordering. README documents the P010 sequence and tunables.
 
 ## Validation
 
@@ -43,26 +33,23 @@ Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 - `godot --headless --path . --script res://tests/p007_playtest_revision_test.gd` — P007 PASS (49 checks).
 - `godot --headless --path . --script res://tests/p008_gamefeel_sfx_test.gd` — P008 PASS (82 checks).
 - `godot --headless --path . --script res://tests/p009_zuma_rollback_test.gd` — P009 PASS (58 checks).
-- `godot --headless --path . --resolution 960x540 --quit-after 5` — exit 0.
-- `godot --headless --path . --resolution 1280x720 --quit-after 5` — exit 0.
-- `godot --headless --path . --resolution 1600x720 --quit-after 5` — exit 0.
-- `git diff --check`, exported-binary scan, external-URL scan and credential-pattern scan — PASS.
+- `godot --headless --path . --script res://tests/p010_staged_cascade_test.gd` — P010 PASS (190 checks).
+- Bounded startup at 960×540, 1280×720 and 1600×720 — all exit 0.
+- `git diff --check`, export-binary scan and credential-pattern scan — PASS.
 
-Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable. All suites and startups returned exit 0 with no script/runtime failures. No platform exports or physical-device test was attempted; P006's templates/complete Android SDK remain unavailable.
+Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable; every suite and startup returned exit 0. No Web/Android export or physical-device/audio listening test was attempted because those external toolchains/devices remain outside this environment.
 
 ## Manual playtest
 
-1. Clear a 3–7-ball group in the middle. Immediately verify the right survivors stay put apart from normal conveyor motion, the hole remains visible, and the existing LEFT/front section rolls RIGHT smoothly into it.
-2. Repeat with different exposed colors: they should meet and stop at normal spacing without another clear. Repeat with matching exposed ends: they must visibly meet first, then emit one cascade/SFX/attack event.
-3. Build a two-stage pattern such as RED RED / GREEN GREEN / BLUE BLUE / GREEN / RED, insert BLUE, and observe delayed BLUE → GREEN → RED events without snapping.
-4. Fire a second shot while rollback is active and try two quick clears in different sections. Confirm shot contact follows the visible retracting ball, order stays stable and neither gap becomes stuck.
-5. Test a seven-ball middle clear, left-edge clear, right-tail clear and full clear. The wide gap should animate, left-edge/full clears should invent no rollback actor, tail recoil should be brief/bounded, and fresh feed should resume from the right.
-6. Let cached RED,GREEN,BLUE return while rollback is active. Confirm FIFO order, no fresh/cache ball appears inside the clear hole, passive long runs remain, and F3 rollback count returns to zero.
-7. Recheck match/insert/attack SFX, score/combo/FEVER, tier attacks, revival, emergency, breach and restart cleanup.
+1. Arrange `[RED][RED] [YELLOW][YELLOW] [RED][RED]` and shoot YELLOW into the pair. At contact, hear only insert and see seven real balls. The three yellows should remain visible for 50 ms, then pop together with one match cue, score/combo step and yellow defender response.
+2. Watch the remaining left red pair: both balls should reverse right together, start gently, accelerate, and preserve their spacing. The right red pair should continue ordinary left conveyor travel without jumping into the hole.
+3. Verify no red response occurs before contact. When the pairs meet, one four-red cascade should pop with a separate later cue, larger score award, second combo step and red defender response.
+4. Repeat with different exposed colors, long groups, three-stage cascades, two quick shots and a shot into the retracting section. Check that gaps remain physical, ordering stays stable, passive 3–7+ runs survive and no event/SFX duplicates.
+5. Let balls roll into FIFO cache and return while gaps close; confirm fresh generation remains at the far right and cached identity order is unchanged. Trigger game over during settle/rollback, wait, then restart and verify no stale match, motor, cue or attack resumes.
 
 ## Notes / limitations
 
-- Rollback speeds (360/480 px/s), 1.25-spacing tail recoil and 1/60 s maximum simulation step are initial tunables selected for visible, deterministic closure.
-- A quick insertion directly at an active exposed endpoint joins that endpoint's section and transfers the motor anchor to the new stable UID. More exotic simultaneous shots that delete a motor endpoint safely retire the stale motor rather than guessing a new unrelated boundary.
-- Cache remains intentionally linear for legitimate unreturned exits; rollback state is bounded by current causal gaps and stores only endpoint UIDs plus tail distance.
-- Pre-existing local editor-generated changes in `project.godot`, `scenes/main.tscn`, and generated `.uid` files were preserved and intentionally excluded.
+- The 60/900/420 rollback profile closes the common three-ball hole in about 0.59 seconds before contact, within the requested theatrical range. Tail recoil uses the same motor profile but remains capped at P009's 1.25-spacing distance.
+- The 50 ms visual settle is intentionally brief: high-refresh displays show several easing frames, while a 30 FPS display normally shows contact plus one intermediate frame before the pop. Simulation timing remains exact and deterministic at all tested rates.
+- Procedural cue synthesis/routing is automated, but timbre, loudness and perceived separation still require human listening on desktop, browser and Android hardware.
+- Pre-existing local editor-generated changes in `project.godot`, `scenes/main.tscn`, `scripts/audio/sfx_manager.gd.uid`, `tests/p007_playtest_revision_test.gd.uid` and `tests/p008_gamefeel_sfx_test.gd.uid` were preserved and intentionally excluded.
