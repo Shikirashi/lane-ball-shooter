@@ -1,54 +1,80 @@
-# Codex Handoff — LBS-P026 public GitHub Pages release
+# Codex Handoff — LBS-P024 automatic Web build and portfolio publication
 
-**Status:** COMPLETE
+**Status:** IMPLEMENTED; LIVE DEPLOYMENT BLOCKED AT REQUIRED CREDENTIAL CHECKPOINT
 
-**Game branch:** `master`
+**Branch:** `master`
 
-**Accepted gameplay/build source:** `cca99baba7805dd05c358c70ffa105aecc75efdc` (`Rebalance enemy HP and projectile tiers`)
+**Public URL retained:** [https://shikirashi.github.io/lane-ball-shooter/](https://shikirashi.github.io/lane-ball-shooter/)
 
-**Portfolio release commit:** `e087383653bac3e459f92e1acedc558f485a0b2a` (`Publish Lane Ball Shooter Web build`)
+P024 source automation is complete, but the game repository has no Actions secrets. Per the task's security boundary, Codex did not create a token, grant repository access, or install a credential. The existing accepted P026 portfolio release remains live and unchanged. No gameplay balance, Mintbase service, Tailscale setting, ChatGPT-owned mailbox file, or existing portfolio page was changed.
 
-**Public URL:** [https://shikirashi.github.io/lane-ball-shooter/](https://shikirashi.github.io/lane-ball-shooter/)
+## Existing hosting configuration inspected
 
-The mailbox remains on LBS-P026. ChatGPT-owned task, decision, ledger, and protocol files were not edited. P024 automation and Tailscale Serve were not configured.
+- Portfolio repository: `Shikirashi/Shikirashi.github.io`, `master`, clean and synchronized locally at P026 commit `e087383653bac3e459f92e1acedc558f485a0b2a` before P024 work.
+- GitHub Pages: legacy branch publication from `master` `/`, status `built`, public with HTTPS enforced.
+- Existing Pages run `40239268461` succeeded for `e087383`; the nine-file game lives only at `lane-ball-shooter/` and root `.nojekyll` is present.
+- Portfolio Actions are enabled. The game repository had zero Actions secrets at inspection time.
 
-## Publication
+This supports the least disruptive mechanism: an Actions workflow in the game repository makes one normal, non-force portfolio commit containing only the nested game files. The existing Pages branch publisher then deploys the whole portfolio normally. It avoids changing Pages mode, replacing the portfolio root, using Git LFS, or introducing a second workflow into the portfolio repository.
 
-- Pulled both repositories with `git pull --ff-only` and verified their `master` branches and GitHub remotes.
-- Used the accepted P022 release already present on Mintbase and confirmed it was byte-identical to the ignored `exports/web/` build before publication.
-- Replaced only `lane-ball-shooter/` in `Shikirashi/Shikirashi.github.io`. The existing site root, `.nojekyll`, and every other portfolio page were preserved.
-- Removed the folder's placeholder `.gitkeep` and committed exactly the nine actual Godot runtime files listed below.
-- Confirmed `index.wasm` and `index.pck` are normal Git blobs with no LFS filter or pointer content.
-- Pushed portfolio `master`; GitHub Pages workflow run `40239268461` completed successfully for commit `e087383`.
+## Implementation
 
-| Runtime file | Bytes | SHA-256 |
-|---|---:|---|
-| `index.html` | 5,447 | `6b94a111a6c79b5811b9d43a6e73bf7c5be40b8ecaeafab72c4e1d7bfd3c18a7` |
-| `index.js` | 279,815 | `33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba` |
-| `index.wasm` | 39,514,754 | `fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0` |
-| `index.pck` | 357,672 | `887b08c77b71283a388836c054294042cc84ff755852d38c9de5e039634ce619` |
-| `index.audio.worklet.js` | 7,298 | `5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3` |
-| `index.audio.position.worklet.js` | 2,973 | `be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8` |
-| `index.png` | 21,443 | `3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e` |
-| `index.icon.png` | 5,700 | `ad3c35ad0facf487c618204bd98db543034fc95224eadc7f08c7a9ff38d5b3b5` |
-| `index.apple-touch-icon.png` | 11,944 | `01d4f63e525941e06ce74f5187dad030d20a8d52a07ce365ae4e94af97a3b1f5` |
+`.github/workflows/publish-web.yml`:
 
-The accepted P022 archive SHA-256 remains `5711dbb5341d6546e564e96ab059801cf8df389687687942b583cc392b2749d4` and its PCK hash matches the published file above. The archive and release manifest were not published because P026 authorizes only the nine browser runtime files.
+- runs on trusted `master` pushes except mailbox/README/license/legacy-host-only changes, plus manual `workflow_dispatch`;
+- uses GitHub-hosted Ubuntu and immutable SHAs for checkout, cache, upload-artifact and download-artifact Actions;
+- installs official Godot 4.7.2 Standard Linux and export templates from fixed upstream URLs after SHA-256 verification (`cadd3204...` executable archive, `f298490b...` template archive);
+- runs every discovered top-level GDScript test, builds a fresh single-threaded Compatibility release from the exact checked-out commit, validates exactly nine files and uploads a 14-day reusable artifact;
+- serializes production jobs and rechecks remote game `master` immediately before publishing, so a superseded build cannot overwrite a newer source release;
+- stops at an explicit error when `PORTFOLIO_PUBLISH_TOKEN` is absent;
+- checks out current portfolio `master`, rejects unexpected target content, stages only `lane-ball-shooter/`, commits the game source SHA and pushes normally;
+- waits for the public PCK hash to change, then verifies all nine HTTPS files byte-for-byte and checks MIME types;
+- starts headless Chrome and requires `window.isSecureContext`, title `Lane Ball Shooter`, one nonempty canvas, and removal of Godot's HTML loader.
 
-## Verification
+Supporting scripts under `scripts/ci/` provide pinned Godot installation, full regression execution, exact release validation, guarded portfolio staging, isolated success/failure tests, public byte/MIME polling, and no-GUI browser startup verification. Generated Web binaries remain ignored in the game repository.
 
-- Before commit, served the nested portfolio checkout over loopback HTTP. All nine paths returned 200 with correct HTML, JavaScript, WASM, PCK, and PNG MIME types; downloaded WASM/PCK hashes matched the source release.
-- After Pages deployment, all nine public HTTPS paths returned 200. Every downloaded byte count and SHA-256 matched the table above.
-- `http://shikirashi.github.io/lane-ball-shooter/` returned 301 to the requested HTTPS game path.
-- Headless Google Chrome loaded the public HTTPS release through the Godot/WebGL splash at both 1280×720 and 1920×1080. In a persistent 1280×720 session after 12 seconds, the page reported `isSecureContext == true`, title `Lane Ball Shooter`, one live canvas, and no remaining HTML loader/status element, confirming runtime handoff beyond the splash.
-- P021 Web menu/export regression passed all 46 checks. P022 HP/penetrating-attacks regression executed directly from the published build's local PCK and passed all 48 checks. The recurring sandbox denial for `user://logs/godot.log` was nonfatal.
-- Headless canvas pixels are not DOM text, and repository rules prohibit GUI/mouse automation, so visual interaction with `LANE BALL SHOOTER`, fullscreen YES/NO behavior, sound, and gameplay still require ordinary browser QA.
-- The portfolio repository was clean and exactly synchronized with `origin/master` after its push.
+The failure path is production-safe: tests and export precede portfolio checkout; an invalid/missing release is rejected before mutation; unexpected target files or changes outside `lane-ball-shooter/` abort; a missing token aborts; a concurrent unrelated portfolio push causes a normal non-fast-forward failure. In all cases the prior Pages branch remains untouched. Rollback is a normal `git revert <deployment-commit>` in the portfolio repository, retaining audit history.
 
-No gameplay source changed in P026, so the already accepted P001–P023 regression results and exact P022 build remain authoritative. P026 adds publication verification rather than rebuilding or modifying the binary.
+## Required one-time user setup — minimum permission
 
-## Hosting disposition
+Create a fine-grained personal access token with:
 
-The preferred player endpoint is now the public GitHub Pages HTTPS URL. The prior Mintbase release and its user service were left intact, but its plain-HTTP tailnet URL is retained only as a legacy/private source because modern browser security checks can reject it. No Tailscale Serve, Funnel, firewall, DNS, or P024 automation changes were made.
+1. Resource owner `Shikirashi`.
+2. Access to only `Shikirashi/Shikirashi.github.io`.
+3. Repository permission **Contents: Read and write**; no Actions, Pages, Administration, organization or account permissions.
+4. A chosen expiration/rotation policy.
 
-For a later manually approved release, rebuild with `./scripts/build_web.sh`, validate all nine files, pull the portfolio repository, replace only `lane-ball-shooter/`, inspect the staged paths and hashes, then commit/push portfolio `master` and wait for its Pages workflow. P024 may automate that cross-repository sequence later; it remains inactive.
+Add it to `Shikirashi/lane-ball-shooter` as an Actions repository secret named exactly `PORTFOLIO_PUBLISH_TOKEN`. Do not send the token through chat or store it in either repository. Then manually dispatch `publish-web.yml` on `master`. This setup is required before an end-to-end automatic portfolio commit can be demonstrated; P024 must not be described as live until that run succeeds.
+
+## Local validation
+
+Godot `4.7.2.stable.official.ed1daf0bf`:
+
+- Full P001–P023 run via `./scripts/ci/run_regression_tests.sh`: **all 23 suites passed**. Counts: P002 66, P003 73, P004 43, P005 63, P006 69, P007 55, P008 84, P009 46, P010 162, P011 stress 16,485, P012 366, P013 50, P014 289, P015 524, P016 76, P017 352, P018 41, P019 117, P020 67, P021 46, P022 48, P023 38; P001 smoke passed.
+- `./scripts/build_web.sh`: PASS; produced nine runtime files and ignored ZIP. Local dry-run ZIP SHA-256 `0eb6566f102d989be1af0f4fea07f3abdb42cba43301d33a13dff465b14078a3`.
+- `validate_web_release.sh`: PASS for names, nonempty data, WASM/PCK/PNG magic, and nested relative references.
+- `test_publish_automation.sh`: PASS; preserved root and another demo byte-for-byte, changed only the game folder, and proved a missing PCK is rejected while a clean simulated portfolio stays unchanged.
+- Shell syntax for all CI scripts and Node syntax for the browser verifier: PASS.
+- Existing public P026 release: all nine HTTPS files returned 200 with expected MIME and byte-exact content.
+- Browser verifier against the existing public URL: PASS — secure context, `Lane Ball Shooter`, one 1280-wide canvas, loader removed after runtime startup.
+
+Known nonfatal local Godot export warnings were the sandboxed editor TCP/settings and unavailable Android build-tools messages; the Web export completed and validated. Pre-existing local `project.godot`, `scenes/main.tscn`, and untracked `.uid` changes remain unstaged and untouched.
+
+## Operational commands
+
+After the secret is installed:
+
+```sh
+gh workflow run publish-web.yml --repo Shikirashi/lane-ball-shooter --ref master
+gh run watch --repo Shikirashi/lane-ball-shooter
+```
+
+Rollback a published build without force-pushing:
+
+```sh
+git -C ../Shikirashi.github.io pull --ff-only
+git -C ../Shikirashi.github.io revert <portfolio-deployment-commit>
+git -C ../Shikirashi.github.io push origin master
+```
+
+The workflow run triggered by the P024 source commit is expected to prove the clean hosted build/test path and then fail at the intentional missing-secret checkpoint. Record its run URL/result after push; production must remain at portfolio `e087383` until the user grants the narrow credential and reruns it.

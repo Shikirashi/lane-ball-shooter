@@ -1,0 +1,153 @@
+name: Build and publish Godot Web
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - ".ai/**"
+      - "AGENTS.md"
+      - "README.md"
+      - "LICENSE*"
+      - "deploy/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lane-ball-shooter-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Test and build exact source commit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GODOT_DOWNLOAD_CACHE: ${{ runner.temp }}/lane-ball-shooter-godot-downloads
+    steps:
+      - name: Check out game source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Restore pinned Godot downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ${{ env.GODOT_DOWNLOAD_CACHE }}
+          key: godot-4.7.2-stable-linux-web-f298490b
+
+      - name: Install checksum-pinned Godot 4.7.2 and Web templates
+        run: ./scripts/ci/install_godot.sh
+
+      - name: Run every regression suite
+        run: ./scripts/ci/run_regression_tests.sh
+
+      - name: Build fresh Web release
+        run: ./scripts/build_web.sh
+
+      - name: Validate release and publication failure safety
+        run: |
+          ./scripts/ci/validate_web_release.sh exports/web
+          ./scripts/ci/test_publish_automation.sh exports/web
+
+      - name: Record build provenance
+        run: |
+          {
+            echo "## Validated Godot Web build"
+            echo
+            echo "Source commit: \`${GITHUB_SHA}\`"
+            echo
+            echo '```text'
+            (cd exports/web && sha256sum *)
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload validated nine-file release
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: lane-ball-shooter-web-${{ github.sha }}
+          path: exports/web/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+  publish:
+    name: Publish portfolio release
+    needs: build-and-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PORTFOLIO_PUBLISH_TOKEN: ${{ secrets.PORTFOLIO_PUBLISH_TOKEN }}
+    steps:
+      - name: Check out publishing scripts
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Ensure this is still the newest approved master commit
+        id: freshness
+        run: |
+          latest_sha="$(git ls-remote https://github.com/Shikirashi/lane-ball-shooter.git refs/heads/master | cut -f1)"
+          if [[ "$latest_sha" == "$GITHUB_SHA" ]]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping superseded source $GITHUB_SHA; master is $latest_sha." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Require narrowly scoped portfolio credential
+        if: steps.freshness.outputs.current == 'true'
+        run: |
+          if [[ -z "$PORTFOLIO_PUBLISH_TOKEN" ]]; then
+            echo "::error::PORTFOLIO_PUBLISH_TOKEN is not configured. Add a fine-grained token scoped only to Shikirashi/Shikirashi.github.io with Contents: Read and write, then manually dispatch this workflow."
+            exit 1
+          fi
+
+      - name: Download validated release
+        if: steps.freshness.outputs.current == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: lane-ball-shooter-web-${{ github.sha }}
+          path: web-release
+
+      - name: Check out portfolio master without replacing other content
+        if: steps.freshness.outputs.current == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: Shikirashi/Shikirashi.github.io
+          ref: master
+          token: ${{ secrets.PORTFOLIO_PUBLISH_TOKEN }}
+          path: portfolio
+          fetch-depth: 0
+
+      - name: Stage only the game folder
+        if: steps.freshness.outputs.current == 'true'
+        run: ./scripts/ci/publish_portfolio_release.sh web-release portfolio "$GITHUB_SHA"
+
+      - name: Commit and push coherent release
+        if: steps.freshness.outputs.current == 'true'
+        id: portfolio
+        working-directory: portfolio
+        run: |
+          git add -- lane-ball-shooter
+          if git diff --cached --quiet; then
+            portfolio_sha="$(git rev-parse HEAD)"
+            echo "No binary changes; portfolio already contains this reproducible release."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Deploy Lane Ball Shooter ${GITHUB_SHA}"
+            git push origin HEAD:master
+            portfolio_sha="$(git rev-parse HEAD)"
+          fi
+          echo "sha=$portfolio_sha" >> "$GITHUB_OUTPUT"
+          echo "Portfolio commit: \`$portfolio_sha\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify public HTTPS bytes and browser startup
+        if: steps.freshness.outputs.current == 'true'
+        run: |
+          ./scripts/ci/verify_public_release.sh web-release https://shikirashi.github.io/lane-ball-shooter/
+          node ./scripts/ci/verify_browser_startup.mjs "https://shikirashi.github.io/lane-ball-shooter/?release=${{ steps.portfolio.outputs.sha }}"
+          echo "Public URL verified: https://shikirashi.github.io/lane-ball-shooter/" >> "$GITHUB_STEP_SUMMARY"
