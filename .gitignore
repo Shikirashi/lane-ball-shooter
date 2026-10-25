@@ -15,6 +15,9 @@ dist/
 exports/
 *.apk
 *.aab
+*.jks
+*.keystore
+*.p12
 *.pck
 *.exe
 *.wasm

@@ -170,14 +170,40 @@ systemctl --user start lane-ball-shooter-web.service
 
 The committed service template is `deploy/lane-ball-shooter-web.service`; its private bind settings are in `deploy/lane-ball-shooter-web.environment.example` and installed at `~/.config/lane-ball-shooter-web/environment`. This legacy host is outside P024: automatic publication targets GitHub Pages only and never reconfigures or restarts Mintbase.
 
-Android debug export requires matching Android export templates plus a JDK and Android SDK configured under Godot's Editor Settings (`Java SDK Path` and `Android SDK Path`). The SDK must include `platform-tools`, a supported platform, build-tools and its `apksigner`. Then run:
+### Android builds and release signing
+
+The committed presets keep `Android Debug` for local iteration and add a separate `Android Release` preset for the public ARM64 APK. Both use package ID `com.shikirashi.laneballshooter`; release version `0.1.0` has version code `1`. Native Android starts gameplay directly in landscape. Generated APK/AAB files and common keystore formats are ignored by Git.
+
+Debug export requires matching Android templates plus a JDK and Android SDK configured under Godot's Editor Settings (`Java SDK Path` and `Android SDK Path`). The SDK must include `platform-tools`, a supported platform and build-tools. Then run:
 
 ```sh
 godot --headless --path . --export-debug "Android Debug" exports/android/lane-ball-shooter-debug.apk
 adb install -r exports/android/lane-ball-shooter-debug.apk
 ```
 
-The provisional package ID is `com.shikirashi.laneballshooter`, the preset exports ARM64, and orientation is sensor-landscape. Change the package ID in `export_presets.cfg` before any store submission and configure a private release keystore outside Git; the prototype preset intentionally needs no committed signing secret. Generated Web/APK/AAB files are ignored by Git.
+Public release creation is currently blocked: this workstation has no approved release keystore, Android SDK/build-tools, or Godot 4.7.2 Android export template. Consequently there is no verified APK, GitHub Release asset, public APK URL, or portfolio download card yet. A debug-signed placeholder is deliberately not published.
+
+To authorize and prepare the release without disclosing secrets:
+
+1. Install Godot 4.7.2's official Standard Android export template so `~/.local/share/godot/export_templates/4.7.2.stable/android_release.apk` exists. Install an Android SDK with platform-tools, a supported platform and build-tools providing `apksigner`, `aapt` and `zipalign`; configure those SDK/JDK paths in Godot.
+2. Create or explicitly approve a dedicated long-lived release keystore outside this repository. A new key can be created interactively with `keytool -genkeypair -v -keystore "$HOME/.local/share/lane-ball-shooter/signing/lane-ball-shooter-release.jks" -alias lane-ball-shooter -keyalg RSA -keysize 4096 -validity 10000`. Create its parent directory with mode `0700` first, use the same key and store password as Godot currently requires, and back up the keystore and password securely. Do not paste either into chat or commit them.
+3. In a clean checkout, export the local paths and secret values only in the shell, then run the guarded builder:
+
+```sh
+export ANDROID_HOME=/absolute/path/to/Android/Sdk
+export JAVA_HOME=/absolute/path/to/jdk
+export GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/absolute/private/path/lane-ball-shooter-release.jks
+export GODOT_ANDROID_KEYSTORE_RELEASE_USER=lane-ball-shooter
+read -rsp 'Release keystore password: ' GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD
+export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD
+./scripts/build_android.sh
+```
+
+The builder refuses dirty sources, missing/mismatched Godot templates, in-repository or debug signing keys, and incomplete SDK/JDK setups. It exports `exports/android/lane-ball-shooter.apk`; the verifier then requires a valid non-debug signature, package/version metadata, ARM64-only native code, a declared minimum SDK, zip alignment, no unexpected sensitive permissions, and prints the APK SHA-256 and byte size.
+
+After physical-device installation/startup, landscape controls, audio, restart and performance pass, publish the exact verified bytes as `lane-ball-shooter-android.apk` on a non-prerelease game GitHub Release. Release notes must include version/code, source commit, SHA-256, ARM64-only support and a sideload warning. Only then may the portfolio link point to `https://github.com/Shikirashi/lane-ball-shooter/releases/latest/download/lane-ball-shooter-android.apk`. GitHub APK downloads do not auto-update installed copies; later releases must preserve the signing identity and increment `version/code`.
+
+The P024 Web publisher intentionally replaces only `lane-ball-shooter/` in the portfolio repository. It does not build Android, touch a future root card/thumbnail, or use Android signing credentials; its separate `PORTFOLIO_PUBLISH_TOKEN` remains an explicit user setup item and was not changed for P027.
 
 ## Regression and playtest checklist
 
