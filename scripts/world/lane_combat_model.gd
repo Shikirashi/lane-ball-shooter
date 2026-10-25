@@ -4,6 +4,7 @@ extends RefCounted
 signal enemy_spawned(enemy: Dictionary)
 signal enemy_hit(enemy_uid: int, remaining_hp: int, impact_x: float)
 signal enemy_killed(enemy_uid: int, impact_x: float)
+signal enemy_neutralized(enemy_uid: int, impact_x: float, cause: StringName)
 signal projectile_spawned(projectile: Dictionary)
 signal defender_knocked_down(identity: int)
 signal emergency_discharged(identity: int, cleared_count: int)
@@ -295,6 +296,7 @@ func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
 		if int(enemy.hp) <= 0:
 			enemies.remove_at(index)
 			total_killed += 1
+			enemy_neutralized.emit(enemy_uid, impact_x, &"projectile")
 			enemy_killed.emit(enemy_uid, impact_x)
 			encounter_state_changed.emit()
 		else:
@@ -384,9 +386,12 @@ func _discharge_emergency() -> void:
 	if not emergency_available:
 		return
 	emergency_available = false
-	var cleared_count := enemies.size()
+	var victims := enemies.duplicate(true)
+	var cleared_count := victims.size()
 	total_emergency_cleared += cleared_count
 	enemies.clear()
+	for enemy in victims:
+		enemy_neutralized.emit(int(enemy.uid), float(enemy.x), &"emergency")
 	emergency_discharged.emit(team_identity, cleared_count)
 	encounter_state_changed.emit()
 
@@ -417,6 +422,7 @@ func clear_enemies_for_tier3() -> int:
 	enemies.clear()
 	for enemy in victims:
 		total_killed += 1
+		enemy_neutralized.emit(int(enemy.uid), float(enemy.x), &"tier3")
 		enemy_killed.emit(int(enemy.uid), float(enemy.x))
 	if not victims.is_empty():
 		encounter_state_changed.emit()

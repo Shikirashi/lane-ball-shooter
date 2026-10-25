@@ -5,7 +5,7 @@ const MIX_RATE := 22050
 const VOICE_COUNT := 10
 const DEFAULT_VOLUME_DB := -15.0
 const MAX_PCM_AMPLITUDE := 0.28
-const CUE_NAMES: Array[String] = ["shoot", "insert", "swap", "match", "attack", "knockdown", "revive"]
+const CUE_NAMES: Array[String] = ["shoot", "insert", "swap", "match", "attack", "knockdown", "revive", "enemy_death"]
 
 var muted := false
 var gameplay_enabled := true
@@ -134,6 +134,12 @@ func _build_clips() -> void:
 	clips.revive = _synthesize(0.32, func(t: float, _duration: float) -> float:
 		var note := mini(2, int(t / 0.1))
 		return _tone(t, [392.0, 523.25, 659.25][note], 0.5)
+	)
+	clips.enemy_death = _synthesize(0.38, func(t: float, duration: float) -> float:
+		var crunch := _triangle(t, lerpf(145.0, 52.0, t / duration), 0.34)
+		var pop := _tone(t, lerpf(310.0, 95.0, t / duration), 0.32)
+		var grit := sin(TAU * (720.0 * t + 41.0 * sin(t * 173.0))) * 0.1
+		return crunch + pop + grit
 	)
 
 func _synthesize(duration: float, generator: Callable) -> AudioStreamWAV:

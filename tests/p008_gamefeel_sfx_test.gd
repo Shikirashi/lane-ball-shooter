@@ -244,7 +244,8 @@ func _test_sfx_synthesis_and_voice_bounds() -> void:
 		for variant in variants:
 			var duration := sfx.clip_duration(cue, variant)
 			var peak := sfx.clip_peak(cue, variant)
-			_check(duration >= 0.045 and duration <= 0.35, "%s clip duration is short and bounded" % sfx._clip_key(cue, variant))
+			var max_duration := 0.45 if cue == "enemy_death" else 0.35
+			_check(duration >= 0.045 and duration <= max_duration, "%s clip duration is short and bounded" % sfx._clip_key(cue, variant))
 			_check(peak > 0.02 and peak <= SfxManagerScript.MAX_PCM_AMPLITUDE + 0.001, "%s PCM has gentle nonzero amplitude" % sfx._clip_key(cue, variant))
 	for index in range(50):
 		sfx.play_cue(SfxManagerScript.CUE_NAMES[index % SfxManagerScript.CUE_NAMES.size()], (index % 3) + 1)

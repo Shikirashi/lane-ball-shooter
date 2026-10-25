@@ -1,7 +1,11 @@
 class_name LaneActor
 extends Node3D
 
+signal enemy_death_started(identity: int, enemy_uid: int, impact_x: float, cause: StringName)
+
 const STATE_EFFECT_DURATION := 0.45
+const DEATH_EFFECT_DURATION := 1.0
+const DEATH_FALL_DURATION := 0.5
 const EMERGENCY_WAVE_EXPANSION := 38.0
 const REVIVAL_FLASH_EXPANSION := 3.0
 
@@ -16,6 +20,7 @@ var _status_label: Label3D
 var _enemy_visuals := {}
 var _projectile_visuals := {}
 var _death_effects: Array[Dictionary] = []
+var _death_uids := {}
 var _state_effects: Array[Dictionary] = []
 var _attack_feedback := 0.0
 var _revive_feedback := 0.0
@@ -31,7 +36,7 @@ func _ready() -> void:
 		combat_model = LaneCombatModel.new(team_identity)
 	_build_lane()
 	_build_defender()
-	combat_model.enemy_killed.connect(_on_enemy_killed)
+	combat_model.enemy_neutralized.connect(_on_enemy_neutralized)
 	combat_model.defender_knocked_down.connect(_on_defender_knocked_down)
 	combat_model.emergency_discharged.connect(_on_emergency_discharged)
 	combat_model.defender_revived.connect(_on_defender_revived)
@@ -41,8 +46,6 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	combat_model.update(delta)
-	if combat_model.game_over:
-		return
 	_update_defender_feedback(delta)
 	_update_death_effects(delta)
 	_update_state_effects(delta)
@@ -78,12 +81,15 @@ func enemy_hop_height(enemy: Dictionary) -> float:
 
 func reset_run() -> void:
 	for effect in _death_effects:
-		var death_node: Node = effect.node
-		death_node.queue_free()
+		for key in ["root", "shadow", "burst"]:
+			var death_node: Node = effect.get(key)
+			if is_instance_valid(death_node):
+				death_node.queue_free()
 	for effect in _state_effects:
 		var state_node: Node = effect.node
 		state_node.queue_free()
 	_death_effects.clear()
+	_death_uids.clear()
 	_state_effects.clear()
 	_attack_feedback = 0.0
 	_revive_feedback = 0.0
@@ -262,26 +268,105 @@ func _update_status_visual() -> void:
 	_status_label.modulate = TeamData.color(team_identity).lightened(0.25) if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else Color(0.72, 0.75, 0.82)
 	_charge_orb.material_override = PrimitiveFactory.material(Color(1.0, 0.74, 0.18) if combat_model.emergency_available else Color(0.16, 0.17, 0.2))
 
-func _on_enemy_killed(_enemy_uid: int, impact_x: float) -> void:
-	var effect := Node3D.new()
-	effect.name = "EnemyDefeatBurst"
-	effect.position = Vector3(impact_x, 0.62, 0.0)
-	for direction in [-1.0, 0.0, 1.0]:
-		var spark := PrimitiveFactory.sphere(0.09, 0.18, Color(1.0, 0.42, 0.18))
-		spark.position = Vector3(direction * 0.18, absf(direction) * 0.12, direction * 0.08)
-		effect.add_child(spark)
-	add_child(effect)
-	_death_effects.append({"node": effect, "age": 0.0})
+func _on_enemy_neutralized(enemy_uid: int, impact_x: float, cause: StringName) -> void:
+	if _death_uids.has(enemy_uid):
+		return
+	_death_uids[enemy_uid] = true
+	var visual: Dictionary
+	if _enemy_visuals.has(enemy_uid):
+		visual = _enemy_visuals[enemy_uid]
+		_enemy_visuals.erase(enemy_uid)
+	else:
+		visual = _create_enemy_visual(enemy_uid, combat_model.enemy_max_hp)
+		var fallback_root: Node3D = visual.root
+		var fallback_shadow: Node3D = visual.shadow
+		fallback_root.position = Vector3(impact_x, 0.29, 0.0)
+		fallback_shadow.position.x = impact_x
+	_prepare_fade_materials(visual.root)
+	_prepare_fade_materials(visual.shadow)
+	var burst := _create_death_burst(enemy_uid, impact_x)
+	var root: Node3D = visual.root
+	_death_effects.append({
+		"uid": enemy_uid,
+		"root": root,
+		"shadow": visual.shadow,
+		"burst": burst,
+		"age": 0.0,
+		"start_position": root.position,
+		"fall_sign": -1.0 if enemy_uid % 2 == 0 else 1.0,
+	})
+	enemy_death_started.emit(team_identity, enemy_uid, impact_x, cause)
+
+func _create_death_burst(enemy_uid: int, impact_x: float) -> Node3D:
+	var burst := Node3D.new()
+	burst.name = "EnemyDeathBurst_%d" % enemy_uid
+	burst.position = Vector3(impact_x, 0.66, 0.0)
+	var core := PrimitiveFactory.sphere(0.18, 0.36, Color(1.0, 0.62, 0.16, 0.9))
+	core.name = "ExplosionCore"
+	_prepare_fade_materials(core)
+	burst.add_child(core)
+	for index in range(8):
+		var angle := TAU * float(index) / 8.0
+		var spark := PrimitiveFactory.sphere(0.055, 0.11, Color(1.0, 0.34 + 0.05 * (index % 3), 0.08, 0.95))
+		spark.name = "Spark%d" % index
+		spark.position = Vector3(cos(angle) * 0.16, sin(angle) * 0.14, sin(angle * 2.0) * 0.1)
+		_prepare_fade_materials(spark)
+		burst.add_child(spark)
+	add_child(burst)
+	return burst
+
+func _prepare_fade_materials(node: Node) -> void:
+	var meshes: Array[Node] = []
+	if node is MeshInstance3D:
+		meshes.append(node)
+	meshes.append_array(node.find_children("*", "MeshInstance3D", true, false))
+	for child in meshes:
+		var mesh_instance := child as MeshInstance3D
+		var material := mesh_instance.material_override as StandardMaterial3D
+		if material == null:
+			material = StandardMaterial3D.new()
+		else:
+			material = material.duplicate()
+		material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh_instance.material_override = material
+
+func _set_visual_alpha(node: Node, alpha: float) -> void:
+	var meshes: Array[Node] = []
+	if node is MeshInstance3D:
+		meshes.append(node)
+	meshes.append_array(node.find_children("*", "MeshInstance3D", true, false))
+	for child in meshes:
+		var material := (child as MeshInstance3D).material_override as StandardMaterial3D
+		if material != null:
+			var color := material.albedo_color
+			color.a = clampf(alpha, 0.0, 1.0)
+			material.albedo_color = color
 
 func _update_death_effects(delta: float) -> void:
 	for index in range(_death_effects.size() - 1, -1, -1):
 		var effect := _death_effects[index]
 		effect.age = float(effect.age) + delta
-		var node: Node3D = effect.node
-		node.position.y += delta * 0.8
-		node.scale = Vector3.ONE * maxf(0.0, 1.0 - float(effect.age) / 0.32)
-		if float(effect.age) >= 0.32:
-			node.queue_free()
+		var age := float(effect.age)
+		var root: Node3D = effect.root
+		var shadow: Node3D = effect.shadow
+		var burst: Node3D = effect.burst
+		var fall_ratio := clampf(age / DEATH_FALL_DURATION, 0.0, 1.0)
+		var eased_fall := 1.0 - pow(1.0 - fall_ratio, 3.0)
+		var start_position: Vector3 = effect.start_position
+		root.rotation.z = float(effect.fall_sign) * (PI * 0.47) * eased_fall
+		root.position = Vector3(start_position.x + float(effect.fall_sign) * 0.18 * eased_fall, lerpf(start_position.y, 0.42, eased_fall), start_position.z)
+		shadow.position.x = root.position.x
+		shadow.scale = Vector3(1.0 + eased_fall * 0.35, 1.0, 0.82)
+		var fade := 1.0 - clampf((age - 0.52) / (DEATH_EFFECT_DURATION - 0.52), 0.0, 1.0)
+		_set_visual_alpha(root, fade)
+		_set_visual_alpha(shadow, fade * 0.58)
+		var burst_ratio := clampf(age / 0.38, 0.0, 1.0)
+		burst.scale = Vector3.ONE * (1.0 + burst_ratio * 2.2)
+		_set_visual_alpha(burst, 1.0 - burst_ratio)
+		if age >= DEATH_EFFECT_DURATION:
+			root.queue_free()
+			shadow.queue_free()
+			burst.queue_free()
 			_death_effects.remove_at(index)
 		else:
 			_death_effects[index] = effect

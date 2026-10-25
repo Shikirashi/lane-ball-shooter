@@ -1,6 +1,7 @@
 extends Node
 
 const SHOOT_COOLDOWN := 0.4
+const VICTORY_PRESENTATION_DELAY := 3.0
 const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
 const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 
@@ -24,6 +25,8 @@ var _playfield_rect := Rect2()
 var _safe_rect := Rect2()
 var _game_over := false
 var _victory := false
+var _victory_pending := false
+var _victory_delay_remaining := 0.0
 var _progression_chain_time := 0.0
 var _processing_chain := false
 
@@ -40,6 +43,7 @@ func _ready() -> void:
 	_battlefield.encounter_progress_changed.connect(_on_encounter_progress_changed)
 	_battlefield.defender_knocked_down.connect(_on_defender_knocked_down)
 	_battlefield.defender_revived.connect(_on_defender_revived)
+	_battlefield.enemy_death_started.connect(_on_enemy_death_started)
 	_game_over_overlay.restart_requested.connect(_restart_run)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
@@ -48,6 +52,11 @@ func _ready() -> void:
 	_layout()
 
 func _process(delta: float) -> void:
+	if _victory_pending:
+		_victory_delay_remaining = maxf(0.0, _victory_delay_remaining - maxf(delta, 0.0))
+		if _victory_delay_remaining <= 0.000001:
+			_finish_victory_presentation()
+		return
 	if _game_over:
 		return
 	_cooldown_remaining = maxf(0.0, _cooldown_remaining - delta)
@@ -128,10 +137,14 @@ func _on_magazine_changed(loaded: int, next_value: int) -> void:
 	_shooter_view.set_ammunition(loaded, next_value)
 
 func _on_shot_reached_lane(identity: int, screen_x: float) -> void:
+	if _game_over:
+		return
 	if _chain_model.try_insert_shot(identity, screen_x - _chain_view.position.x):
 		_sfx.play_cue("insert")
 
 func _on_chain_match_completed(identity: int, group_size: int) -> void:
+	if _game_over:
+		return
 	if _processing_chain:
 		_sync_progression_to_chain_time()
 	_sfx.play_cue("match")
@@ -147,6 +160,8 @@ func _on_progression_state_changed(score: int, combo_count: int, tier: int, feve
 	_hud_view.set_progress(score, combo_count, tier, fever_active, window_ratio)
 
 func _on_match_resolved(result: Dictionary) -> void:
+	if _game_over:
+		return
 	_chain_view.show_progression_feedback(result)
 	var outcome := _battlefield.handle_match(result)
 	if str(outcome.get("action", "")) == "attack":
@@ -159,11 +174,16 @@ func _on_defender_knocked_down(_identity: int) -> void:
 func _on_defender_revived(_identity: int) -> void:
 	_sfx.play_cue("revive")
 
+func _on_enemy_death_started(_identity: int, _enemy_uid: int, _impact_x: float, _cause: StringName) -> void:
+	_sfx.play_cue("enemy_death")
+
 func _on_game_over_requested(_identity: int) -> void:
 	if _game_over:
 		return
 	_game_over = true
 	_victory = false
+	_victory_pending = false
+	_victory_delay_remaining = 0.0
 	_sfx.set_gameplay_enabled(false)
 	_clear_touch_ownership()
 	_shooter_view.set_simulation_paused(true)
@@ -175,10 +195,18 @@ func _on_encounter_cleared() -> void:
 		return
 	_game_over = true
 	_victory = true
-	_sfx.set_gameplay_enabled(false)
+	_victory_pending = true
+	_victory_delay_remaining = VICTORY_PRESENTATION_DELAY
 	_clear_touch_ownership()
 	_shooter_view.set_simulation_paused(true)
 	_chain_view.set_settling_visuals_visible(false)
+
+func _finish_victory_presentation() -> void:
+	if not _victory_pending or not _victory:
+		return
+	_victory_pending = false
+	_victory_delay_remaining = 0.0
+	_sfx.set_gameplay_enabled(false)
 	_game_over_overlay.show_wave_cleared(_progression.score)
 
 func _on_encounter_progress_changed(neutralized: int, total: int, remaining: int) -> void:
@@ -187,6 +215,8 @@ func _on_encounter_progress_changed(neutralized: int, total: int, remaining: int
 func _restart_run() -> void:
 	_game_over = false
 	_victory = false
+	_victory_pending = false
+	_victory_delay_remaining = 0.0
 	_sfx.reset_run()
 	_cooldown_remaining = 0.0
 	_clear_touch_ownership()

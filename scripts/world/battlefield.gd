@@ -6,6 +6,7 @@ signal encounter_cleared
 signal encounter_progress_changed(neutralized: int, total: int, remaining: int)
 signal defender_knocked_down(identity: int)
 signal defender_revived(identity: int)
+signal enemy_death_started(identity: int, enemy_uid: int, impact_x: float, cause: StringName)
 
 var lanes: Array[LaneActor] = []
 var attack_history: Array[Dictionary] = []
@@ -32,6 +33,7 @@ func _ready() -> void:
 		lane.combat_model.defender_knocked_down.connect(_on_defender_knocked_down)
 		lane.combat_model.defender_revived.connect(_on_defender_revived)
 		lane.combat_model.encounter_state_changed.connect(_on_encounter_state_changed)
+		lane.enemy_death_started.connect(_on_enemy_death_started)
 	_publish_encounter_progress()
 
 func _process(_delta: float) -> void:
@@ -181,6 +183,9 @@ func _on_defender_knocked_down(identity: int) -> void:
 
 func _on_defender_revived(identity: int, _repelled_count: int) -> void:
 	defender_revived.emit(identity)
+
+func _on_enemy_death_started(identity: int, enemy_uid: int, impact_x: float, cause: StringName) -> void:
+	enemy_death_started.emit(identity, enemy_uid, impact_x, cause)
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()
