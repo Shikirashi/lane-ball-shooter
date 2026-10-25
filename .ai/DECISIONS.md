@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: P021 Web menu/export accepted; P023 enemy speed/victory subtitle ACTIVE; P022 Mintbase first hosting QUEUED; P024 automatic post-push Web build/deployment QUEUED for after P022 (2026-10-25).
+Status: P023 enemy speed/victory subtitle source-reviewed COMPLETE; P022 initial Mintbase LAN/Tailscale Web hosting ACTIVE; P024 automated post-push deployment QUEUED (2026-10-25).
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
@@ -156,3 +156,7 @@ If necessary, implement conservative and configurable defaults and report decisi
 - Static HTTP hosting normally requires **no restart on content updates**; a versioned directory and atomic `current` symlink are preferred. Restart/reload server only for real server/config changes. Existing running game tabs need not be interrupted; browser refresh loads new release. Maintain minimal appropriate cache semantics.
 - Infrastructure can be an explicitly approved restricted GitHub Actions runner on Mintbase or other secure trusted build/transfer design selected after assessing P022 implementation and permissions. Do not install persistent CI credentials/services, enable public firewall changes or run arbitrary PR code on Mintbase without the user's authorization.
 - **Status now:** P024 queued at `.ai/TASKS/LBS-P024.md`. P022 prepares versioned deploy hooks for P024; P023 remains the only active Codex task. Hosting and auto-deploy are NOT yet installed or running.
+
+## P023 completed / P022 activated (2026-10-25)
+- P023 `0378d45` accepted after code review, Codex reports P001–P023 all passing (P023 38 checks) and rebuilt local Web ZIP with SHA-256 `08a8d52201b1d3fd03c983267bd54659a5350db109a07bc31e6f09526e5dfccb`. Game difficulty browser QA remains open.
+- P022 is the ONLY active task: deploy this latest Web build to Mintbase over an existing authorized LAN or Tailscale-accessible HTTP port with versioned releases/atomic promotion and a persistent static server; avoid other app service conflicts. No public Internet exposure until separately requested. P024 automation remains queued pending a working manually tested hosting service.
