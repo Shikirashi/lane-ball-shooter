@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
-      GODOT_DOWNLOAD_CACHE: ${{ runner.temp }}/lane-ball-shooter-godot-downloads
+      GODOT_DOWNLOAD_CACHE: /tmp/lane-ball-shooter-godot-downloads
     steps:
       - name: Check out game source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
