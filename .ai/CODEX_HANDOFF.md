@@ -4,12 +4,13 @@
 
 **Branch:** `master`
 
-**Implementation commit:** `327077e` (`Implement P008 gamefeel and procedural audio`)
+**Implementation commits:** `327077e` (`Implement P008 gamefeel and procedural audio`), corrected by `d1df357` (`Correct P008 conveyor speed to 34 px/s`)
 
 **Mailbox:** remains on LBS-P008; task/ledger/decision/protocol files were not changed.
 
 ## Implemented
 
+- P008 correction: restored `ChainModel.DEFAULT_SPEED` from 68 to **34 px/s**. The player-fired projectile remains independently locked to a **0.20-second** trip to the upper lane. README, active task, decisions, and deterministic movement/feed tests now reflect the corrected separation.
 - Replaced fixed 610 px/s shooter motion with per-shot elapsed interpolation to a locked launch-time target. Every accepted shot preserves launch X/identity and reaches the upper lane in `ShooterView.SHOT_TRAVEL_TIME=0.20` seconds at all supported layout heights; large deltas and mid-flight resize emit once. The 0.4 s cooldown is unchanged.
 - Halved `LaneCombatModel.DEFAULT_ENEMY_SPEED` to 0.24 world units/s average while retaining the 0.55 s grounded dwell, 0.75 s airborne phase, hop-only translation, visual phase sync, piecewise projectile sweep, and contact/emergency/breach ordering.
 - Replaced only the top feeder's strict color shuffle with deterministic weighted same-color runs. Lengths 1–7 use weights `[20, 30, 18, 13, 9, 6, 4]`; run colors use a shuffled four-color bag and cannot repeat at run boundaries. Public bounded counters expose identity totals, run-length totals, run count and longest run. Restart resets RNG/run state deterministically. The separate magazine shuffle bag is unchanged.
@@ -30,7 +31,7 @@ Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 - `godot --headless --path . --script res://tests/p005_survival_test.gd` — P005 PASS (63 checks).
 - `godot --headless --path . --script res://tests/p006_platform_qa_test.gd` — P006 PASS (66 checks).
 - `godot --headless --path . --script res://tests/p007_playtest_revision_test.gd` — P007 PASS (49 checks).
-- `godot --headless --path . --script res://tests/p008_gamefeel_sfx_test.gd` — P008 PASS (81 checks).
+- `godot --headless --path . --script res://tests/p008_gamefeel_sfx_test.gd` — P008 PASS (82 checks).
 - `godot --headless --path . --resolution 960x540 --quit-after 5` — exit 0.
 - `godot --headless --path . --resolution 1280x720 --quit-after 5` — exit 0.
 - `godot --headless --path . --resolution 1600x720 --quit-after 5` — exit 0.
@@ -41,7 +42,7 @@ Every Godot invocation printed the known non-fatal sandbox diagnostic because `u
 
 ## Manual playtest / audio listening
 
-1. At 960×540, 1280×720, 1600×720 and 2400×1080, fire while moving the shooter. Each ball should visibly take about 0.20 s, keep its original X, and the 0.4 s cooldown should remain apparent.
+1. At 960×540, 1280×720, 1600×720 and 2400×1080, confirm the conveyor moves at the restored 34 px/s. Fire while moving the shooter: each fired ball should independently take about 0.20 s, keep its original X, and retain the 0.4 s cooldown.
 2. Watch the train for several minutes. Pairs should be common and 4–7-ball runs occasional. A long run must survive passive travel/re-entry; inserting its own color clears the whole resulting group once, while a wrong-color/unrelated insertion does not.
 3. Compare enemy approach to P007: grounded pauses and jump cadence are unchanged, but average advance is half-speed (0.24 units/s). Recheck swept hits, emergency-first contact and later breach.
 4. Listen for: upward shoot pew (including eventual misses), insert plop only on contact, two-note swap, bright match arpeggio per group, tier-varying attack zap/stronger tier-3 sting, descending knockdown womp, and rising completed-revival chime. Revival 1/2 must have no revive/attack sound; tier-3 must sound once, not once per cleared lane.
