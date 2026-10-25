@@ -23,7 +23,7 @@ Five explicit revisions:
 Existing `scripts/ui/shooter_view.gd` advances fired balls upward at hardcoded 610 pixels/s: too slow. Introduce a tunable `SHOT_TRAVEL_TIME := 0.20` seconds. For each accepted shot record launch X, initial Y, target lane Y (as provided by current responsive layout), elapsed time, and identity. Position with elapsed-time interpolation or with speed calculated from that shot's actual initial-to-target distance, so each shot reaches upper lane in **0.20s in 960x540, 1280x720, 1600x720 and 2400x1080** layouts rather than only at one viewport height.
 
 - Keep straight vertical path and stable X; shooter movement AFTER firing must not steer a shot.
-- Cross lane boundary exactly once even for a single `_process(0.5)` update. Emit `shot_reached_lane` exactly once and remove finished shot; no double consume, no score or sound for a miss.
+- Cross lane boundary exactly once even for a single `_process(0.5)` update. Emit `shot_reached_lane` exactly once and remove finished shot; no double consume, no score or **insertion/impact SFX** for a miss. The accepted firing still plays its **shoot** SFX even if the shot eventually misses.
 - The 0.4s firing cooldown is unchanged (shot speed is NOT fire rate). Keep loaded/next generation, swaps, desktop and touch, and their no-double-input rules.
 - Player's input snapshot is at moment of firing; maintain correct impact X against the chain's current position after travel. Do not teleport an impossible shot into a distant train. If a resize happens while a shot is active, preserve sensible shot termination and avoid duplicate insertion.
 - Visually confirm shot reaches upper chain quickly but visibly (not instantly). Any firing VFX cadence may be adjusted.
