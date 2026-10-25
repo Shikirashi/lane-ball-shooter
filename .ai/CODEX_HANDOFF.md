@@ -1,73 +1,86 @@
-# Codex Handoff — LBS-P016
+# Codex Handoff — LBS-P017 (corrected physical-left interpretation)
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** this scoped P016 commit.
+**Implementation commit:** this scoped P017 commit.
 
-**Mailbox:** remains on LBS-P016. `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
+**Mailbox:** remains on corrected LBS-P017. `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
+
+## Correction and root cause
+
+P016 deleted every ball whose circle cleared LEFT: `_roll_off_left()` removed its member/UID, stored only its color in `cache`, and `_feed_right_edge()` later built a different member/UID beyond RIGHT. A later gap therefore had no original left-hand object for virtual gravity to move. The visually similar color was a respawn on the wrong side, not Zuma-style rollback.
+
+P017 removes that gameplay path. Crossing `x=0` or `x=-radius` has no topology mutation. The same member remains inside its authoritative rigid segment with its original UID, identity, signed position, order and 58 px spacing. Only an actual match or run reset removes it.
 
 ## Implementation
 
-- Changed the single canonical `ChainModel.DEFAULT_SPEED` from 34 to **102 px/s**. Source-supported rigid segments, fresh entrants, and recycled entrants all use that same normal speed.
-- Preserved the separate movement values: vertical player shots remain 0.20 seconds, cooldown 0.40 seconds, insertion settlement 0.05 seconds, enemy average speed 0.24 units/s, and unsupported-segment gravity remains initial 60 px/s, acceleration 900 px/s², cap 420 px/s.
-- Fixed the rollover root cause by making `cache` the canonical eligibility queue. `_roll_off_left()` appends each fully crossed color once, increments `total_exited`, and immediately exposes the full queue through `pending_cache_returns == cache.size()`.
-- Ordinary `_feed_right_edge()` calls now drain cached colors without a match. The deterministic policy admits up to three FIFO returns, then one weighted fresh color. This prioritizes recycling while guaranteeing continued fresh generation.
-- Preserved the legacy `return_cached()` API as a compatibility prompt. In continuous mode it can immediately admit already-eligible colors when a legal slot exists, but it cannot add quota tokens or schedule the same color twice. Its return value is the number actually admitted during that call. Deterministic fixtures with continuous feed disabled retain direct requested-count admission.
-- Recycled and fresh colors use the same single offscreen-right slot, mask, segment admission, 102 px/s motion, and maximum 24 live automatic balls. FIFO colors retain order and get new unique live UIDs.
-- Added bounded F3 counters: `Q` queue length, `P` eligible count, `X` total left exits, `A` returns admitted automatically by ordinary simulation, and `F` total fresh generations, alongside P015 gravity diagnostics. The model also retains total recycled admissions for exact reconciliation.
-- Restart clears queue, eligibility and all recycle counters. Main's existing terminal guard prevents movement, spawning, exits, and returns after defeat or WAVE CLEARED.
+- Normal advancement no longer invokes left rollover. Segment anchors and derived ball positions may continue arbitrarily negative.
+- The right feeder now admits only NEW weighted-run colors. Match resolution no longer calls `return_cached()`, and continuous gameplay makes that deprecated API a no-op. Its old direct behavior remains only for isolated non-continuous historical fixtures.
+- The 24-ball automatic cap now uses `active_population_count()`: balls whose circles have not fully cleared LEFT, including a staged right entrant. Fully hidden left history does not block fresh generation. Right staging remains limited to one ball.
+- Existing P015 gravity needs no animation substitute: when a match splits the chain, every segment left of the gap—including negative-X members—becomes unsupported and accelerates RIGHT as one rigid group using the preserved 60/900/420 profile. Contact clamps at exact spacing and only a CAUSAL edge can cascade.
+- P012 insertion still translates the entire preceding prefix LEFT by 58 px, including hidden members. Source-supported trains and NEW right entrants still move LEFT at 102 px/s.
+- Shot collision now rejects wholly clipped balls on either side. A crossing circle remains targetable once it physically intersects the visible lane.
+- The established conveyor render layer filters wholly offscreen members before issuing draw commands; the existing mask supplies progressive clipping at both LEFT and RIGHT. Settling/in-flight/loaded/next visuals retain their existing unmasked ownership.
+- F3 replaces P016's retired queue counters with `L` retained-left count, `X` leftmost center, `A` active population, `U/G` unsupported segments/gaps, `V/D` gravity speed/displacement, `F` fresh count and `I` invariant violations.
+- Restart discards the whole run, including hidden history. GAME OVER and WAVE CLEARED continue to freeze all chain physics.
 
-## Scheduling and memory trade-off
+## Performance and memory policy
 
-The queue is a compact `Array[int]` of color identities and uses front-pop FIFO semantics; it does not scan the queue per frame. With lossless recycling plus a required independent fresh source, an indefinitely full-throughput no-match run introduces one new color for each group of up to three returns. The stored queue can therefore grow over unlimited time. This is intentional and documented: live/offscreen geometry remains bounded, and exited colors are never silently dropped. Matches create additional capacity and let the return-priority policy service the backlog.
+Hidden history is intentionally lossless and can grow for the lifetime of an encounter. Member storage and the compatibility snapshot/validation pass are linear in total retained balls; segment integration/contact remains based on the much smaller segment list, and rendering skips wholly clipped members. No operation introduced by P017 is quadratic in history length. The mandatory three-minute no-shot simulation retained more than 100 hidden balls, continued generating fresh balls, and completed inside the 10-second regression bound.
+
+This is an honest memory trade-off: there is no distance-based pruning because any left segment can become unsupported and return. A future extremely long/endless-mode optimization could use a chunked prefix representation, but the present finite 32-enemy encounter keeps practical history modest.
 
 ## Regression coverage
 
-Added `tests/p016_speed_auto_recycle_test.gd` — PASS (72 checks):
+Added `tests/p017_offscreen_left_reentry_test.gd` — PASS (352 checks):
 
-- Exact 102×delta source movement at 120/60/30 Hz and larger deltas; unchanged shot, enemy, and gravity tuning.
-- Known RED/GREEN/BLUE sequence exits and automatically re-enters FIFO without any shot, match, or `return_cached()` call.
-- Multiple exits in one update, queued returns waiting for a legal slot, repeat compatibility calls, exactly-once bookkeeping, no negative/phantom quota, unique UIDs, and zero overlap.
-- A player match while returns are pending cannot double-book them; natural seven-color FEED reconnection closes physically without a passive match.
-- Two-minute seeded no-match stream and two-minute frequent-match stream at 60 Hz. Both preserve bounded live/offscreen population, nonzero automatic returns, continuing fresh supply, exact `exited = returned + queued` reconciliation, stable geometry, and eventual gap closure.
-- Terminal defeat freezes stream counters and restart restores the 102 px/s seed, empty recycle state, and four one-of-eight enemy lanes.
+- Tracks a known hidden RED pair through YELLOW insertion, 49/50 ms settlement, gap creation, frame-by-frame rightward gravity and progressive LEFT reappearance. Both original UIDs survive, remain ordered at 58 px, never appear at RIGHT, and never exceed the gravity speed cap.
+- Verifies hidden balls cannot be shot or reported by the established render layer, while partially crossing balls become renderable/targetable.
+- Retains more than 24 balls offscreen LEFT while NEW fresh generation continues and active/right populations remain capped.
+- Runs 90-second and three-minute no-shot histories with fresh generation, unique UIDs, stable spacing, no passive matches and bounded runtime.
+- Demonstrates a far-left group begins moving from its actual negative coordinate without teleporting to zero.
+- Exercises insertion into a chain with hidden prefix members, two concurrent causal gaps, gravity closure, UID survival and zero overlap.
+- Verifies authorized yellow-then-red contact cascades at 30/60/120 Hz and `0.08 s`, always after physical contact.
+- Verifies terminal freeze, restart cleanup and the preserved 32-enemy encounter.
 
-Updated P007, P008, P009, P013, P014, and P015 assertions only where 102 px/s or automatic eligibility superseded their earlier speed/quota assumptions. P011/P012/P015 invariant, insertion, gravity, and encounter coverage remains active.
+Updated P002, P005, P007, P008, P009, P011, P012, P013, P014, P015 and the superseded P016 suite only where old cache/right-respawn or total-live-cap assumptions conflicted with corrected P017. Existing collision, rigid geometry, insertion, staging, cascade, speed, SFX and finite-encounter checks remain.
 
 ## Validation
 
 Godot 4.7.2 headless, all passing:
 
 - P001 smoke — PASS.
-- P002 gameplay logic — PASS (61 checks).
+- P002 gameplay logic — PASS (66 checks).
 - P003 progression/magazine — PASS (73 checks).
 - P004 lane combat — PASS (42 checks).
 - P005 survival — PASS (63 checks).
 - P006 platform QA — PASS (69 checks).
-- P007 playtest revision — PASS (49 checks).
+- P007 playtest revision — PASS (53 checks).
 - P008 gamefeel/SFX — PASS (82 checks).
 - P009 Zuma rollback — PASS (46 checks).
 - P010 staged cascade — PASS (162 checks).
-- P011 segment stress — PASS (16,485 checks; seed `5011CAFE`; 2,400 operations; 2,460 insertions; 636 matches; 679 fresh; 58 cache activities).
-- P012 forward insertion — PASS (364 checks).
+- P011 segment stress — PASS (16,485 checks; seed `5011CAFE`; 2,400 operations; 1,836 visible insertions; 620 matches; 707 fresh; 57 hidden-left).
+- P012 forward insertion — PASS (366 checks).
 - P013 shooter preview/mask — PASS (50 checks).
 - P014 causal rollback/feed — PASS (289 checks).
 - P015 gravity/finite enemies — PASS (523 checks).
-- P016 speed/automatic recycle — PASS (72 checks).
+- P016 speed/retained-history compatibility — PASS (76 checks).
+- P017 offscreen-left reentry — PASS (352 checks).
 - `git diff --check` — PASS.
 
-Bounded main-scene startup completed without script/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`; each was intentionally terminated after three seconds. The sandbox cannot create/rotate `user://logs/godot.log`, so Godot prints a log-file warning before otherwise successful test and startup runs. Web/Android export artifacts and physical-device QA remain unverified because this task did not install or exercise those external toolchains.
+Bounded main-scene startup completed without project/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`; each was intentionally terminated after three seconds. The sandbox cannot create/rotate `user://logs/godot.log`, so Godot prints a log-file warning before successful tests/startups. Web/Android exports and physical-device QA remain unverified because their external toolchains were not exercised.
 
 ## Manual playtest
 
-1. Watch the top conveyor and incoming balls move at the new 102 px/s speed. Confirm vertical shots, enemies, 50 ms settlement and rightward gravity still look unchanged.
-2. Do not shoot. Note several colors leaving LEFT, then watch the same color sequence enter fully offscreen RIGHT. In F3, `X` and `A` should rise and `Q` and `P` should agree; the model's total returned plus `Q` equals `X`.
-3. Make rapid matches while returns are entering. Confirm the P012 insertion push remains LEFT, unsupported groups fall RIGHT, FEED joins never self-match, and `I` stays zero.
-4. Finish or lose the 32-enemy encounter, confirm the stream freezes, then restart and verify the original chain plus zeroed `Q/P/X/R` counters.
+1. Enable F3 and follow a recognizable color sequence as it leaves LEFT. `L` should rise while `A` remains bounded; nothing should reappear from RIGHT except newly generated colors.
+2. Match a group immediately to the hidden sequence's RIGHT. Confirm the same balls slide back progressively from LEFT as one accelerating group, with no flash, teleport or spacing change.
+3. Fire near the left boundary: a wholly hidden ball must not receive the shot, while a partially visible returning circle may be hit.
+4. Make rapid matches and insertion during rollback. Confirm insertion still pushes the whole front prefix LEFT, gravity pulls unsupported segments RIGHT, noncausal FEED joins do not pop and F3 remains `I0`.
+5. Complete or lose the 32-enemy encounter, confirm chain freeze, then restart and verify `L0` with the original seed.
 
 ## Limitations
 
-- Visual speed, touch behavior and synthesized audio still require desktop/Web/Android playtesting.
-- The FIFO queue's deliberate long-run growth follows from combining lossless recycling with perpetual fresh introduction. It stores only integer colors, while live/offscreen balls remain capped.
+- Headless tests validate model/render classification, but progressive clipping, apparent motion, touch targeting and audio still require desktop/Web/Android visual playtesting.
+- Retained history is lossless and therefore grows linearly with play time until victory, defeat or restart.

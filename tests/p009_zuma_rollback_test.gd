@@ -186,14 +186,14 @@ func _test_multiple_gaps_and_restart() -> void:
 func _test_fifo_and_fresh_feed_isolation() -> void:
 	var fifo := ChainModel.new()
 	var identities: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.BLUE, TeamData.Identity.GREEN]
-	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
-	fifo.set_test_state(identities, 100.0, cached)
+	fifo.set_test_state(identities, -120.0)
+	var hidden_uids := [int(fifo.balls[0].uid), int(fifo.balls[1].uid)]
 	fifo.try_insert_shot(TeamData.Identity.BLUE, float(fifo.balls[3].display_x) + 4.0)
 	fifo.advance(ChainModel.INSERT_SETTLE_TIME)
-	_check(fifo.identities().slice(-3) == cached, "FIFO RED,GREEN,BLUE returns remain ordered during rollback")
-	_check(fifo.rollback_gaps.size() == 1, "FIFO return creates no extra causal rollback state")
+	_check(fifo.offscreen_left_count() == 2 and fifo.cache.is_empty(), "front RED pair remains physical beyond LEFT during rollback")
+	_check(fifo.rollback_gaps.size() == 1, "offscreen retention creates no extra causal rollback state")
 	fifo.advance(2.0)
-	_check(fifo.cache.is_empty() and _is_sorted(fifo), "FIFO catch-up and causal rollback coexist without reversal")
+	_check(fifo._ball_index_by_uid(hidden_uids[0]) >= 0 and fifo._ball_index_by_uid(hidden_uids[1]) >= 0 and _is_sorted(fifo), "same hidden UIDs rejoin without reversal")
 
 	var feed := ChainModel.new()
 	feed.set_test_state(identities, 100.0)
@@ -238,13 +238,12 @@ func _test_passive_runs_remain_passive() -> void:
 	model.set_test_state(seven, 1000.0)
 	model.advance(10.0)
 	_check(model.total_match_events == 0 and model.identities() == seven, "passive seven-ball run survives ordinary conveyor movement")
-	var cached: Array[int] = seven.duplicate()
 	var returned := ChainModel.new()
 	var red: Array[int] = [TeamData.Identity.RED]
-	returned.set_test_state(red, 100.0, cached)
-	returned.return_cached(7)
+	returned.set_test_state(red, 100.0)
+	returned.add_test_segment(seven, 500.0, ChainModel.GapType.FEED)
 	returned.advance(20.0)
-	_check(returned.total_match_events == 0, "passive long run survives cache catch-up and noncausal reconnection")
+	_check(returned.total_match_events == 0, "passive long run survives noncausal FEED reconnection")
 
 func _finish() -> void:
 	if _failures.is_empty():

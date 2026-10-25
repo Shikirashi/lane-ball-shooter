@@ -85,8 +85,8 @@ func _debug_text() -> String:
 	var logical_minimum := model.min_logical_spacing if is_finite(model.min_logical_spacing) else 0.0
 	var display_minimum := model.min_display_spacing if is_finite(model.min_display_spacing) else 0.0
 	if model.last_match_identity < 0:
-		return "B%d S%d U%d G%d V%.0f D%.1f Q%d/P%d X%d A%d F%d SET%d I%d" % [model.balls.size(), model.segments.size(), model.unsupported_segment_count, model.gravity_gap_count, model.max_gravity_speed, model.last_gravity_displacement, model.cache.size(), model.pending_cache_returns, model.total_exited, model.total_automatic_cache_returned, model.total_fresh_generated, model.pending_insertions.size(), model.invariant_violations]
-	return "B%d S%d U%d G%d V%.0f D%.1f Q%d/P%d X%d A%d F%d M%.0f/%.0f I%d" % [model.balls.size(), model.segments.size(), model.unsupported_segment_count, model.gravity_gap_count, model.max_gravity_speed, model.last_gravity_displacement, model.cache.size(), model.pending_cache_returns, model.total_exited, model.total_automatic_cache_returned, model.total_fresh_generated, logical_minimum, display_minimum, model.invariant_violations]
+		return "B%d L%d X%.0f A%d U%d G%d V%.0f D%.1f F%d SET%d I%d" % [model.balls.size(), model.offscreen_left_count(), model.leftmost_x(), model.active_population_count(), model.unsupported_segment_count, model.gravity_gap_count, model.max_gravity_speed, model.last_gravity_displacement, model.total_fresh_generated, model.pending_insertions.size(), model.invariant_violations]
+	return "B%d L%d X%.0f A%d U%d G%d V%.0f D%.1f F%d M%.0f/%.0f I%d" % [model.balls.size(), model.offscreen_left_count(), model.leftmost_x(), model.active_population_count(), model.unsupported_segment_count, model.gravity_gap_count, model.max_gravity_speed, model.last_gravity_displacement, model.total_fresh_generated, logical_minimum, display_minimum, model.invariant_violations]
 
 func _on_match_completed(identity: int, group_size: int) -> void:
 	_feedback_identity = identity

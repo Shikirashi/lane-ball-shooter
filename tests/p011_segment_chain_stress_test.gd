@@ -112,12 +112,12 @@ func _test_concurrent_gaps_fifo_and_restart() -> void:
 	_check(model.rollback_gaps.is_empty() and _invariants_hold(model), "multiple motors and rollback-time insertion terminate without overlap")
 	var fifo := ChainModel.new()
 	var fifo_tail: Array[int] = [TeamData.Identity.YELLOW]
-	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
-	fifo.set_test_state(fifo_tail, 500.0, cached)
-	fifo.return_cached(3)
-	_check(fifo.identities().slice(-3) == cached, "FIFO return colors retain exact order through segment admission")
+	var entrants: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
+	fifo.set_test_state(fifo_tail, 500.0)
+	fifo.add_test_segment(entrants, fifo.entry_spawn_x(), ChainModel.GapType.FEED)
+	_check(fifo.identities().slice(-3) == entrants, "fresh feed colors retain exact order through segment admission")
 	_advance_checked(fifo, 8.0, 1.0 / 30.0, "FIFO gravity closure")
-	_check(_invariants_hold(fifo) and fifo.segment_gaps.is_empty(), "separated FIFO batch reconnects through rigid gravity without passive match or overlap")
+	_check(_invariants_hold(fifo) and fifo.segment_gaps.is_empty(), "separated fresh batch reconnects through rigid gravity without passive match or overlap")
 
 	var restart := ChainModel.new()
 	restart.set_test_state(identities, 100.0)
@@ -139,13 +139,18 @@ func _test_seeded_long_stress() -> void:
 	for operation in range(STRESS_OPERATIONS):
 		if model.balls.is_empty():
 			model.advance(0.0)
-		if not model.balls.is_empty():
-			var target_index := rng.randi_range(0, model.balls.size() - 1)
+		var visible_indices: Array[int] = []
+		for index in range(model.balls.size()):
+			var x := float(model.balls[index].x)
+			if x + model.radius >= 0.0 and x - model.radius <= model.lane_width:
+				visible_indices.append(index)
+		if not visible_indices.is_empty():
+			var target_index := visible_indices[rng.randi_range(0, visible_indices.size() - 1)]
 			var target: Dictionary = model.balls[target_index]
 			if model.try_insert_shot(int(target.identity), float(target.display_x) + (2.0 if operation % 2 == 0 else -2.0)):
 				accepted += 1
-			if operation % 19 == 0 and model.balls.size() > 3:
-				var second_index := rng.randi_range(0, model.balls.size() - 1)
+			if operation % 19 == 0 and visible_indices.size() > 3:
+				var second_index := visible_indices[rng.randi_range(0, visible_indices.size() - 1)]
 				var second: Dictionary = model.balls[second_index]
 				if model.try_insert_shot(int(second.identity), float(second.display_x) + 1.0):
 					accepted += 1
@@ -153,19 +158,17 @@ func _test_seeded_long_stress() -> void:
 		_advance_checked(model, duration, minf(duration, 1.0 / 120.0), "seed %08X op %d" % [STRESS_SEED, operation])
 		if operation % 37 == 0:
 			_advance_checked(model, 0.21, 1.0 / 120.0, "seeded long delta %d" % operation)
-		if operation % 101 == 0 and not model.cache.is_empty():
-			model.return_cached(mini(3, model.cache.size()))
-		_check(model.balls.size() <= model.max_auto_population + 8, "stress live population remains bounded at operation %d" % operation)
+		_check(model.active_population_count() <= model.max_auto_population + 8, "stress active population remains bounded at operation %d" % operation)
 	_advance_checked(model, 45.0, 1.0 / 30.0, "seeded rollover tail")
-	_check(accepted >= STRESS_OPERATIONS, "fixed seed accepts thousands of physical insertions (%d)" % accepted)
+	_check(accepted >= 1800, "fixed seed accepts at least 1,800 physically visible insertions while rejecting hidden targets (%d)" % accepted)
 	_check(model.total_match_events > 500, "fixed seed produces hundreds of real staged matches (%d)" % model.total_match_events)
-	_check(model.total_fresh_generated > model.initial_population and model.cache.size() + model.total_cache_returned > 0, "stress exercises perpetual feed and left FIFO rollover")
+	_check(model.total_fresh_generated > model.initial_population and model.offscreen_left_count() > 0 and model.cache.is_empty(), "stress exercises perpetual fresh feed and physical left history")
 	_check(model.invariant_violations == 0 and _invariants_hold(model), "fixed seed completes with zero recorded invariant violations")
 	_check(model.max_concurrent_events <= 4, "event processing stays bounded per substep (%d max)" % model.max_concurrent_events)
 	_stress_accepted = accepted
 	_stress_matches = model.total_match_events
 	_stress_fresh = model.total_fresh_generated
-	_stress_cache_activity = model.cache.size() + model.total_cache_returned
+	_stress_cache_activity = model.offscreen_left_count()
 
 func _test_layout_palette_and_live_routing() -> void:
 	_check([TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.YELLOW, TeamData.Identity.GREEN] == [0, 1, 2, 3], "team identity order remains RED BLUE YELLOW GREEN")
@@ -206,7 +209,7 @@ func _test_layout_palette_and_live_routing() -> void:
 
 func _finish() -> void:
 	if _failures.is_empty():
-		print("P011 segment chain stress: PASS (%d checks, seed %08X, %d operations, %d insertions, %d matches, %d fresh, %d cache activity)" % [_checks, STRESS_SEED, STRESS_OPERATIONS, _stress_accepted, _stress_matches, _stress_fresh, _stress_cache_activity])
+		print("P011 segment chain stress: PASS (%d checks, seed %08X, %d operations, %d insertions, %d matches, %d fresh, %d hidden-left)" % [_checks, STRESS_SEED, STRESS_OPERATIONS, _stress_accepted, _stress_matches, _stress_fresh, _stress_cache_activity])
 		quit(0)
 		return
 	for failure in _failures:

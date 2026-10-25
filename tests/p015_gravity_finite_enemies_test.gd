@@ -109,14 +109,14 @@ func _test_causal_gravity_and_cascade() -> void:
 func _test_multiple_gaps_feed_and_restart() -> void:
 	var model := ChainModel.new()
 	var identities: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.BLUE, TeamData.Identity.GREEN, TeamData.Identity.GREEN, TeamData.Identity.YELLOW, TeamData.Identity.YELLOW, TeamData.Identity.RED]
-	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
-	model.set_test_state(identities, 180.0, cached)
+	var entrants: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
+	model.set_test_state(identities, 180.0)
 	model.try_insert_shot(TeamData.Identity.BLUE, float(model.balls[3].x) + 1.0)
 	model.try_insert_shot(TeamData.Identity.YELLOW, float(model.balls[7].x) + 1.0)
 	model.advance(0.05)
-	model.return_cached(3)
-	_check(model.identities().slice(-3) == cached, "separated FIFO batch enters in RED GREEN BLUE order")
-	_check(model.segment_gaps.size() >= 3 and model.gap_type_counts().causal == 2 and model.gap_type_counts().feed == 1, "rapid matches and FIFO return coexist as causal/noncausal metadata")
+	model.add_test_segment(entrants, model.entry_spawn_x(), ChainModel.GapType.FEED)
+	_check(model.identities().slice(-3) == entrants, "separated fresh batch enters in RED GREEN BLUE order")
+	_check(model.segment_gaps.size() >= 3 and model.gap_type_counts().causal == 2 and model.gap_type_counts().feed == 1, "rapid matches and fresh feed coexist as causal/noncausal metadata")
 	var first_uid := int(model.balls[0].uid)
 	var before_insert := _position(model, first_uid)
 	model.try_insert_shot(TeamData.Identity.GREEN, float(model.balls[2].x) + 1.0)
@@ -153,13 +153,13 @@ func _test_source_attachment_and_frame_rates() -> void:
 	var stream := ChainModel.new()
 	stream.set_lane_width(900.0)
 	stream.reset_run()
-	var max_live := stream.balls.size()
+	var max_active := stream.active_population_count()
 	for frame in range(7200):
 		stream.advance(1.0 / 120.0)
-		max_live = maxi(max_live, stream.balls.size())
+		max_active = maxi(max_active, stream.active_population_count())
 		if frame % 120 == 0:
 			_check(_invariants_hold(stream), "60s source stream remains valid at second %d" % (frame / 120))
-	_check(stream.total_fresh_generated > stream.initial_population and max_live <= stream.max_auto_population, "right source remains infinite and live-bounded")
+	_check(stream.total_fresh_generated > stream.initial_population and max_active <= stream.max_auto_population and stream.offscreen_left_count() > 0, "right source remains infinite while active population is bounded")
 	_check(stream.offscreen_right_count() <= 1, "source attachment does not build an offscreen tail")
 
 func _test_lane_spawn_budget_and_neutralization() -> void:

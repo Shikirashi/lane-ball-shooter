@@ -61,24 +61,24 @@ func _test_offscreen_fresh_entry() -> void:
 		_check(absf(positions[index] - positions[0]) < 0.002, "entry position is deterministic at sample %d including large delta" % index)
 
 func _test_fifo_entry_and_bounds() -> void:
-	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
+	var entrants: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
 	var model := ChainModel.new()
 	var tail: Array[int] = [TeamData.Identity.YELLOW]
-	model.set_test_state(tail, 100.0, cached)
-	model.return_cached(3)
-	_check(model.identities().slice(-3) == cached, "FIFO recycled identities retain RED GREEN BLUE entry order")
+	model.set_test_state(tail, 100.0)
+	model.add_test_segment(entrants, model.entry_spawn_x(), ChainModel.GapType.FEED)
+	_check(model.identities().slice(-3) == entrants, "fresh entrant identities retain RED GREEN BLUE order")
 	var first_return_index := model.balls.size() - 3
 	var before := float(model.balls[first_return_index].x)
-	_check(before >= model.entry_spawn_x() and model.segment_gaps.size() == 1 and int(model.segment_gaps[0].type) == ChainModel.GapType.FEED, "FIFO batch uses typed offscreen FEED segment")
+	_check(before >= model.entry_spawn_x() and model.segment_gaps.size() == 1 and int(model.segment_gaps[0].type) == ChainModel.GapType.FEED, "fresh batch uses typed offscreen FEED segment")
 	model.advance(0.1)
 	var after := float(model.balls[first_return_index].x)
-	_check(absf(after - (before - model.speed * 0.1)) < 0.001, "FIFO batch enters at normal speed before feeder catch-up")
-	_check(model.offscreen_right_count() <= model.max_auto_population and model.invariant_violations == 0, "FIFO entry remains bounded and overlap-free")
+	_check(absf(after - (before - model.speed * 0.1)) < 0.001, "fresh batch enters at normal speed before gravity contact")
+	_check(model.offscreen_right_count() <= model.max_auto_population and model.invariant_violations == 0, "fresh entry remains bounded and overlap-free")
 
 	var long_run := _new_entry_model()
 	for unused in range(3600):
 		long_run.advance(1.0 / 60.0)
-	_check(long_run.balls.size() <= long_run.max_auto_population and long_run.offscreen_right_count() <= 1, "one-minute stream never grows an invisible right backlog")
+	_check(long_run.active_population_count() <= long_run.max_auto_population and long_run.offscreen_right_count() <= 1 and long_run.offscreen_left_count() > 0, "one-minute stream bounds the active/right population while retaining left history")
 	_check(long_run.total_fresh_generated > long_run.initial_population and long_run.invariant_violations == 0, "long stream replenishes indefinitely without geometry violations")
 
 func _test_live_preview_layers_and_input() -> void:

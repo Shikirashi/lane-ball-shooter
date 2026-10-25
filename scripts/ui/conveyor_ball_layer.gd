@@ -17,7 +17,8 @@ func rendered_uids() -> Array[int]:
 	if model == null:
 		return result
 	for ball in model.balls:
-		if not model.is_settling(int(ball.uid)):
+		var x := float(ball.x)
+		if x + model.radius >= 0.0 and x - model.radius <= model.lane_width and not model.is_settling(int(ball.uid)):
 			result.append(int(ball.uid))
 	return result
 
@@ -29,7 +30,10 @@ func _draw() -> void:
 		var uid := int(ball.uid)
 		if model.is_settling(uid):
 			continue
-		var center := Vector2(float(ball.display_x), cy)
+		var x := float(ball.display_x)
+		if x + model.radius < 0.0 or x - model.radius > model.lane_width:
+			continue
+		var center := Vector2(x, cy)
 		_draw_ball(center, model.radius, int(ball.identity))
 
 func _draw_ball(center: Vector2, draw_radius: float, identity: int) -> void:

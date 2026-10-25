@@ -16,11 +16,11 @@ func _run() -> void:
 	_test_three_ball_threshold()
 	_test_large_group_single_event()
 	_test_boundary_cascade_order()
-	_test_fifo_rollover_and_partial_return()
+	_test_offscreen_left_retention()
 	_test_empty_recovery()
 	_test_continuous_identity_motion()
 	_test_shot_contact_guard()
-	_test_recycled_gap_adjacency()
+	_test_feed_gap_adjacency()
 	await _test_shot_pipeline()
 	_finish()
 
@@ -55,7 +55,7 @@ func _test_three_ball_threshold() -> void:
 	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.total_match_events == 1, "inserted third emits one match")
 	_check(model.last_match_identity == TeamData.Identity.RED and model.last_match_size == 3, "three-ball event reports identity and actual size")
-	_check(model.identities() == [TeamData.Identity.GREEN], "match returns cached ball without fabricating survivors")
+	_check(model.identities() == [TeamData.Identity.GREEN], "fixture cache adapter restores its explicit survivor")
 
 func _test_large_group_single_event() -> void:
 	var model := ChainModel.new()
@@ -90,7 +90,7 @@ func _test_boundary_cascade_order() -> void:
 		_check(int(model.event_log[1].identity) == TeamData.Identity.GREEN and int(model.event_log[1].size) == 3, "newly connected green group cascades second")
 	_check(model.identities() == [TeamData.Identity.BLUE, TeamData.Identity.BLUE, TeamData.Identity.BLUE], "unrelated preexisting blue group remains")
 
-func _test_fifo_rollover_and_partial_return() -> void:
+func _test_offscreen_left_retention() -> void:
 	var model := ChainModel.new()
 	var identities: Array[int] = [
 		TeamData.Identity.RED,
@@ -100,20 +100,22 @@ func _test_fifo_rollover_and_partial_return() -> void:
 		TeamData.Identity.YELLOW,
 	]
 	model.set_test_state(identities, -190.0)
+	var original_uids: Array[int] = []
+	for ball in model.balls:
+		original_uids.append(int(ball.uid))
 	model.advance(0.0)
-	_check(model.cache == [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE], "left exits append RED, GREEN, BLUE to FIFO cache")
-	model.return_cached(2)
-	_check(model.cache == [TeamData.Identity.BLUE], "partial return consumes cache front")
-	_check(model.identities().slice(-2) == [TeamData.Identity.RED, TeamData.Identity.GREEN], "partial return appends RED then GREEN on right")
-	model.return_cached(1)
-	_check(model.identities().slice(-3) == [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE], "fully restored subgroup preserves left-to-right order")
+	_check(model.cache.is_empty() and model.offscreen_left_count() == 3, "RED GREEN BLUE remain physical beyond the left clip instead of entering a cache")
+	_check(model.identities() == identities, "offscreen-left retention preserves exact color order")
+	for index in range(original_uids.size()):
+		_check(int(model.balls[index].uid) == original_uids[index], "offscreen-left member %d preserves its UID" % index)
+	_check(model.return_cached(3) == 0 and model.cache.is_empty(), "normal chain has no right-side recycling tokens")
 
 func _test_empty_recovery() -> void:
 	var model := ChainModel.new()
 	var identities: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
 	model.set_test_state(identities, -220.0)
 	model.advance(0.0)
-	_check(model.identities() == identities and model.cache.is_empty(), "empty visible chain immediately re-enters from cache in FIFO order")
+	_check(model.identities() == identities and model.offscreen_left_count() == identities.size(), "empty visible lane retains its physical offscreen-left train")
 	var none: Array[int] = []
 	model.set_test_state(none)
 	model.advance(0.0)
@@ -150,26 +152,28 @@ func _test_shot_contact_guard() -> void:
 	_check(model.try_insert_shot(TeamData.Identity.RED, moving_contact_x), "shot contacts train at its updated moving position")
 	_check(model.balls.size() == 3, "moving-train contact inserts exactly once")
 
-func _test_recycled_gap_adjacency() -> void:
+func _test_feed_gap_adjacency() -> void:
 	var model := ChainModel.new()
 	var tail: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED]
-	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
-	model.set_test_state(tail, 500.0, cached)
-	model.return_cached(3)
-	_check(model.identities().slice(-3) == cached, "recycled RED, GREEN, BLUE retain left-to-right FIFO order")
+	var entrants: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
+	model.set_test_state(tail, 500.0)
+	model.add_test_segment(entrants, model.entry_spawn_x(), ChainModel.GapType.FEED)
+	_check(model.identities().slice(-3) == entrants, "fresh RED, GREEN, BLUE retain left-to-right feed order")
 	var initial_gap := float(model.balls[2].x) - float(model.balls[1].x)
-	_check(initial_gap > model.spacing * ChainModel.ADJACENCY_GAP_FACTOR, "returned batch starts physically disconnected at right boundary")
-	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[2].display_x)), "shot can contact returned right-side segment")
-	_check(model.total_match_events == 0, "same colors across recycled wide gap do not match")
+	_check(initial_gap > model.spacing * ChainModel.ADJACENCY_GAP_FACTOR, "fresh batch starts physically disconnected beyond the right boundary")
+	_check(not model.try_insert_shot(TeamData.Identity.RED, float(model.balls[2].display_x)), "shot cannot target a wholly offscreen right-side ball")
+	model.advance(1.0)
+	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[2].display_x)), "shot can contact the entrant after it becomes visible")
+	_check(model.total_match_events == 0, "same colors across a wide FEED gap do not match")
 	_check(model.identities().slice(0, 4) == [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED], "disconnected same-color runs remain ordered")
 
 	# P015 virtual gravity closes every physical gap by moving the unsupported
 	# LEFT train right; FEED remains noncausal match metadata only.
 	model.advance(8.0)
 	var connected_gap := float(model.balls[2].x) - float(model.balls[1].x)
-	_check(is_equal_approx(connected_gap, model.spacing), "returned segment reconnects through rigid virtual gravity without overlap")
+	_check(is_equal_approx(connected_gap, model.spacing), "fresh segment reconnects through rigid virtual gravity without overlap")
 	var rightmost_red_index := 3
-	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[rightmost_red_index].display_x) + 8.0), "shot inserts after gravity reconnects the recycled segment")
+	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[rightmost_red_index].display_x) + 8.0), "shot inserts after gravity reconnects the fresh segment")
 	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.total_match_events == 1 and model.last_match_size == 5, "player insertion clears the physically reconnected five-red run")
 

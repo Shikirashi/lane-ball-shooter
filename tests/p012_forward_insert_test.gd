@@ -162,19 +162,20 @@ func _test_concurrent_settles_and_left_rollover_fifo() -> void:
 	_advance_checked(concurrent, 0.05, "concurrent settle")
 	_check(concurrent.pending_insertions.is_empty() and concurrent.total_match_events <= 2, "concurrent checks retire once without duplicate events")
 	for uid in original_uids:
-		_check(concurrent._ball_index_by_uid(uid) >= 0 or concurrent.cache.size() > 0, "concurrent insertion never silently loses original UID %d" % uid)
+		_check(concurrent._ball_index_by_uid(uid) >= 0 or concurrent.total_match_events > 0, "concurrent insertion retains UID %d unless an actual match removes its group" % uid)
 
 	var rollover := ChainModel.new()
 	var near_left: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
 	rollover.set_test_state(near_left, 10.0)
-	for expected_cache_size in range(1, 4):
+	var rollover_uids := _uids(rollover)
+	for expected_hidden_count in range(1, 4):
 		rollover.try_insert_shot(TeamData.Identity.YELLOW, float(rollover.balls[-1].display_x) + 1.0)
 		rollover.advance(0.0)
-		_check(rollover.cache.size() == expected_cache_size, "left push rolls exactly one front ball into FIFO at step %d" % expected_cache_size)
-		_check(_invariants_hold(rollover), "near-left rollover step %d remains legal" % expected_cache_size)
-	_check(rollover.cache == near_left, "insertion-driven exits preserve RED GREEN BLUE FIFO order")
-	rollover.return_cached(3)
-	_check(rollover.identities().slice(-3) == near_left, "insertion-driven FIFO exits return in original order")
+		_check(rollover.offscreen_left_count() == expected_hidden_count, "left push moves exactly one additional original ball beyond the clip at step %d" % expected_hidden_count)
+		_check(_invariants_hold(rollover), "near-left hidden-prefix step %d remains legal" % expected_hidden_count)
+	for index in range(rollover_uids.size()):
+		_check(rollover._ball_index_by_uid(rollover_uids[index]) >= 0, "insertion-driven left exit preserves original UID %d" % rollover_uids[index])
+	_check(rollover.cache.is_empty() and rollover.return_cached(3) == 0, "insertion-driven exits never create right-side recycle tokens")
 
 func _test_insert_left_then_rollback_right() -> void:
 	var model := ChainModel.new()

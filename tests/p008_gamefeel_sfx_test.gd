@@ -189,11 +189,11 @@ func _test_weighted_generator() -> void:
 	_check(after_reset == before_reset, "restart resets weighted run generator and counters deterministically")
 
 	var stream := ChainModel.new()
-	var max_live := stream.balls.size()
+	var max_active := stream.active_population_count()
 	for unused in range(2200):
 		stream.advance(0.1)
-		max_live = maxi(max_live, stream.balls.size())
-	_check(stream.total_fresh_generated > 100 and max_live <= stream.max_auto_population, "weighted feeder remains infinite and live-population bounded")
+		max_active = maxi(max_active, stream.active_population_count())
+	_check(stream.total_fresh_generated > 100 and max_active <= stream.max_auto_population and stream.offscreen_left_count() > 24, "weighted feeder remains infinite while active population stays bounded")
 
 func _test_player_triggered_matching() -> void:
 	var seeded := ChainModel.new()
@@ -227,13 +227,12 @@ func _test_player_triggered_matching() -> void:
 	_check(unrelated.total_match_events == 1 and unrelated.last_match_identity == TeamData.Identity.RED, "shot clears only its corresponding group")
 	_check(unrelated.identities().slice(0, 7) == seven, "unrelated passive seven group survives another group match")
 
-	var cached: Array[int] = seven.duplicate()
 	var cache_merge := ChainModel.new()
 	var blue: Array[int] = [TeamData.Identity.BLUE]
-	cache_merge.set_test_state(blue, 100.0, cached)
-	cache_merge.return_cached(7)
+	cache_merge.set_test_state(blue, 100.0)
+	cache_merge.add_test_segment(seven, 500.0, ChainModel.GapType.FEED)
 	cache_merge.advance(20.0)
-	_check(cache_merge.total_match_events == 0, "cache return and gap closure never passively clear a long run")
+	_check(cache_merge.total_match_events == 0, "fresh FEED gap closure never passively clears a long run")
 
 func _test_sfx_synthesis_and_voice_bounds() -> void:
 	var sfx := SfxManagerScript.new()

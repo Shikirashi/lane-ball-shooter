@@ -166,8 +166,8 @@ func _test_game_over_freeze_and_restart() -> void:
 	var rollover: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE, TeamData.Identity.YELLOW, TeamData.Identity.YELLOW]
 	chain.set_test_state(rollover, -190.0)
 	chain.advance(0.0)
-	_check(not bool(main.get("_game_over")), "top-ball FIFO rollover never causes game over")
-	_check(not chain.cache.is_empty(), "rollover still enters FIFO cache during survival play")
+	_check(not bool(main.get("_game_over")), "top balls crossing the left clip never cause game over")
+	_check(chain.cache.is_empty() and chain.offscreen_left_count() == 3, "crossed balls remain physical offscreen-left members during survival play")
 
 	progression.register_match(TeamData.Identity.RED, 3)
 	main.set("_cooldown_remaining", 0.0)
@@ -196,7 +196,7 @@ func _test_game_over_freeze_and_restart() -> void:
 	main.call("_restart_run")
 	_check(not bool(main.get("_game_over")) and not overlay.visible and not shooter.simulation_paused, "restart hides overlay and resumes clean run")
 	_check(progression.score == 0 and progression.combo_count == 0 and not progression.fever_active, "restart clears score/combo/fever")
-	_check(chain.cache.is_empty() and chain.balls.size() == chain.initial_population, "restart resets chain and FIFO cache")
+	_check(chain.cache.is_empty() and chain.balls.size() == chain.initial_population and chain.offscreen_left_count() == 0, "restart discards hidden history and resets the chain")
 	_check(magazine.draw_count == 2 and shooter.get("_shots").is_empty(), "restart resets shuffle bag and pending 2D shots")
 	for lane in battlefield.lanes:
 		_check(lane.combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE, "restart lane %d is ACTIVE" % lane.team_identity)

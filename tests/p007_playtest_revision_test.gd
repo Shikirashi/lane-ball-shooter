@@ -42,39 +42,38 @@ func _test_speed_and_infinite_feed() -> void:
 		_check(is_equal_approx(float(motion.balls[0].x), before - motion.speed * delta), "conveyor motion is delta-based at %.3fs" % delta)
 
 	var stream := ChainModel.new()
-	var minimum_live := stream.balls.size()
-	var maximum_live := stream.balls.size()
+	var minimum_active := stream.active_population_count()
+	var maximum_active := stream.active_population_count()
 	for unused in range(2200):
 		stream.advance(0.1)
-		minimum_live = mini(minimum_live, stream.balls.size())
-		maximum_live = maxi(maximum_live, stream.balls.size())
+		minimum_active = mini(minimum_active, stream.active_population_count())
+		maximum_active = maxi(maximum_active, stream.active_population_count())
 	_check(stream.total_fresh_generated > 100, "fresh feeder generates more than 100 lifetime balls without matches")
-	_check(minimum_live > 0 and not stream.balls.is_empty(), "continuous train never becomes permanently empty")
-	_check(maximum_live <= stream.max_auto_population, "continuous feeder live population remains capped")
-	_check(stream.cache.size() > 0, "legitimate left exits remain represented in linear FIFO storage")
+	_check(minimum_active > 0 and not stream.balls.is_empty(), "continuous active train never becomes permanently empty")
+	_check(maximum_active <= stream.max_auto_population, "continuous feeder active population remains capped")
+	_check(stream.offscreen_left_count() > 0 and stream.cache.is_empty(), "left exits remain physical hidden members rather than cached colors")
 
 func _test_fifo_feed_and_physical_adjacency() -> void:
 	var feeder := ChainModel.new()
 	var rollover: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE, TeamData.Identity.YELLOW, TeamData.Identity.YELLOW]
 	feeder.set_test_state(rollover, -190.0)
+	var original_uids: Array[int] = []
+	for ball in feeder.balls:
+		original_uids.append(int(ball.uid))
 	feeder.continuous_feed_enabled = true
 	feeder.advance(0.0)
-	_check(feeder.total_exited == 3 and feeder.total_cache_returned == 1 and feeder.cache.slice(0, 2) == [TeamData.Identity.GREEN, TeamData.Identity.BLUE], "rollover records RED, GREEN, BLUE and immediately admits the FIFO front")
-	_check(feeder.pending_cache_returns == feeder.cache.size(), "all rollover colors are automatically eligible while the right edge has no slot")
-	var returned: Array[int] = [TeamData.Identity.RED]
-	var returned_count := feeder.total_cache_returned
+	_check(feeder.offscreen_left_count() == 3 and feeder.cache.is_empty(), "RED GREEN BLUE remain simulated beyond the left boundary")
+	_check(feeder.identities().slice(0, 5) == rollover, "hidden prefix retains exact color order while fresh feed begins on the right")
 	for unused in range(45):
 		feeder.advance(0.1)
-		if feeder.total_cache_returned > returned_count:
-			returned.append(int(feeder.balls[-1].identity))
-			returned_count = feeder.total_cache_returned
-	_check(feeder.pending_cache_returns == feeder.cache.size(), "automatic eligibility counter tracks the exact remaining FIFO queue")
-	_check(returned.slice(0, 3) == [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE], "automatic FIFO returns retain RED, GREEN, BLUE visual order")
+	for index in range(original_uids.size()):
+		_check(int(feeder.balls[index].uid) == original_uids[index], "left history UID %d is never recreated on the right" % index)
+	_check(feeder.total_cache_returned == 0 and feeder.pending_cache_returns == 0, "ordinary play performs no right-side recycling")
 	var generated_before := feeder.total_fresh_generated
 	for unused in range(50):
 		feeder.advance(0.1)
-	_check(feeder.total_fresh_generated > generated_before, "fresh generation continues after cached returns")
-	_check(feeder.balls.size() <= feeder.max_auto_population, "return integration does not create offscreen-right backlog")
+	_check(feeder.total_fresh_generated > generated_before, "fresh generation continues while hidden history grows")
+	_check(feeder.active_population_count() <= feeder.max_auto_population and feeder.offscreen_right_count() <= 1, "physical retention does not create an active/right backlog")
 
 	var separated := ChainModel.new()
 	var red_pair: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED]

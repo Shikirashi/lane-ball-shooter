@@ -169,7 +169,6 @@ func _advance_step(delta: float) -> bool:
 		simulation_time += delta
 		_integrate_segments(delta)
 	_process_contacts()
-	var rolled_off := _roll_off_left()
 	if continuous_feed_enabled:
 		_feed_right_edge()
 	elif segments.is_empty():
@@ -177,7 +176,7 @@ func _advance_step(delta: float) -> bool:
 	_update_pending_insertions(delta)
 	_refresh_snapshot()
 	max_concurrent_events = maxi(max_concurrent_events, total_match_events - event_count_before)
-	return rolled_off or total_match_events != event_count_before
+	return total_match_events != event_count_before
 
 ## Projectile-to-chain contact uses the actual rendered center and the sum of the
 ## 22px chain radius plus the 12px projectile radius; this is collision tolerance,
@@ -200,25 +199,20 @@ func try_insert_shot(identity: int, impact_x: float, shot_radius := DEFAULT_SHOT
 	return true
 
 func return_cached(requested_count: int = -1) -> int:
+	# Deprecated P002 fixture adapter. Normal continuous gameplay retains every
+	# UID physically at x < 0 and never recreates cached colors on the right.
+	if continuous_feed_enabled:
+		return 0
 	var count := cache_return_batch if requested_count < 0 else requested_count
-	if not continuous_feed_enabled:
-		count = mini(maxi(count, 0), cache.size())
-		for unused in range(count):
-			_admit_on_right(cache.pop_front(), true)
-			total_cache_returned += 1
-		_sync_pending_cache_returns()
-		_refresh_snapshot()
-		if count > 0:
-			state_changed.emit()
-		return count
-	# Every cached color is already eligible. This compatibility API only asks
-	# the ordinary feeder to prioritize up to `count` admissions; it never adds
-	# a second quota token for an item that rollover already scheduled.
 	count = mini(maxi(count, 0), cache.size())
-	var admitted := _feed_right_edge(count, false)
-	if admitted > 0:
+	for unused in range(count):
+		_admit_on_right(cache.pop_front(), true)
+		total_cache_returned += 1
+	_sync_pending_cache_returns()
+	_refresh_snapshot()
+	if count > 0:
 		state_changed.emit()
-	return admitted
+	return count
 
 func seed_stream() -> void:
 	if not segments.is_empty() or not cache.is_empty():
@@ -317,6 +311,23 @@ func offscreen_right_count() -> int:
 			count += 1
 	return count
 
+func offscreen_left_count() -> int:
+	var count := 0
+	for segment in segments:
+		count += _segment_offscreen_left_count(segment)
+	return count
+
+func visible_ball_count() -> int:
+	var count := 0
+	for ball in balls:
+		var x := float(ball.x)
+		if x + radius >= 0.0 and x - radius <= lane_width:
+			count += 1
+	return count
+
+func leftmost_x() -> float:
+	return float(segments[0].anchor_x) if not segments.is_empty() else 0.0
+
 func gap_type_counts() -> Dictionary:
 	var result := {"feed": 0, "causal": 0, "tail": tail_recoils.size()}
 	for gap in segment_gaps:
@@ -413,7 +424,7 @@ func _solve_non_overlap(adjustments: Array[float]) -> void:
 			break
 
 func _process_contacts() -> void:
-	var safety := max_auto_population * 2
+	var safety := maxi(max_auto_population * 2, segments.size() * 2)
 	while safety > 0:
 		safety -= 1
 		var contact_index := _first_contact_index(GapType.CAUSAL)
@@ -446,7 +457,6 @@ func _process_contacts() -> void:
 			var group := _group_in_segment(contact_index, boundary_member_index)
 			if int(group.size) >= MATCH_SIZE:
 				_remove_group(contact_index, int(group.start), int(group.size), int(group.identity))
-				return_cached(cache_return_batch)
 				_ensure_playable_stream()
 		_refresh_snapshot()
 
@@ -519,7 +529,6 @@ func _resolve_inserted_match(uid: int) -> void:
 	if int(group.size) < MATCH_SIZE:
 		return
 	_remove_group(int(location.segment), int(group.start), int(group.size), int(group.identity))
-	return_cached(cache_return_batch)
 	_ensure_playable_stream()
 
 func _group_in_segment(segment_index: int, member_index: int) -> Dictionary:
@@ -540,7 +549,7 @@ func _time_until_next_settle() -> float:
 	return result
 
 func _time_until_feed_slot() -> float:
-	if not continuous_feed_enabled or _live_count() >= max_auto_population:
+	if not continuous_feed_enabled or active_population_count() >= max_auto_population:
 		return INF
 	if segments.is_empty():
 		return 0.0
@@ -569,31 +578,6 @@ func _retire_pending_insertion(uid: int) -> void:
 		if int(pending_insertions[index].uid) == uid:
 			pending_insertions.remove_at(index)
 
-func _roll_off_left() -> bool:
-	var rolled_off := false
-	while not segments.is_empty():
-		var first := segments[0]
-		var members: Array = first.members
-		if members.is_empty() or float(first.anchor_x) + radius >= 0.0:
-			break
-		var exited: Dictionary = members.pop_front()
-		cache.append(int(exited.identity))
-		total_exited += 1
-		_sync_pending_cache_returns()
-		_retire_pending_insertion(int(exited.uid))
-		rolled_off = true
-		if members.is_empty():
-			segments.remove_at(0)
-			if not segment_gaps.is_empty():
-				segment_gaps.remove_at(0)
-		else:
-			first.members = members
-			first.anchor_x = float(first.anchor_x) + spacing
-			segments[0] = first
-	_bind_gap_endpoints()
-	_refresh_snapshot()
-	return rolled_off
-
 func _ensure_playable_stream() -> void:
 	if continuous_feed_enabled:
 		_feed_right_edge()
@@ -603,36 +587,18 @@ func _ensure_playable_stream() -> void:
 		else:
 			seed_stream()
 
-func _feed_right_edge(max_return_admissions := -1, count_as_automatic := true) -> int:
+func _feed_right_edge() -> void:
 	var spawn_x := entry_spawn_x()
-	var returns_admitted := 0
-	while _live_count() < max_auto_population:
+	while active_population_count() < max_auto_population:
 		if not segments.is_empty() and _segment_end_x(segments[-1]) + spacing > spawn_x + POSITION_EPSILON:
 			break
-		if max_return_admissions >= 0 and returns_admitted >= max_return_admissions:
-			break
-		# Canonical scheduling policy: admit up to three FIFO returns, then one
-		# fresh weighted-run color. This prioritizes lossless recirculation while
-		# guaranteeing the independent infinite fresh source keeps advancing.
-		var use_return := not cache.is_empty() and _returns_since_fresh < cache_return_batch
-		if use_return:
-			_admit_on_right(cache.pop_front(), false)
-			total_cache_returned += 1
-			if count_as_automatic:
-				total_automatic_cache_returned += 1
-			returns_admitted += 1
-			_returns_since_fresh += 1
-			_sync_pending_cache_returns()
-		else:
-			_admit_on_right(_draw_fresh_identity(), false)
-			total_fresh_generated += 1
-			_returns_since_fresh = 0
+		_admit_on_right(_draw_fresh_identity(), false)
+		total_fresh_generated += 1
 	_refresh_snapshot()
-	return returns_admitted
 
 func _sync_pending_cache_returns() -> void:
-	# Compatibility/debug field: eligibility is now exactly the FIFO contents,
-	# never a separately incremented quota that can duplicate or strand colors.
+	# Deprecated fixture compatibility only; continuous gameplay never populates
+	# this queue or exposes it as conveyor state.
 	pending_cache_returns = cache.size()
 
 func _admit_on_right(identity: int, _force_right_edge: bool) -> void:
@@ -657,7 +623,10 @@ func _find_contact_index(impact_x: float, tolerance: float) -> int:
 	var closest := -1
 	var closest_distance := INF
 	for index in range(balls.size()):
-		var distance := absf(impact_x - float(balls[index].display_x))
+		var ball_x := float(balls[index].display_x)
+		if ball_x + radius < 0.0 or ball_x - radius > lane_width:
+			continue
+		var distance := absf(impact_x - ball_x)
 		if distance <= tolerance and distance < closest_distance:
 			closest = index
 			closest_distance = distance
@@ -768,6 +737,20 @@ func _live_count() -> int:
 	for segment in segments:
 		count += (segment.members as Array).size()
 	return count
+
+func active_population_count() -> int:
+	var count := 0
+	for segment in segments:
+		count += (segment.members as Array).size() - _segment_offscreen_left_count(segment)
+	return count
+
+func _segment_offscreen_left_count(segment: Dictionary) -> int:
+	var member_count := (segment.members as Array).size()
+	if member_count <= 0:
+		return 0
+	# First index whose circle has not completely cleared the left clip edge.
+	var first_active := ceili((-radius - float(segment.anchor_x)) / spacing)
+	return clampi(first_active, 0, member_count)
 
 func _refresh_snapshot() -> void:
 	balls.clear()

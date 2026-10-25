@@ -150,9 +150,9 @@ func _test_two_causal_gaps_and_fifo() -> void:
 		TeamData.Identity.GREEN, TeamData.Identity.GREEN,
 		TeamData.Identity.RED, TeamData.Identity.RED,
 	]
-	var cache_values: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
+	var entrants: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
 	var model := ChainModel.new()
-	model.set_test_state(pattern, 180.0, cache_values)
+	model.set_test_state(pattern, 180.0)
 	model.try_insert_shot(TeamData.Identity.YELLOW, float(model.balls[3].x) + 1.0)
 	model.advance(0.05)
 	var green_index := -1
@@ -167,7 +167,7 @@ func _test_two_causal_gaps_and_fifo() -> void:
 	for gap in model.segment_gaps:
 		if int(gap.type) == ChainModel.GapType.CAUSAL:
 			bindings.append([int(gap.id), int(gap.left_segment_id), int(gap.right_segment_id)])
-	model.return_cached(3)
+	model.add_test_segment(entrants, model.entry_spawn_x(), ChainModel.GapType.FEED)
 	var anchors := {}
 	for segment in model.segments:
 		anchors[int(segment.id)] = float(segment.anchor_x)
@@ -176,7 +176,7 @@ func _test_two_causal_gaps_and_fifo() -> void:
 		var left_id := int(binding[1])
 		if model._segment_index_by_id(left_id) >= 0:
 			_check(_segment_anchor(model, left_id) > float(anchors[left_id]), "causal front segment %d moves right as a rigid motor" % left_id)
-	_check(model.gravity_gap_count >= 1 and _invariants_hold(model), "FIFO and causal gaps share one rigid gravity integrator")
+	_check(model.gravity_gap_count >= 1 and _invariants_hold(model), "fresh feed and causal gaps share one rigid gravity integrator")
 
 func _test_insertion_during_rollback() -> void:
 	var model := _setup_clear(MAIN_PATTERN)
@@ -218,12 +218,10 @@ func _test_long_mixed_stream() -> void:
 			var target: Dictionary = model.balls[target_index]
 			if model.try_insert_shot(int(target.identity), float(target.x) + (1.0 if frame % 48 == 0 else -1.0)):
 				accepted += 1
-		if frame % 601 == 0 and not model.cache.is_empty():
-			model.return_cached(mini(3, model.cache.size()))
 		model.advance(1.0 / 60.0)
 		if frame % 60 == 0:
 			_check(_invariants_hold(model), "120s mixed stream remains valid at second %d" % floori(frame / 60.0))
-			_check(model.balls.size() <= model.max_auto_population + 8 and model.offscreen_right_count() <= model.max_auto_population, "120s mixed stream remains bounded at second %d" % floori(frame / 60.0))
+			_check(model.active_population_count() <= model.max_auto_population + 8 and model.offscreen_right_count() <= 1, "120s mixed active/right stream remains bounded at second %d" % floori(frame / 60.0))
 	_check(accepted > 100 and model.total_match_events > 100 and model.total_rollbacks_started > 0, "long stress exercises rapid shots, many matches and causal rollback (%d/%d/%d)" % [accepted, model.total_match_events, model.total_rollbacks_started])
 	_check(model.total_fresh_generated > model.initial_population, "long stress preserves continuing offscreen fresh arrivals")
 	_check(model.invariant_violations == 0, "long stress finishes without feed sprint or overlap")
