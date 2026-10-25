@@ -39,7 +39,7 @@ func _run() -> void:
 	main.call("_swap")
 	_check(magazine.loaded_identity == original_next and magazine.next_identity == original_loaded, "swap exchanges loaded and next")
 	_check(shooter.loaded_identity == magazine.loaded_identity, "swap updates shooter identity")
-	_check(magazine_view.loaded_identity == magazine.loaded_identity, "swap updates magazine display")
+	_check(shooter.loaded_identity == magazine.loaded_identity and shooter.next_identity == magazine.next_identity, "swap updates shooter loaded and next display")
 
 	main.call("_shoot")
 	_check(shooter.get("_shots").size() == 1, "shoot launches one visible projectile")

@@ -23,10 +23,7 @@ static func calculate(viewport_size: Vector2, requested_safe_rect := Rect2()) ->
 	var center_bottom := safe_rect.end.y - bottom_height
 	var center_height := maxf(1.0, center_bottom - center_top)
 
-	var magazine_size := Vector2(
-		clampf(safe_rect.size.x * 0.20, 190.0, 230.0),
-		maxf(56.0, hud_height - 8.0)
-	)
+	var magazine_size := Vector2(56.0, 56.0)
 	var magazine_rect := Rect2(
 		Vector2(content_right - magazine_size.x, safe_rect.position.y + 4.0),
 		magazine_size

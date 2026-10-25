@@ -16,6 +16,7 @@ const DEFAULT_MAX_AUTO_POPULATION := 24
 const MATCH_SIZE := 3
 const DEFAULT_SHOT_RADIUS := 12.0
 const RETURN_CATCHUP_SPEED := 120.0
+const ENTRY_MARGIN := 4.0
 const INSERT_SETTLE_TIME := 0.05
 const ROLLBACK_INITIAL_SPEED := 60.0
 const ROLLBACK_ACCELERATION := 900.0
@@ -135,6 +136,9 @@ func advance(delta: float) -> void:
 		var settle_deadline := _time_until_next_settle()
 		if settle_deadline > 0.000001:
 			step = minf(step, settle_deadline)
+		var feed_deadline := _time_until_feed_slot()
+		if feed_deadline > 0.000001:
+			step = minf(step, feed_deadline)
 		changed = _advance_step(step) or changed
 		remaining -= step
 	if delta > 0.0 or changed:
@@ -267,6 +271,22 @@ func settle_ratio(uid: int) -> float:
 			return clampf(float(state.elapsed) / INSERT_SETTLE_TIME, 0.0, 1.0)
 	return 1.0
 
+func is_settling(uid: int) -> bool:
+	for state in pending_insertions:
+		if int(state.uid) == uid:
+			return true
+	return false
+
+func entry_spawn_x() -> float:
+	return lane_width + radius + ENTRY_MARGIN
+
+func offscreen_right_count() -> int:
+	var count := 0
+	for ball in balls:
+		if float(ball.x) - radius >= lane_width:
+			count += 1
+	return count
+
 func gap_type_counts() -> Dictionary:
 	var result := {"feed": 0, "causal": 0, "tail": tail_recoils.size()}
 	for gap in segment_gaps:
@@ -317,7 +337,7 @@ func _integrate_segments(delta: float) -> void:
 			gap.speed = minf(ROLLBACK_MAX_SPEED, float(gap.speed) + ROLLBACK_ACCELERATION * delta)
 			segment_gaps[gap_index] = gap
 			adjustments[gap_index] = maxf(adjustments[gap_index], distance)
-		elif adjustments[gap_index + 1] <= 0.0:
+		elif _segment_has_fully_entered(gap_index + 1) and adjustments[gap_index + 1] <= 0.0:
 			adjustments[gap_index + 1] = -RETURN_CATCHUP_SPEED * delta
 
 	for recoil_index in range(tail_recoils.size() - 1, -1, -1):
@@ -492,6 +512,16 @@ func _time_until_next_settle() -> float:
 		result = minf(result, maxf(0.0, INSERT_SETTLE_TIME - float(state.elapsed)))
 	return result
 
+func _time_until_feed_slot() -> float:
+	if not continuous_feed_enabled or _live_count() >= max_auto_population:
+		return INF
+	if segments.is_empty():
+		return 0.0
+	var distance := _segment_end_x(segments[-1]) - (entry_spawn_x() - spacing)
+	if distance <= POSITION_EPSILON:
+		return 0.0
+	return distance / maxf(speed, 0.001)
+
 func _update_pending_insertions(delta: float) -> void:
 	var matured: Array[int] = []
 	for index in range(pending_insertions.size() - 1, -1, -1):
@@ -546,9 +576,9 @@ func _ensure_playable_stream() -> void:
 			seed_stream()
 
 func _feed_right_edge() -> void:
-	var right_edge := lane_width - radius
+	var spawn_x := entry_spawn_x()
 	while _live_count() < max_auto_population:
-		if not segments.is_empty() and _segment_end_x(segments[-1]) + spacing > right_edge + POSITION_EPSILON:
+		if not segments.is_empty() and _segment_end_x(segments[-1]) + spacing > spawn_x + POSITION_EPSILON:
 			break
 		var use_return := pending_cache_returns > 0 and not cache.is_empty() and _returns_since_fresh < cache_return_batch
 		if use_return:
@@ -562,20 +592,22 @@ func _feed_right_edge() -> void:
 			_returns_since_fresh = 0
 	_refresh_snapshot()
 
-func _admit_on_right(identity: int, force_right_edge: bool) -> void:
-	var spawn_x := lane_width - radius
+func _admit_on_right(identity: int, _force_right_edge: bool) -> void:
+	var spawn_x := entry_spawn_x()
 	if segments.is_empty():
 		segments.append(_new_segment([_new_member(identity)], spawn_x))
 		return
 	var last := segments[-1]
 	var last_end := _segment_end_x(last)
-	spawn_x = maxf(spawn_x, last_end + spacing) if force_right_edge else last_end + spacing
+	spawn_x = maxf(spawn_x, last_end + spacing)
 	if absf(spawn_x - (last_end + spacing)) <= POSITION_EPSILON:
 		var members: Array = last.members
 		members.append(_new_member(identity))
 		last.members = members
 		segments[-1] = last
 	else:
+		# The FEED motor stays dormant until the first member is fully visible, so
+		# every new or recycled batch crosses the mask at normal conveyor speed.
 		segment_gaps.append(_new_gap(GapType.FEED))
 		segments.append(_new_segment([_new_member(identity)], spawn_x))
 
@@ -611,6 +643,9 @@ func _segment_index_by_id(segment_id: int) -> int:
 
 func _segment_end_x(segment: Dictionary) -> float:
 	return float(segment.anchor_x) + float((segment.members as Array).size() - 1) * spacing
+
+func _segment_has_fully_entered(segment_index: int) -> bool:
+	return segment_index >= 0 and segment_index < segments.size() and float(segments[segment_index].anchor_x) + radius <= lane_width + POSITION_EPSILON
 
 func _gap_distance(index: int) -> float:
 	return float(segments[index + 1].anchor_x) - _segment_end_x(segments[index])

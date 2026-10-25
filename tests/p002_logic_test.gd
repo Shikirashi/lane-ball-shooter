@@ -163,7 +163,9 @@ func _test_recycled_gap_adjacency() -> void:
 	_check(model.total_match_events == 0, "same colors across recycled wide gap do not match")
 	_check(model.identities().slice(0, 4) == [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.RED], "disconnected same-color runs remain ordered")
 
-	model.advance(6.0)
+	# P013 entries first cross the right mask at normal speed; feeder catch-up
+	# begins only after the returned segment is fully visible.
+	model.advance(8.0)
 	var connected_gap := float(model.balls[2].x) - float(model.balls[1].x)
 	_check(is_equal_approx(connected_gap, model.spacing), "returned segment catches up without overlap or teleport")
 	var rightmost_red_index := 3

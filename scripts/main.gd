@@ -121,8 +121,7 @@ func _swap() -> void:
 	_sfx.play_cue("swap")
 
 func _on_magazine_changed(loaded: int, next_value: int) -> void:
-	_shooter_view.set_loaded(loaded)
-	_magazine_view.set_identities(loaded, next_value)
+	_shooter_view.set_ammunition(loaded, next_value)
 
 func _on_shot_reached_lane(identity: int, screen_x: float) -> void:
 	if _chain_model.try_insert_shot(identity, screen_x - _chain_view.position.x):
@@ -163,6 +162,7 @@ func _on_game_over_requested(_identity: int) -> void:
 	_sfx.set_gameplay_enabled(false)
 	_clear_touch_ownership()
 	_shooter_view.set_simulation_paused(true)
+	_chain_view.set_settling_visuals_visible(false)
 	_game_over_overlay.show_game_over(_progression.score)
 
 func _restart_run() -> void:

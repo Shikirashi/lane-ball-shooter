@@ -1,6 +1,9 @@
 class_name BallChainView
 extends Control
 
+const ConveyorBallLayerScript = preload("res://scripts/ui/conveyor_ball_layer.gd")
+const SettlingBallViewScript = preload("res://scripts/ui/settling_ball_view.gd")
+
 var model: ChainModel
 var _feedback_time := 0.0
 var _feedback_identity := -1
@@ -9,39 +12,61 @@ var _feedback_points := 0
 var _feedback_tier := 0
 var _feedback_fever := false
 var debug_visible := false
+var conveyor_mask: Control
+var conveyor_balls: Control
+var settling_overlay: Control
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	clip_contents = true
+	clip_contents = false
+	conveyor_mask = Control.new()
+	conveyor_mask.name = "EstablishedConveyorMask"
+	conveyor_mask.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	conveyor_mask.clip_contents = true
+	add_child(conveyor_mask)
+	conveyor_balls = ConveyorBallLayerScript.new()
+	conveyor_balls.name = "EstablishedConveyorBalls"
+	conveyor_mask.add_child(conveyor_balls)
+	settling_overlay = SettlingBallViewScript.new()
+	settling_overlay.name = "UnmaskedSettlingOverlay"
+	add_child(settling_overlay)
 	queue_redraw()
 
 func set_model(value: ChainModel) -> void:
 	model = value
 	model.state_changed.connect(queue_redraw)
 	model.match_completed.connect(_on_match_completed)
+	conveyor_balls.set_model(model)
+	settling_overlay.set_model(model)
 	queue_redraw()
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and conveyor_mask != null:
+		_configure_layers()
+
+func _configure_layers() -> void:
+	var lane_rect := conveyor_window_rect()
+	conveyor_mask.position = lane_rect.position
+	conveyor_mask.size = lane_rect.size
+	conveyor_balls.position = Vector2.ZERO
+	conveyor_balls.size = lane_rect.size
+	settling_overlay.position = Vector2.ZERO
+	settling_overlay.size = size
+	settling_overlay.configure_lane_center(lane_rect.get_center().y)
+
+func conveyor_window_rect() -> Rect2:
+	return Rect2(0.0, 10.0, size.x, maxf(56.0, size.y - 14.0))
 
 func _process(delta: float) -> void:
 	_feedback_time = maxf(0.0, _feedback_time - delta)
 	queue_redraw()
 
 func _draw() -> void:
-	var lane_rect := Rect2(0.0, 10.0, size.x, maxf(56.0, size.y - 14.0))
+	var lane_rect := conveyor_window_rect()
 	draw_style_box(_panel_style(), lane_rect)
 	var cy := lane_rect.get_center().y
 	draw_line(Vector2(22.0, cy), Vector2(size.x - 22.0, cy), Color(0.3, 0.38, 0.52, 0.75), 3.0)
 	if model != null:
-		for ball in model.balls:
-			var identity := int(ball.identity)
-			var center := Vector2(float(ball.display_x), cy)
-			if center.x < -model.radius or center.x > size.x + model.radius:
-				continue
-			var settle_scale := lerpf(0.72, 1.0, model.settle_ratio(int(ball.uid)))
-			var draw_radius := model.radius * settle_scale
-			draw_circle(center + Vector2(2.0, 4.0), draw_radius + 1.0, Color(0.0, 0.0, 0.0, 0.35))
-			draw_circle(center, draw_radius, TeamData.color(identity))
-			draw_arc(center, draw_radius, 0.0, TAU, 32, Color(1.0, 1.0, 1.0, 0.34), 2.0)
-			TeamData.draw_symbol(self, identity, center, draw_radius, Color(0.08, 0.1, 0.16, 0.88))
 		if debug_visible:
 			draw_string(ThemeDB.fallback_font, Vector2(size.x - 248.0, size.y - 5.0), _debug_text(), HORIZONTAL_ALIGNMENT_RIGHT, 232.0, 10, Color(0.65, 0.72, 0.84, 0.85))
 	if _feedback_time > 0.0:
@@ -92,7 +117,12 @@ func reset_feedback() -> void:
 	_feedback_points = 0
 	_feedback_tier = 0
 	_feedback_fever = false
+	settling_overlay.visible = true
 	queue_redraw()
+
+func set_settling_visuals_visible(value: bool) -> void:
+	if settling_overlay != null:
+		settling_overlay.visible = value
 
 func _draw_direction_hint(center: Vector2) -> void:
 	var shade := Color(0.92, 0.96, 1.0, 0.92)

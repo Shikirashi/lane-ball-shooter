@@ -191,7 +191,7 @@ func _test_layout_palette_and_live_routing() -> void:
 	var chain_view: BallChainView = main.get("_chain_view")
 	var magazine_view: MagazineView = main.get("_magazine_view")
 	_check(absf((shooter.track_left - chain_view.position.x) - 24.0) < 0.01 and absf((shooter.track_right - chain_view.position.x) - (chain_view.size.x - 24.0)) < 0.01, "live shooter/chain coordinate mapping reaches both physical edges")
-	_check(magazine_view.get("_swap_rect").size == Vector2(64.0, 56.0), "live swap control retains 64x56 touch target")
+	_check(magazine_view.get("_swap_rect").size == Vector2(56.0, 56.0), "live circular swap control retains 56x56 touch target")
 	var battlefield: Battlefield = main.get("_battlefield")
 	for identity in range(TeamData.COUNT):
 		var lane: LaneActor = battlefield.get_lane(identity)

@@ -6,6 +6,7 @@ signal shot_reached_lane(identity: int, impact_x: float)
 const SHOT_TRAVEL_TIME := 0.20
 
 var loaded_identity: int = TeamData.Identity.RED
+var next_identity: int = TeamData.Identity.BLUE
 var shooter_x := 400.0
 var shooter_y := 650.0
 var track_left := 42.0
@@ -30,6 +31,17 @@ func configure_layout(y_position: float, left_edge: float, right_edge: float, ce
 func set_loaded(identity: int) -> void:
 	loaded_identity = identity
 	queue_redraw()
+
+func set_ammunition(loaded: int, next_value: int) -> void:
+	loaded_identity = loaded
+	next_identity = next_value
+	queue_redraw()
+
+func loaded_ball_center() -> Vector2:
+	return Vector2(shooter_x, shooter_y - 23.0)
+
+func next_ball_center() -> Vector2:
+	return Vector2(shooter_x, shooter_y + 8.0)
 
 func reset_run() -> void:
 	_shots.clear()
@@ -93,9 +105,14 @@ func _draw() -> void:
 		Vector2(shooter_x - 18.0, shooter_y - 12.0),
 	]), body_color)
 	draw_rect(Rect2(shooter_x - 7.0, shooter_y - 34.0, 14.0, 30.0), Color(0.55, 0.63, 0.75), true)
-	var ball_center := Vector2(shooter_x, shooter_y - 23.0)
+	var ball_center := loaded_ball_center()
 	draw_circle(ball_center, 19.0, TeamData.color(loaded_identity))
 	TeamData.draw_symbol(self, loaded_identity, ball_center, 19.0, Color(0.07, 0.09, 0.14, 0.9))
+	var preview_center := next_ball_center()
+	draw_circle(preview_center + Vector2(1.0, 2.0), 10.0, Color(0.0, 0.0, 0.0, 0.35))
+	draw_circle(preview_center, 9.0, TeamData.color(next_identity))
+	draw_arc(preview_center, 9.0, 0.0, TAU, 20, Color(1.0, 1.0, 1.0, 0.4), 1.0)
+	TeamData.draw_symbol(self, next_identity, preview_center, 9.0, Color(0.07, 0.09, 0.14, 0.9))
 	if _muzzle_flash > 0.0:
 		draw_circle(Vector2(shooter_x, shooter_y - 50.0), 8.0 + _muzzle_flash * 55.0, Color(1.0, 0.92, 0.55, _muzzle_flash * 5.0))
 
