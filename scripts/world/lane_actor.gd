@@ -95,12 +95,15 @@ func reset_run() -> void:
 func _build_lane() -> void:
 	var team_color := TeamData.color(team_identity)
 	var floor := PrimitiveFactory.box(Vector3(16.8, 0.12, 1.45), Color(0.1, 0.13, 0.18))
+	floor.name = "LaneFloor"
 	floor.position.y = -0.1
 	add_child(floor)
 	var stripe := PrimitiveFactory.box(Vector3(16.8, 0.025, 0.08), team_color.darkened(0.08))
+	stripe.name = "TeamStripe_%s" % TeamData.display_name(team_identity)
 	stripe.position = Vector3(0.0, -0.025, -0.61)
 	add_child(stripe)
 	var team_marker := PrimitiveFactory.cylinder(0.38, 0.38, 0.035, team_color, 20)
+	team_marker.name = "TeamMarker_%s" % TeamData.display_name(team_identity)
 	team_marker.position = Vector3(-7.05, 0.03, 0.0)
 	add_child(team_marker)
 	_add_team_glyph(team_marker, team_identity)
@@ -112,9 +115,11 @@ func _build_defender() -> void:
 	add_child(_defender_root)
 	var color_value := TeamData.color(team_identity)
 	var body := PrimitiveFactory.cylinder(0.32, 0.43, 0.75, color_value)
+	body.name = "DefenderBody_%s" % TeamData.display_name(team_identity)
 	body.position.y = 0.42
 	_defender_root.add_child(body)
 	var head := PrimitiveFactory.sphere(0.31, 0.62, color_value.lightened(0.08))
+	head.name = "DefenderHead_%s" % TeamData.display_name(team_identity)
 	head.position.y = 1.0
 	_defender_root.add_child(head)
 	var visor := PrimitiveFactory.box(Vector3(0.3, 0.12, 0.11), Color(0.06, 0.08, 0.12))
@@ -135,7 +140,7 @@ func _build_defender() -> void:
 	_status_label = Label3D.new()
 	_status_label.name = "LaneStatus"
 	_status_label.position = Vector3(-4.65, 1.34, 0.0)
-	_status_label.font_size = 24
+	_status_label.font_size = 28
 	_status_label.outline_size = 6
 	_status_label.modulate = TeamData.color(team_identity).lightened(0.2)
 	_status_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED

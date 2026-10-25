@@ -29,8 +29,8 @@ func _test_layout_calculator() -> void:
 		_check(safe.encloses(layout.battlefield_rect), "%s battlefield remains in safe region" % size)
 		_check(safe.encloses(layout.magazine_rect), "%s magazine remains in safe region" % size)
 		_check(layout.chain_rect.end.y <= layout.battlefield_rect.position.y, "%s chain and battlefield do not overlap" % size)
-		_check(layout.battlefield_rect.end.y <= layout.magazine_rect.position.y, "%s battlefield and magazine do not overlap" % size)
-		_check(float(layout.track_right) < layout.magazine_rect.position.x, "%s shooter track stops before magazine" % size)
+		_check(layout.hud_rect.encloses(layout.magazine_rect), "%s compact magazine sits inside HUD rather than shooter track" % size)
+		_check(float(layout.track_left) <= layout.chain_rect.position.x + 25.0 and float(layout.track_right) >= layout.chain_rect.end.x - 25.0, "%s shooter track spans the targetable chain width" % size)
 		var render_size := LayoutCalculator.bounded_render_size(layout.battlefield_rect.size)
 		_check(render_size.x <= int(LayoutCalculator.MAX_3D_WIDTH) and render_size.y <= int(LayoutCalculator.MAX_3D_HEIGHT), "%s 3D render resolution is bounded" % size)
 
@@ -58,8 +58,9 @@ func _test_live_layout_and_input() -> void:
 	_check(safe.encloses(Rect2(chain.position, chain.size)), "live chain uses injected safe rectangle")
 	_check(safe.encloses(Rect2(magazine_view.position, magazine_view.size)), "live magazine uses injected safe rectangle")
 	_check(battlefield_region.stretch_shrink >= 1, "live 3D viewport uses a positive render shrink")
-	_check(shooter.track_left >= safe.position.x and shooter.track_right < magazine_view.position.x, "live shooter track remains usable and clear of swap UI")
-	_check(magazine_view.get("_swap_rect").size.x >= 44.0 and magazine_view.get("_swap_rect").size.y >= 44.0, "swap touch target is at least 44 logical pixels")
+	_check(shooter.track_left >= safe.position.x and shooter.track_right >= chain.position.x + chain.size.x - 25.0, "live shooter track reaches the rightmost chain target")
+	_check(magazine_view.position.y + magazine_view.size.y <= chain.position.y, "live magazine remains above chain and outside firing playfield")
+	_check(magazine_view.get("_swap_rect").size.x >= 56.0 and magazine_view.get("_swap_rect").size.y >= 56.0, "swap touch target is at least 56 logical pixels")
 	var restart_button: Button = overlay.get("_restart_button")
 	_check(safe.encloses(Rect2(restart_button.position, restart_button.size)), "restart button stays in safe rectangle")
 
@@ -109,6 +110,18 @@ func _test_live_layout_and_input() -> void:
 	_check(shooter.get("_shots").is_empty() and int(main.get("_active_touch_id")) == 10, "second finger cannot steal or release the active touch")
 	await _dispatch_touch(10, Vector2(touch_x, touch_y), false)
 	_check(shooter.get("_shots").size() == 1, "owned finger still fires once after unrelated second touch")
+
+	shooter.reset_run()
+	main.set("_cooldown_remaining", 0.0)
+	var extreme_y := playfield.position.y + playfield.size.y * 0.5
+	await _dispatch_touch(12, Vector2(playfield.end.x - 2.0, extreme_y), true)
+	await _dispatch_touch(12, Vector2(playfield.end.x - 2.0, extreme_y), false)
+	_check(shooter.get("_shots").size() == 1 and absf(float(shooter.get("_shots")[0].start.x) - shooter.track_right) < 0.01, "extreme-right touch fires once from the rightmost targetable coordinate")
+	shooter.reset_run()
+	main.set("_cooldown_remaining", 0.0)
+	await _dispatch_touch(13, Vector2(playfield.position.x + 2.0, extreme_y), true)
+	await _dispatch_touch(13, Vector2(playfield.position.x + 2.0, extreme_y), false)
+	_check(shooter.get("_shots").size() == 1 and absf(float(shooter.get("_shots")[0].start.x) - shooter.track_left) < 0.01, "extreme-left touch fires once from the leftmost targetable coordinate")
 
 	shooter.reset_run()
 	main.set("_cooldown_remaining", 0.0)

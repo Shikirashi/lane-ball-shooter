@@ -86,7 +86,8 @@ func _test_fifo_feed_and_physical_adjacency() -> void:
 	var separated := ChainModel.new()
 	var red_pair: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED]
 	separated.set_test_state(red_pair, 100.0)
-	separated.balls.append(separated._make_ball(TeamData.Identity.RED, 500.0))
+	var isolated_red: Array[int] = [TeamData.Identity.RED]
+	separated.add_test_segment(isolated_red, 500.0)
 	separated.try_insert_shot(TeamData.Identity.RED, 510.0)
 	_check(separated.total_match_events == 0, "same colors across a physical gap do not match")
 

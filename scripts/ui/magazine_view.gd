@@ -40,29 +40,28 @@ func _notification(what: int) -> void:
 
 func _draw() -> void:
 	draw_style_box(_panel_style(), Rect2(Vector2.ZERO, size))
-	var loaded_center := Vector2(size.x * 0.22, size.y * 0.54)
-	var swap_center := Vector2(size.x * 0.5, size.y * 0.54)
-	var next_center := Vector2(size.x * 0.78, size.y * 0.54)
+	var loaded_center := Vector2(size.x * 0.18, size.y * 0.58)
+	var swap_center := Vector2(size.x * 0.5, size.y * 0.55)
+	var next_center := Vector2(size.x * 0.82, size.y * 0.58)
 	_update_swap_rect()
 
 	_draw_slot(loaded_center, loaded_identity)
 	_draw_slot(next_center, next_identity)
-	draw_string(ThemeDB.fallback_font, Vector2(loaded_center.x - 31.0, 20.0), "LOADED", HORIZONTAL_ALIGNMENT_CENTER, 62.0, 12, Color(0.82, 0.88, 0.98))
-	draw_string(ThemeDB.fallback_font, Vector2(next_center.x - 24.0, 20.0), "NEXT", HORIZONTAL_ALIGNMENT_CENTER, 48.0, 12, Color(0.82, 0.88, 0.98))
+	draw_string(ThemeDB.fallback_font, Vector2(loaded_center.x - 25.0, 14.0), "LOAD", HORIZONTAL_ALIGNMENT_CENTER, 50.0, 10, Color(0.82, 0.88, 0.98))
+	draw_string(ThemeDB.fallback_font, Vector2(next_center.x - 22.0, 14.0), "NEXT", HORIZONTAL_ALIGNMENT_CENTER, 44.0, 10, Color(0.82, 0.88, 0.98))
 
 	var button_color := Color(0.29, 0.38, 0.56) if _swap_hovered else Color(0.19, 0.26, 0.4)
 	draw_style_box(_button_style(button_color), _swap_rect)
-	draw_string(ThemeDB.fallback_font, Vector2(swap_center.x - 18.0, swap_center.y + 8.0), "<>", HORIZONTAL_ALIGNMENT_CENTER, 36.0, 23, Color.WHITE)
-	draw_string(ThemeDB.fallback_font, Vector2(swap_center.x - 29.0, size.y - 9.0), "SWAP", HORIZONTAL_ALIGNMENT_CENTER, 58.0, 11, Color(0.72, 0.8, 0.94))
+	draw_string(ThemeDB.fallback_font, Vector2(swap_center.x - 18.0, swap_center.y + 7.0), "<>", HORIZONTAL_ALIGNMENT_CENTER, 36.0, 21, Color.WHITE)
 
 func _update_swap_rect() -> void:
-	var swap_center := Vector2(size.x * 0.5, size.y * 0.54)
+	var swap_center := Vector2(size.x * 0.5, size.y * 0.55)
 	_swap_rect = Rect2(swap_center - Vector2(32.0, 28.0), Vector2(64.0, 56.0))
 
 func _draw_slot(center: Vector2, identity: int) -> void:
-	draw_circle(center + Vector2(2.0, 4.0), 25.0, Color(0.0, 0.0, 0.0, 0.35))
-	draw_circle(center, 23.0, TeamData.color(identity))
-	TeamData.draw_symbol(self, identity, center, 23.0, Color(0.06, 0.08, 0.12, 0.9))
+	draw_circle(center + Vector2(1.0, 3.0), 20.0, Color(0.0, 0.0, 0.0, 0.35))
+	draw_circle(center, 18.0, TeamData.color(identity))
+	TeamData.draw_symbol(self, identity, center, 18.0, Color(0.06, 0.08, 0.12, 0.9))
 
 func _panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()

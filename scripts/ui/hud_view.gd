@@ -29,11 +29,13 @@ func _draw() -> void:
 	var panel := Rect2(Vector2.ZERO, size)
 	draw_style_box(_panel_style(), panel)
 	var compact := size.x < 1100.0
+	var control_reserve := clampf(size.x * 0.20, 190.0, 230.0) + 12.0
+	var info_right := size.x - control_reserve
 	var title_font_size := 14 if compact else 17
 	var value_font_size := 13 if compact else 15
 	var baseline := minf(25.0, size.y - 13.0)
 
-	draw_string(ThemeDB.fallback_font, Vector2(14.0, baseline), "LANE BALL SHOOTER", HORIZONTAL_ALIGNMENT_LEFT, -1.0, title_font_size, Color(0.92, 0.96, 1.0))
+	draw_string(ThemeDB.fallback_font, Vector2(14.0, baseline), "LBS" if compact else "LANE BALL SHOOTER", HORIZONTAL_ALIGNMENT_LEFT, -1.0, title_font_size, Color(0.92, 0.96, 1.0))
 	draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.30, baseline), "SCORE  %06d" % score, HORIZONTAL_ALIGNMENT_LEFT, -1.0, value_font_size, Color.WHITE)
 	var combo_color := Color(0.82, 0.9, 1.0) if combo_count > 0 else Color(0.52, 0.59, 0.7)
 	draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.54, baseline), "COMBO  x%d" % combo_count, HORIZONTAL_ALIGNMENT_LEFT, -1.0, value_font_size, combo_color)
@@ -46,10 +48,10 @@ func _draw() -> void:
 	elif tier > 0:
 		state_text = "TIER %d" % tier
 		state_color = Color(0.67, 0.86, 1.0)
-	draw_string(ThemeDB.fallback_font, Vector2(size.x - 102.0, baseline), state_text, HORIZONTAL_ALIGNMENT_CENTER, 88.0, value_font_size, state_color)
+	draw_string(ThemeDB.fallback_font, Vector2(info_right - 94.0, baseline), state_text, HORIZONTAL_ALIGNMENT_CENTER, 88.0, value_font_size, state_color)
 
 	var meter_left := size.x * 0.29
-	var meter_right := size.x - 14.0
+	var meter_right := info_right - 8.0
 	var meter_rect := Rect2(meter_left, size.y - 8.0, meter_right - meter_left, 5.0)
 	draw_rect(meter_rect, Color(0.1, 0.14, 0.22), true)
 	if window_ratio > 0.0:

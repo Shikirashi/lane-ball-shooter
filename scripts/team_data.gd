@@ -8,9 +8,9 @@ const NAMES: Array[String] = ["RED", "BLUE", "YELLOW", "GREEN"]
 const SYMBOL_NAMES: Array[String] = ["DOT", "SQUARE", "TRIANGLE", "DIAMOND"]
 const COLORS: Array[Color] = [
 	Color("ef5b5b"),
-	Color("55a7ff"),
+	Color("3677e8"),
 	Color("f3cf4b"),
-	Color("58d68d"),
+	Color("37c45a"),
 ]
 
 static func color(identity: int) -> Color:

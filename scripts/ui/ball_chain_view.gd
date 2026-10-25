@@ -36,10 +36,12 @@ func _draw() -> void:
 			var center := Vector2(float(ball.display_x), cy)
 			if center.x < -model.radius or center.x > size.x + model.radius:
 				continue
-			draw_circle(center + Vector2(2.0, 4.0), model.radius + 1.0, Color(0.0, 0.0, 0.0, 0.35))
-			draw_circle(center, model.radius, TeamData.color(identity))
-			draw_arc(center, model.radius, 0.0, TAU, 32, Color(1.0, 1.0, 1.0, 0.34), 2.0)
-			TeamData.draw_symbol(self, identity, center, model.radius, Color(0.08, 0.1, 0.16, 0.88))
+			var settle_scale := lerpf(0.72, 1.0, model.settle_ratio(int(ball.uid)))
+			var draw_radius := model.radius * settle_scale
+			draw_circle(center + Vector2(2.0, 4.0), draw_radius + 1.0, Color(0.0, 0.0, 0.0, 0.35))
+			draw_circle(center, draw_radius, TeamData.color(identity))
+			draw_arc(center, draw_radius, 0.0, TAU, 32, Color(1.0, 1.0, 1.0, 0.34), 2.0)
+			TeamData.draw_symbol(self, identity, center, draw_radius, Color(0.08, 0.1, 0.16, 0.88))
 		if debug_visible:
 			draw_string(ThemeDB.fallback_font, Vector2(size.x - 248.0, size.y - 5.0), _debug_text(), HORIZONTAL_ALIGNMENT_RIGHT, 232.0, 10, Color(0.65, 0.72, 0.84, 0.85))
 	if _feedback_time > 0.0:
@@ -54,9 +56,12 @@ func _draw() -> void:
 	_draw_direction_hint(Vector2(36.0, cy))
 
 func _debug_text() -> String:
+	var gap_counts := model.gap_type_counts()
+	var logical_minimum := model.min_logical_spacing if is_finite(model.min_logical_spacing) else 0.0
+	var display_minimum := model.min_display_spacing if is_finite(model.min_display_spacing) else 0.0
 	if model.last_match_identity < 0:
-		return "VISIBLE %d  CACHE %d  SETTLE %d  ROLLBACK %d  MATCHES 0" % [model.balls.size(), model.cache.size(), model.pending_insertions.size(), model.rollback_gaps.size()]
-	return "VISIBLE %d  CACHE %d  SETTLE %d  ROLLBACK %d  LAST %s x%d  EVENTS %d" % [model.balls.size(), model.cache.size(), model.pending_insertions.size(), model.rollback_gaps.size(), TeamData.display_name(model.last_match_identity), model.last_match_size, model.total_match_events]
+		return "B%d S%d G%d/%d SET%d M%.0f/%.0f I%d" % [model.balls.size(), model.segments.size(), int(gap_counts.feed), int(gap_counts.causal), model.pending_insertions.size(), logical_minimum, display_minimum, model.invariant_violations]
+	return "B%d S%d G%d/%d E%d M%.0f/%.0f I%d" % [model.balls.size(), model.segments.size(), int(gap_counts.feed), int(gap_counts.causal), model.max_concurrent_events, logical_minimum, display_minimum, model.invariant_violations]
 
 func _on_match_completed(identity: int, group_size: int) -> void:
 	_feedback_identity = identity

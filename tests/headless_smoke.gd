@@ -50,7 +50,8 @@ func _run() -> void:
 	var battlefield_region: SubViewportContainer = main.get("_battlefield_container")
 	var chain: BallChainView = main.get("_chain_view")
 	_check(battlefield_region.position.y >= chain.position.y + chain.size.y, "3D region starts below the top chain")
-	_check(magazine_view.position.y >= battlefield_region.position.y + battlefield_region.size.y, "magazine starts below the 3D region")
+	_check(magazine_view.position.y + magazine_view.size.y <= chain.position.y, "compact magazine stays in HUD above the chain")
+	_check(shooter.track_right >= chain.position.x + chain.size.x - 25.0, "shooter reaches the rightmost chain target")
 	_finish()
 
 func _finish() -> void:

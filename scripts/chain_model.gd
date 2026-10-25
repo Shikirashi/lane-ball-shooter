@@ -4,6 +4,8 @@ extends RefCounted
 signal state_changed
 signal match_completed(identity: int, group_size: int)
 
+enum GapType { FEED, CAUSAL }
+
 const DEFAULT_SPEED := 34.0
 const DEFAULT_SPACING := 58.0
 const DEFAULT_RADIUS := 22.0
@@ -12,7 +14,6 @@ const DEFAULT_CACHE_RETURN_BATCH := 3
 const DEFAULT_EMPTY_RETURN_COUNT := 8
 const DEFAULT_MAX_AUTO_POPULATION := 24
 const MATCH_SIZE := 3
-const GAP_CLOSE_SPEED := 420.0
 const DEFAULT_SHOT_RADIUS := 12.0
 const RETURN_CATCHUP_SPEED := 120.0
 const INSERT_SETTLE_TIME := 0.05
@@ -23,20 +24,14 @@ const ROLLBACK_CONTACT_EPSILON := 0.05
 const TAIL_RECOIL_SPACING_FACTOR := 1.25
 const MAX_SIMULATION_STEP := 1.0 / 60.0
 const ADJACENCY_GAP_FACTOR := 1.25
+const POSITION_EPSILON := 0.01
 const DEFAULT_FRESH_SEED := 0x1B5C008
 const FRESH_RUN_LENGTH_WEIGHTS: Array[int] = [20, 30, 18, 13, 9, 6, 4]
 const SEED_PATTERN: Array[int] = [
-	TeamData.Identity.RED,
-	TeamData.Identity.RED,
-	TeamData.Identity.BLUE,
-	TeamData.Identity.BLUE,
-	TeamData.Identity.BLUE,
-	TeamData.Identity.YELLOW,
-	TeamData.Identity.YELLOW,
-	TeamData.Identity.GREEN,
-	TeamData.Identity.GREEN,
-	TeamData.Identity.GREEN,
-	TeamData.Identity.GREEN,
+	TeamData.Identity.RED, TeamData.Identity.RED,
+	TeamData.Identity.BLUE, TeamData.Identity.BLUE, TeamData.Identity.BLUE,
+	TeamData.Identity.YELLOW, TeamData.Identity.YELLOW,
+	TeamData.Identity.GREEN, TeamData.Identity.GREEN, TeamData.Identity.GREEN, TeamData.Identity.GREEN,
 	TeamData.Identity.RED,
 ]
 
@@ -50,8 +45,17 @@ var max_auto_population := DEFAULT_MAX_AUTO_POPULATION
 var lane_width := 1252.0
 var continuous_feed_enabled := true
 
+# Authoritative physics state. Each segment owns one anchor and an ordered list of
+# UID/color members. Member positions are always anchor + index * spacing.
+var segments: Array[Dictionary] = []
+var segment_gaps: Array[Dictionary] = []
+var tail_recoils: Array[Dictionary] = []
+
+# Read-only-by-convention flattened compatibility snapshot for views/older tests.
 var balls: Array[Dictionary] = []
 var cache: Array[int] = []
+var rollback_gaps: Array[Dictionary] = []
+var pending_insertions: Array[Dictionary] = []
 var total_match_events := 0
 var last_match_identity := -1
 var last_match_size := 0
@@ -64,20 +68,25 @@ var fresh_identity_counts: Array[int] = [0, 0, 0, 0]
 var fresh_run_length_counts: Array[int] = [0, 0, 0, 0, 0, 0, 0]
 var fresh_runs_generated := 0
 var longest_fresh_run := 0
-var rollback_gaps: Array[Dictionary] = []
-var pending_insertions: Array[Dictionary] = []
 var total_rollbacks_started := 0
 var total_rollbacks_completed := 0
 var simulation_time := 0.0
 
+# Bounded diagnostics used by F3 and stress tests.
+var max_concurrent_events := 0
+var min_logical_spacing := INF
+var min_display_spacing := INF
+var invariant_violations := 0
+
 var _next_ball_id := 1
+var _next_segment_id := 1
+var _next_gap_id := 1
 var _fresh_color_bag: Array[int] = []
 var _fresh_rng := RandomNumberGenerator.new()
 var _fresh_run_identity := -1
 var _fresh_run_remaining := 0
 var _previous_fresh_run_identity := -1
 var _returns_since_fresh := 0
-var _next_rollback_id := 1
 
 func _init() -> void:
 	_reset_fresh_generator()
@@ -88,8 +97,13 @@ func set_lane_width(value: float) -> void:
 
 func reset_run() -> void:
 	continuous_feed_enabled = true
+	segments.clear()
+	segment_gaps.clear()
+	tail_recoils.clear()
 	balls.clear()
 	cache.clear()
+	rollback_gaps.clear()
+	pending_insertions.clear()
 	total_match_events = 0
 	last_match_identity = -1
 	last_match_size = 0
@@ -97,70 +111,69 @@ func reset_run() -> void:
 	pending_cache_returns = 0
 	total_fresh_generated = 0
 	total_cache_returned = 0
-	_next_ball_id = 1
-	_reset_fresh_generator()
-	_returns_since_fresh = 0
-	rollback_gaps.clear()
-	pending_insertions.clear()
 	total_rollbacks_started = 0
 	total_rollbacks_completed = 0
-	_next_rollback_id = 1
 	simulation_time = 0.0
+	max_concurrent_events = 0
+	min_logical_spacing = INF
+	min_display_spacing = INF
+	invariant_violations = 0
+	_next_ball_id = 1
+	_next_segment_id = 1
+	_next_gap_id = 1
+	_returns_since_fresh = 0
+	_reset_fresh_generator()
 	seed_stream()
 
 func advance(delta: float) -> void:
 	var remaining := maxf(delta, 0.0)
-	var rolled_off := false
+	var changed := false
 	if remaining <= 0.0:
-		rolled_off = _advance_step(0.0)
+		changed = _advance_step(0.0)
 	while remaining > 0.000001:
 		var step := minf(remaining, MAX_SIMULATION_STEP)
-		var next_settle := _time_until_next_settle()
-		if next_settle > 0.000001:
-			step = minf(step, next_settle)
-		rolled_off = _advance_step(step) or rolled_off
+		var settle_deadline := _time_until_next_settle()
+		if settle_deadline > 0.000001:
+			step = minf(step, settle_deadline)
+		changed = _advance_step(step) or changed
 		remaining -= step
-	if delta > 0.0 or rolled_off:
+	if delta > 0.0 or changed:
 		state_changed.emit()
 
 func _advance_step(delta: float) -> bool:
-	var travel := speed * delta
-	for index in range(balls.size()):
-		var ball := balls[index]
-		ball.x -= travel
-		ball.display_x -= travel
-		balls[index] = ball
-	_close_disconnected_gaps(delta)
-	simulation_time += delta
-	_update_rollbacks(delta)
-	for index in range(balls.size()):
-		var ball := balls[index]
-		if not _is_pending_insertion_uid(int(ball.uid)):
-			ball.display_x = move_toward(float(ball.display_x), float(ball.x), GAP_CLOSE_SPEED * delta)
-		balls[index] = ball
-
-	var rolled_off := false
-	while not balls.is_empty() and float(balls[0].x) + radius < 0.0:
-		var exited: Dictionary = balls.pop_front()
-		cache.append(int(exited.identity))
-		_retire_pending_insertion(int(exited.uid))
-		rolled_off = true
+	var event_count_before := total_match_events
+	if delta > 0.0:
+		simulation_time += delta
+		_integrate_segments(delta)
+	_process_contacts()
+	var rolled_off := _roll_off_left()
 	if continuous_feed_enabled:
 		_feed_right_edge()
-	elif balls.is_empty():
+	elif segments.is_empty():
 		_ensure_playable_stream()
-	_prune_invalid_rollbacks()
 	_update_pending_insertions(delta)
-	return rolled_off
+	_refresh_snapshot()
+	max_concurrent_events = maxi(max_concurrent_events, total_match_events - event_count_before)
+	return rolled_off or total_match_events != event_count_before
 
-## Returns true only when the projectile horizontally overlaps a rendered chain ball.
-## The tolerance is the chain-ball radius plus the projectile's visual radius.
+## Projectile-to-chain contact uses the actual rendered center and the sum of the
+## 22px chain radius plus the 12px projectile radius; this is collision tolerance,
+## not permission for live chain balls to overlap.
 func try_insert_shot(identity: int, impact_x: float, shot_radius := DEFAULT_SHOT_RADIUS) -> bool:
+	_refresh_snapshot()
 	var contact_index := _find_contact_index(impact_x, radius + maxf(shot_radius, 0.0))
 	if contact_index < 0:
 		return false
+	var contact_uid := int(balls[contact_index].uid)
+	var location := _locate_uid(contact_uid)
+	if location.is_empty():
+		return false
+	var segment_index := int(location.segment)
+	var local_index := int(location.local)
 	var insert_after := impact_x >= float(balls[contact_index].display_x)
-	_insert_beside_contact(identity, contact_index, insert_after, impact_x)
+	var insert_index := local_index + 1 if insert_after else local_index
+	_insert_into_segment(identity, segment_index, insert_index)
+	state_changed.emit()
 	return true
 
 func return_cached(requested_count: int = -1) -> int:
@@ -168,12 +181,14 @@ func return_cached(requested_count: int = -1) -> int:
 	if not continuous_feed_enabled:
 		count = mini(maxi(count, 0), cache.size())
 		for unused in range(count):
-			_append_on_right(cache.pop_front())
+			_admit_on_right(cache.pop_front(), true)
+			total_cache_returned += 1
+		_refresh_snapshot()
 		if count > 0:
 			state_changed.emit()
 		return count
-	var available_to_request := maxi(0, cache.size() - pending_cache_returns)
-	count = mini(maxi(count, 0), available_to_request)
+	var available := maxi(0, cache.size() - pending_cache_returns)
+	count = mini(maxi(count, 0), available)
 	pending_cache_returns += count
 	var returned_before := total_cache_returned
 	_feed_right_edge()
@@ -183,102 +198,292 @@ func return_cached(requested_count: int = -1) -> int:
 	return admitted
 
 func seed_stream() -> void:
-	if balls.size() + cache.size() > 0:
+	if not segments.is_empty() or not cache.is_empty():
 		return
 	var count := mini(initial_population, max_auto_population)
 	var right_x := lane_width - radius
 	var left_x := right_x - spacing * (count - 1)
+	var members: Array[Dictionary] = []
 	for index in range(count):
-		balls.append(_make_ball(SEED_PATTERN[index % SEED_PATTERN.size()], left_x + spacing * index))
+		members.append(_new_member(SEED_PATTERN[index % SEED_PATTERN.size()]))
 		total_fresh_generated += 1
+	segments.append(_new_segment(members, left_x))
+	_refresh_snapshot()
 	state_changed.emit()
 
-func set_test_state(identities: Array[int], start_x := 100.0, cached: Array[int] = []) -> void:
+func set_test_state(identities_value: Array[int], start_x := 100.0, cached: Array[int] = []) -> void:
 	continuous_feed_enabled = false
+	segments.clear()
+	segment_gaps.clear()
+	tail_recoils.clear()
 	balls.clear()
 	cache = cached.duplicate()
+	rollback_gaps.clear()
+	pending_insertions.clear()
 	total_match_events = 0
 	last_match_identity = -1
 	last_match_size = 0
 	event_log.clear()
 	pending_cache_returns = 0
 	_returns_since_fresh = 0
-	rollback_gaps.clear()
-	pending_insertions.clear()
 	total_rollbacks_started = 0
 	total_rollbacks_completed = 0
-	_next_rollback_id = 1
 	simulation_time = 0.0
-	for index in range(identities.size()):
-		balls.append(_make_ball(identities[index], start_x + spacing * index))
+	max_concurrent_events = 0
+	min_logical_spacing = INF
+	min_display_spacing = INF
+	invariant_violations = 0
+	_next_segment_id = 1
+	_next_gap_id = 1
+	var members: Array[Dictionary] = []
+	for identity in identities_value:
+		members.append(_new_member(identity))
+	if not members.is_empty():
+		segments.append(_new_segment(members, start_x))
+	_refresh_snapshot()
 	state_changed.emit()
+
+func add_test_segment(identities_value: Array[int], anchor_x: float, gap_type := GapType.FEED) -> void:
+	var members: Array[Dictionary] = []
+	for identity in identities_value:
+		members.append(_new_member(identity))
+	if members.is_empty():
+		return
+	if not segments.is_empty():
+		segment_gaps.append(_new_gap(gap_type))
+	segments.append(_new_segment(members, anchor_x))
+	_refresh_snapshot()
 
 func identities() -> Array[int]:
 	var result: Array[int] = []
-	for ball in balls:
-		result.append(int(ball.identity))
+	for segment in segments:
+		for member in segment.members:
+			result.append(int(member.identity))
 	return result
 
-func _find_contact_index(impact_x: float, tolerance: float) -> int:
-	var closest_index := -1
-	var closest_distance := INF
-	for index in range(balls.size()):
-		var distance := absf(impact_x - float(balls[index].display_x))
-		if distance <= tolerance and distance < closest_distance:
-			closest_index = index
-			closest_distance = distance
-	return closest_index
+func settle_ratio(uid: int) -> float:
+	for state in pending_insertions:
+		if int(state.uid) == uid:
+			return clampf(float(state.elapsed) / INSERT_SETTLE_TIME, 0.0, 1.0)
+	return 1.0
 
-func _insert_beside_contact(identity: int, contact_index: int, insert_after: bool, impact_x: float) -> void:
-	var insert_index := contact_index + 1 if insert_after else contact_index
-	var logical_x: float
-	if insert_after:
-		logical_x = float(balls[contact_index].x) + spacing
-		if contact_index + 1 < balls.size():
-			var next_segment_end := _connected_segment_end(contact_index + 1)
-			if _are_adjacent(contact_index, contact_index + 1):
-				_shift_logical_positions(contact_index + 1, next_segment_end, spacing)
-			else:
-				var gap_to_next := float(balls[contact_index + 1].x) - float(balls[contact_index].x)
-				if gap_to_next < spacing * 2.0:
-					_shift_logical_positions(contact_index + 1, next_segment_end, spacing * 2.0 - gap_to_next)
+func gap_type_counts() -> Dictionary:
+	var result := {"feed": 0, "causal": 0, "tail": tail_recoils.size()}
+	for gap in segment_gaps:
+		if int(gap.type) == GapType.CAUSAL:
+			result.causal += 1
+		else:
+			result.feed += 1
+	return result
+
+func _insert_into_segment(identity: int, segment_index: int, insert_index: int) -> void:
+	var segment := segments[segment_index]
+	var members: Array = segment.members
+	insert_index = clampi(insert_index, 0, members.size())
+	var member := _new_member(identity)
+	if insert_index == 0:
+		segment.anchor_x = float(segment.anchor_x) - spacing
 	else:
-		logical_x = float(balls[contact_index].x) - spacing
-		if contact_index > 0:
-			var current_segment_end := _connected_segment_end(contact_index)
-			if _are_adjacent(contact_index - 1, contact_index):
-				logical_x = float(balls[contact_index].x)
-				_shift_logical_positions(contact_index, current_segment_end, spacing)
-			else:
-				var gap_from_previous := float(balls[contact_index].x) - float(balls[contact_index - 1].x)
-				if gap_from_previous < spacing * 2.0:
-					var required_shift := spacing * 2.0 - gap_from_previous
-					logical_x += required_shift
-					_shift_logical_positions(contact_index, current_segment_end, required_shift)
+		# The inserted slot expands the contacted segment to the right. Move every
+		# following segment by exactly the same slot width, preserving every gap.
+		for following in range(segment_index + 1, segments.size()):
+			var shifted := segments[following]
+			shifted.anchor_x = float(shifted.anchor_x) + spacing
+			segments[following] = shifted
+	members.insert(insert_index, member)
+	segment.members = members
+	segments[segment_index] = segment
+	pending_insertions.append({"uid": int(member.uid), "elapsed": 0.0})
+	_refresh_snapshot()
 
-	var contact_uid := int(balls[contact_index].uid)
-	var inserted_ball := _make_ball(identity, logical_x, impact_x)
-	balls.insert(insert_index, inserted_ball)
-	_update_rollback_endpoint_after_insert(contact_uid, int(inserted_ball.uid), insert_after)
-	pending_insertions.append({
-		"uid": int(inserted_ball.uid),
-		"elapsed": 0.0,
-		"start_offset": impact_x - logical_x,
-	})
-	state_changed.emit()
-
-func _resolve_inserted_match(inserted_uid: int) -> void:
-	var insert_index := _ball_index_by_uid(inserted_uid)
-	if insert_index < 0:
+func _integrate_segments(delta: float) -> void:
+	if segments.is_empty() or delta <= 0.0:
 		return
-	var group := _group_at(insert_index)
+	var adjustments: Array[float] = []
+	adjustments.resize(segments.size())
+	adjustments.fill(0.0)
+	for index in range(segments.size()):
+		var segment := segments[index]
+		segment.anchor_x = float(segment.anchor_x) - speed * delta
+		segments[index] = segment
+
+	# One segment receives at most one special motor: its causal right edge has
+	# priority over feed catch-up at its left edge.
+	for gap_index in range(segment_gaps.size()):
+		var gap := segment_gaps[gap_index]
+		if int(gap.type) == GapType.CAUSAL:
+			var distance := _accelerated_distance(gap, delta)
+			gap.speed = minf(ROLLBACK_MAX_SPEED, float(gap.speed) + ROLLBACK_ACCELERATION * delta)
+			segment_gaps[gap_index] = gap
+			adjustments[gap_index] = maxf(adjustments[gap_index], distance)
+		elif adjustments[gap_index + 1] <= 0.0:
+			adjustments[gap_index + 1] = -RETURN_CATCHUP_SPEED * delta
+
+	for recoil_index in range(tail_recoils.size() - 1, -1, -1):
+		var recoil := tail_recoils[recoil_index]
+		var segment_index := _segment_index_by_id(int(recoil.segment_id))
+		if segment_index < 0:
+			tail_recoils.remove_at(recoil_index)
+			continue
+		var distance := minf(float(recoil.remaining), _accelerated_distance(recoil, delta))
+		recoil.speed = minf(ROLLBACK_MAX_SPEED, float(recoil.speed) + ROLLBACK_ACCELERATION * delta)
+		adjustments[segment_index] = maxf(adjustments[segment_index], distance)
+		recoil.step_distance = distance
+		tail_recoils[recoil_index] = recoil
+
+	_solve_non_overlap(adjustments)
+	for index in range(segments.size()):
+		var segment := segments[index]
+		segment.anchor_x = float(segment.anchor_x) + adjustments[index]
+		segments[index] = segment
+	for recoil_index in range(tail_recoils.size() - 1, -1, -1):
+		var recoil := tail_recoils[recoil_index]
+		var segment_index := _segment_index_by_id(int(recoil.segment_id))
+		if segment_index < 0:
+			tail_recoils.remove_at(recoil_index)
+			continue
+		var actual_move := maxf(0.0, adjustments[segment_index])
+		recoil.remaining = maxf(0.0, float(recoil.remaining) - minf(actual_move, float(recoil.step_distance)))
+		if float(recoil.remaining) <= ROLLBACK_CONTACT_EPSILON:
+			tail_recoils.remove_at(recoil_index)
+			total_rollbacks_completed += 1
+		else:
+			tail_recoils[recoil_index] = recoil
+	_refresh_rollback_snapshot()
+
+func _solve_non_overlap(adjustments: Array[float]) -> void:
+	# Resolve desired segment translations before applying any of them. Causal
+	# leftward-edge motors yield first; feed right-side catch-up yields second.
+	for unused in range(maxi(1, segments.size() * 2)):
+		var changed := false
+		for gap_index in range(segment_gaps.size()):
+			var available := maxf(0.0, _gap_distance(gap_index) - spacing)
+			var closure := adjustments[gap_index] - adjustments[gap_index + 1]
+			if closure <= available + POSITION_EPSILON:
+				continue
+			var excess := closure - available
+			if adjustments[gap_index] > 0.0:
+				adjustments[gap_index] = maxf(0.0, adjustments[gap_index] - excess)
+			elif adjustments[gap_index + 1] < 0.0:
+				adjustments[gap_index + 1] = minf(0.0, adjustments[gap_index + 1] + excess)
+			changed = true
+		if not changed:
+			break
+
+func _process_contacts() -> void:
+	var safety := max_auto_population * 2
+	while safety > 0:
+		safety -= 1
+		var contact_index := -1
+		for index in range(segment_gaps.size()):
+			if _gap_distance(index) <= spacing + ROLLBACK_CONTACT_EPSILON:
+				contact_index = index
+				break
+		if contact_index < 0:
+			break
+		var gap := segment_gaps[contact_index]
+		var was_causal := int(gap.type) == GapType.CAUSAL
+		var left_segment := segments[contact_index]
+		var right_segment := segments[contact_index + 1]
+		var left_members: Array = left_segment.members
+		var right_members: Array = right_segment.members
+		var matching_ends := int(left_members[-1].identity) == int(right_members[0].identity)
+		# Clamp to exact physical contact, then merge the two rigid lists.
+		right_segment.anchor_x = _segment_end_x(left_segment) + spacing
+		for member in right_members:
+			left_members.append(member)
+		left_segment.members = left_members
+		segments[contact_index] = left_segment
+		segments.remove_at(contact_index + 1)
+		segment_gaps.remove_at(contact_index)
+		if was_causal:
+			total_rollbacks_completed += 1
+		if was_causal and matching_ends:
+			var boundary_member_index := left_members.size() - right_members.size() - 1
+			var group := _group_in_segment(contact_index, boundary_member_index)
+			if int(group.size) >= MATCH_SIZE:
+				_remove_group(contact_index, int(group.start), int(group.size), int(group.identity))
+				return_cached(cache_return_batch)
+				_ensure_playable_stream()
+		_refresh_snapshot()
+
+func _remove_group(segment_index: int, start: int, count: int, identity: int) -> void:
+	if segment_index < 0 or segment_index >= segments.size() or count <= 0:
+		return
+	var segment := segments[segment_index]
+	var members: Array = segment.members
+	var left_members := members.slice(0, start)
+	var right_members := members.slice(start + count, members.size())
+	for removed in members.slice(start, start + count):
+		_retire_pending_insertion(int(removed.uid))
+	var original_anchor := float(segment.anchor_x)
+	var has_previous := segment_index > 0
+	var has_next := segment_index + 1 < segments.size()
+
+	if not left_members.is_empty() and not right_members.is_empty():
+		segment.members = left_members
+		segments[segment_index] = segment
+		var right_anchor := original_anchor + float(start + count) * spacing
+		segments.insert(segment_index + 1, _new_segment_from_members(right_members, right_anchor))
+		segment_gaps.insert(segment_index, _new_gap(GapType.CAUSAL, count))
+		_register_rollback_started()
+	elif not left_members.is_empty():
+		segment.members = left_members
+		segments[segment_index] = segment
+		if has_next:
+			segment_gaps[segment_index] = _new_gap(GapType.CAUSAL, count)
+			_register_rollback_started()
+		else:
+			_create_tail_recoil(int(segment.id), count)
+	elif not right_members.is_empty():
+		segment.members = right_members
+		segment.anchor_x = original_anchor + float(start + count) * spacing
+		segments[segment_index] = segment
+		if has_previous:
+			segment_gaps[segment_index - 1] = _new_gap(GapType.CAUSAL, count)
+			_register_rollback_started()
+	else:
+		var removed_segment_id := int(segment.id)
+		segments.remove_at(segment_index)
+		_remove_tail_recoil(removed_segment_id)
+		if has_previous and has_next:
+			segment_gaps.remove_at(segment_index)
+			segment_gaps[segment_index - 1] = _new_gap(GapType.CAUSAL, count)
+			_register_rollback_started()
+		elif has_previous:
+			segment_gaps.remove_at(segment_index - 1)
+			_create_tail_recoil(int(segments[segment_index - 1].id), count)
+		elif has_next:
+			segment_gaps.remove_at(0)
+
+	total_match_events += 1
+	last_match_identity = identity
+	last_match_size = count
+	event_log.append({"identity": identity, "size": count, "time": simulation_time})
+	_refresh_snapshot()
+	match_completed.emit(identity, count)
+
+func _resolve_inserted_match(uid: int) -> void:
+	var location := _locate_uid(uid)
+	if location.is_empty():
+		return
+	var group := _group_in_segment(int(location.segment), int(location.local))
 	if int(group.size) < MATCH_SIZE:
 		return
-
-	_remove_group(int(group.start), int(group.size), int(group.identity))
+	_remove_group(int(location.segment), int(group.start), int(group.size), int(group.identity))
 	return_cached(cache_return_batch)
 	_ensure_playable_stream()
-	state_changed.emit()
+
+func _group_in_segment(segment_index: int, member_index: int) -> Dictionary:
+	var members: Array = segments[segment_index].members
+	var identity := int(members[member_index].identity)
+	var start := member_index
+	var end := member_index
+	while start > 0 and int(members[start - 1].identity) == identity:
+		start -= 1
+	while end + 1 < members.size() and int(members[end + 1].identity) == identity:
+		end += 1
+	return {"start": start, "size": end - start + 1, "identity": identity}
 
 func _time_until_next_settle() -> float:
 	var result := INF
@@ -287,217 +492,109 @@ func _time_until_next_settle() -> float:
 	return result
 
 func _update_pending_insertions(delta: float) -> void:
-	if pending_insertions.is_empty():
-		return
+	var matured: Array[int] = []
 	for index in range(pending_insertions.size() - 1, -1, -1):
-		if _ball_index_by_uid(int(pending_insertions[index].uid)) < 0:
-			pending_insertions.remove_at(index)
-	var matured_uids: Array[int] = []
-	for index in range(pending_insertions.size()):
 		var state := pending_insertions[index]
-		var uid := int(state.uid)
-		var ball_index := _ball_index_by_uid(uid)
-		if ball_index < 0:
+		if _locate_uid(int(state.uid)).is_empty():
+			pending_insertions.remove_at(index)
 			continue
 		state.elapsed = minf(INSERT_SETTLE_TIME, float(state.elapsed) + delta)
-		var ratio := clampf(float(state.elapsed) / INSERT_SETTLE_TIME, 0.0, 1.0)
-		var eased := ratio * ratio * (3.0 - 2.0 * ratio)
-		var ball := balls[ball_index]
-		ball.display_x = float(ball.x) + float(state.start_offset) * (1.0 - eased)
-		balls[ball_index] = ball
 		pending_insertions[index] = state
 		if float(state.elapsed) >= INSERT_SETTLE_TIME - 0.000001:
-			matured_uids.append(uid)
-	for uid in matured_uids:
+			matured.push_front(int(state.uid))
+	for uid in matured:
 		_retire_pending_insertion(uid)
 		_resolve_inserted_match(uid)
-
-func _is_pending_insertion_uid(uid: int) -> bool:
-	for state in pending_insertions:
-		if int(state.uid) == uid:
-			return true
-	return false
 
 func _retire_pending_insertion(uid: int) -> void:
 	for index in range(pending_insertions.size() - 1, -1, -1):
 		if int(pending_insertions[index].uid) == uid:
 			pending_insertions.remove_at(index)
 
-func _group_at(index: int) -> Dictionary:
-	var identity := int(balls[index].identity)
-	var start := index
-	var end := index
-	while start > 0 and _are_adjacent(start - 1, start) and int(balls[start - 1].identity) == identity:
-		start -= 1
-	while end + 1 < balls.size() and _are_adjacent(end, end + 1) and int(balls[end + 1].identity) == identity:
-		end += 1
-	return {"start": start, "size": end - start + 1, "identity": identity}
-
-func _remove_group(start: int, count: int, identity: int) -> void:
-	var left_uid := int(balls[start - 1].uid) if start > 0 else -1
-	var right_uid := int(balls[start + count].uid) if start + count < balls.size() else -1
-	var removed_uids: Array[int] = []
-	for index in range(start, start + count):
-		removed_uids.append(int(balls[index].uid))
-	for unused in range(count):
-		balls.remove_at(start)
-	for uid in removed_uids:
-		_retire_pending_insertion(uid)
-	_create_rollback(left_uid, right_uid, count)
-	total_match_events += 1
-	last_match_identity = identity
-	last_match_size = count
-	event_log.append({"identity": identity, "size": count, "time": simulation_time})
-	match_completed.emit(identity, count)
-
-func _shift_logical_positions(from_index: int, through_index: int, amount: float) -> void:
-	for index in range(from_index, mini(through_index + 1, balls.size())):
-		var ball := balls[index]
-		ball.x += amount
-		balls[index] = ball
-
-func _are_adjacent(left_index: int, right_index: int) -> bool:
-	if left_index < 0 or right_index >= balls.size() or right_index != left_index + 1:
-		return false
-	if _is_rollback_boundary(int(balls[left_index].uid), int(balls[right_index].uid)):
-		return false
-	var gap := float(balls[right_index].x) - float(balls[left_index].x)
-	return gap >= 0.0 and gap <= spacing * ADJACENCY_GAP_FACTOR
-
-func _connected_segment_end(start_index: int) -> int:
-	var result := start_index
-	while result + 1 < balls.size() and _are_adjacent(result, result + 1):
-		result += 1
-	return result
-
-func _connected_segment_start(end_index: int) -> int:
-	var result := end_index
-	while result > 0 and _are_adjacent(result - 1, result):
-		result -= 1
-	return result
-
-func _close_disconnected_gaps(delta: float) -> void:
-	if delta <= 0.0:
-		return
-	for boundary in range(1, balls.size()):
-		var gap := float(balls[boundary].x) - float(balls[boundary - 1].x)
-		if gap <= spacing:
-			continue
-		if _is_rollback_boundary(int(balls[boundary - 1].uid), int(balls[boundary].uid)):
-			continue
-		var catchup := minf(RETURN_CATCHUP_SPEED * delta, gap - spacing)
-		for index in range(boundary, balls.size()):
-			var ball := balls[index]
-			ball.x -= catchup
-			ball.display_x -= catchup
-			balls[index] = ball
-
-func _create_rollback(left_uid: int, right_uid: int, removed_count: int) -> void:
-	if left_uid < 0:
-		return
-	var state := {
-		"id": _next_rollback_id,
-		"left_uid": left_uid,
-		"right_uid": right_uid,
-		"tail_remaining": minf(spacing * removed_count, spacing * TAIL_RECOIL_SPACING_FACTOR) if right_uid < 0 else 0.0,
-		"speed": ROLLBACK_INITIAL_SPEED,
-	}
-	_next_rollback_id += 1
-	rollback_gaps.append(state)
-	total_rollbacks_started += 1
-
-func _update_rollbacks(delta: float) -> void:
-	if delta <= 0.0 or rollback_gaps.is_empty():
-		return
-	var state_ids: Array[int] = []
-	for state in rollback_gaps:
-		state_ids.append(int(state.id))
-	for state_id in state_ids:
-		var state_index := _rollback_index_by_id(state_id)
-		if state_index < 0:
-			continue
-		var state := rollback_gaps[state_index]
-		var left_index := _ball_index_by_uid(int(state.left_uid))
-		if left_index < 0:
-			rollback_gaps.remove_at(state_index)
-			continue
-		var segment_start := _connected_segment_start(left_index)
-		var current_speed := float(state.speed)
-		var next_speed := minf(ROLLBACK_MAX_SPEED, current_speed + ROLLBACK_ACCELERATION * delta)
-		var rollback_distance := current_speed * delta + 0.5 * ROLLBACK_ACCELERATION * delta * delta
-		if next_speed >= ROLLBACK_MAX_SPEED:
-			var acceleration_time := maxf(0.0, (ROLLBACK_MAX_SPEED - current_speed) / ROLLBACK_ACCELERATION)
-			rollback_distance = current_speed * acceleration_time + 0.5 * ROLLBACK_ACCELERATION * acceleration_time * acceleration_time + ROLLBACK_MAX_SPEED * (delta - acceleration_time)
-		state.speed = next_speed
-		var right_uid := int(state.right_uid)
-		if right_uid < 0:
-			var tail_move := minf(float(state.tail_remaining), rollback_distance)
-			_shift_positions(segment_start, left_index, tail_move, true)
-			state.tail_remaining = float(state.tail_remaining) - tail_move
-			if float(state.tail_remaining) <= ROLLBACK_CONTACT_EPSILON:
-				rollback_gaps.remove_at(state_index)
-				total_rollbacks_completed += 1
-			else:
-				rollback_gaps[state_index] = state
-			continue
-
-		var right_index := _ball_index_by_uid(right_uid)
-		if right_index != left_index + 1:
-			rollback_gaps.remove_at(state_index)
-			continue
-		var gap := float(balls[right_index].x) - float(balls[left_index].x)
-		var rollback_move := minf(maxf(0.0, gap - spacing), rollback_distance)
-		_shift_positions(segment_start, left_index, rollback_move, true)
-		gap -= rollback_move
-		if gap <= spacing + ROLLBACK_CONTACT_EPSILON:
-			_complete_rollback(state_id)
+func _roll_off_left() -> bool:
+	var rolled_off := false
+	while not segments.is_empty():
+		var first := segments[0]
+		var members: Array = first.members
+		if members.is_empty() or float(first.anchor_x) + radius >= 0.0:
+			break
+		var exited: Dictionary = members.pop_front()
+		cache.append(int(exited.identity))
+		_retire_pending_insertion(int(exited.uid))
+		rolled_off = true
+		if members.is_empty():
+			var segment_id := int(first.id)
+			segments.remove_at(0)
+			_remove_tail_recoil(segment_id)
+			if not segment_gaps.is_empty():
+				segment_gaps.remove_at(0)
 		else:
-			rollback_gaps[state_index] = state
+			first.members = members
+			first.anchor_x = float(first.anchor_x) + spacing
+			segments[0] = first
+	_refresh_snapshot()
+	return rolled_off
 
-func _complete_rollback(state_id: int) -> void:
-	var state_index := _rollback_index_by_id(state_id)
-	if state_index < 0:
-		return
-	var state := rollback_gaps[state_index]
-	rollback_gaps.remove_at(state_index)
-	total_rollbacks_completed += 1
-	var left_index := _ball_index_by_uid(int(state.left_uid))
-	var right_index := _ball_index_by_uid(int(state.right_uid))
-	if left_index < 0 or right_index != left_index + 1:
-		return
-	if int(balls[left_index].identity) != int(balls[right_index].identity):
-		return
-	var cascade := _group_at(left_index)
-	if int(cascade.size) < MATCH_SIZE:
-		return
-	_remove_group(int(cascade.start), int(cascade.size), int(cascade.identity))
-	return_cached(cache_return_batch)
-	_ensure_playable_stream()
+func _ensure_playable_stream() -> void:
+	if continuous_feed_enabled:
+		_feed_right_edge()
+	elif segments.is_empty():
+		if not cache.is_empty():
+			return_cached(mini(empty_return_count, cache.size()))
+		else:
+			seed_stream()
 
-func _shift_positions(from_index: int, through_index: int, amount: float, include_display: bool) -> void:
-	if amount <= 0.0:
+func _feed_right_edge() -> void:
+	var right_edge := lane_width - radius
+	while _live_count() < max_auto_population:
+		if not segments.is_empty() and _segment_end_x(segments[-1]) + spacing > right_edge + POSITION_EPSILON:
+			break
+		var use_return := pending_cache_returns > 0 and not cache.is_empty() and _returns_since_fresh < cache_return_batch
+		if use_return:
+			_admit_on_right(cache.pop_front(), false)
+			pending_cache_returns -= 1
+			total_cache_returned += 1
+			_returns_since_fresh += 1
+		else:
+			_admit_on_right(_draw_fresh_identity(), false)
+			total_fresh_generated += 1
+			_returns_since_fresh = 0
+	_refresh_snapshot()
+
+func _admit_on_right(identity: int, force_right_edge: bool) -> void:
+	var spawn_x := lane_width - radius
+	if segments.is_empty():
+		segments.append(_new_segment([_new_member(identity)], spawn_x))
 		return
-	for index in range(maxi(0, from_index), mini(through_index + 1, balls.size())):
-		var ball := balls[index]
-		ball.x += amount
-		if include_display:
-			ball.display_x += amount
-		balls[index] = ball
+	var last := segments[-1]
+	var last_end := _segment_end_x(last)
+	spawn_x = maxf(spawn_x, last_end + spacing) if force_right_edge else last_end + spacing
+	if absf(spawn_x - (last_end + spacing)) <= POSITION_EPSILON:
+		var members: Array = last.members
+		members.append(_new_member(identity))
+		last.members = members
+		segments[-1] = last
+	else:
+		segment_gaps.append(_new_gap(GapType.FEED))
+		segments.append(_new_segment([_new_member(identity)], spawn_x))
 
-func _is_rollback_boundary(left_uid: int, right_uid: int) -> bool:
-	for state in rollback_gaps:
-		if int(state.left_uid) == left_uid and int(state.right_uid) == right_uid:
-			return true
-	return false
+func _find_contact_index(impact_x: float, tolerance: float) -> int:
+	var closest := -1
+	var closest_distance := INF
+	for index in range(balls.size()):
+		var distance := absf(impact_x - float(balls[index].display_x))
+		if distance <= tolerance and distance < closest_distance:
+			closest = index
+			closest_distance = distance
+	return closest
 
-func _update_rollback_endpoint_after_insert(contact_uid: int, inserted_uid: int, insert_after: bool) -> void:
-	for index in range(rollback_gaps.size()):
-		var state := rollback_gaps[index]
-		if insert_after and int(state.left_uid) == contact_uid:
-			state.left_uid = inserted_uid
-		elif not insert_after and int(state.right_uid) == contact_uid:
-			state.right_uid = inserted_uid
-		rollback_gaps[index] = state
+func _locate_uid(uid: int) -> Dictionary:
+	for segment_index in range(segments.size()):
+		var members: Array = segments[segment_index].members
+		for local_index in range(members.size()):
+			if int(members[local_index].uid) == uid:
+				return {"segment": segment_index, "local": local_index}
+	return {}
 
 func _ball_index_by_uid(uid: int) -> int:
 	for index in range(balls.size()):
@@ -505,55 +602,144 @@ func _ball_index_by_uid(uid: int) -> int:
 			return index
 	return -1
 
-func _rollback_index_by_id(state_id: int) -> int:
-	for index in range(rollback_gaps.size()):
-		if int(rollback_gaps[index].id) == state_id:
+func _segment_index_by_id(segment_id: int) -> int:
+	for index in range(segments.size()):
+		if int(segments[index].id) == segment_id:
 			return index
 	return -1
 
-func _prune_invalid_rollbacks() -> void:
-	for index in range(rollback_gaps.size() - 1, -1, -1):
-		var state := rollback_gaps[index]
-		if _ball_index_by_uid(int(state.left_uid)) < 0:
-			rollback_gaps.remove_at(index)
-		elif int(state.right_uid) >= 0 and _ball_index_by_uid(int(state.right_uid)) < 0:
-			rollback_gaps.remove_at(index)
+func _segment_end_x(segment: Dictionary) -> float:
+	return float(segment.anchor_x) + float((segment.members as Array).size() - 1) * spacing
 
-func _append_on_right(identity: int) -> void:
-	var spawn_x := lane_width - radius
-	if not balls.is_empty():
-		spawn_x = float(balls[-1].x) + spacing if continuous_feed_enabled else maxf(spawn_x, float(balls[-1].x) + spacing)
-	var display_x := spawn_x if continuous_feed_enabled else spawn_x + minf(spacing * 0.35, 18.0)
-	balls.append(_make_ball(identity, spawn_x, display_x))
+func _gap_distance(index: int) -> float:
+	return float(segments[index + 1].anchor_x) - _segment_end_x(segments[index])
 
-func _ensure_playable_stream() -> void:
-	if continuous_feed_enabled:
-		_feed_right_edge()
-	elif balls.is_empty():
-		if not cache.is_empty():
-			return_cached(mini(empty_return_count, cache.size()))
-		else:
-			seed_stream()
+func _accelerated_distance(state: Dictionary, delta: float) -> float:
+	var current_speed := float(state.speed)
+	var acceleration_time := minf(delta, maxf(0.0, (ROLLBACK_MAX_SPEED - current_speed) / ROLLBACK_ACCELERATION))
+	return current_speed * acceleration_time + 0.5 * ROLLBACK_ACCELERATION * acceleration_time * acceleration_time + ROLLBACK_MAX_SPEED * (delta - acceleration_time)
 
-## Fills only physically available slots up to the right boundary. Requested FIFO
-## returns are admitted in batches, followed by at least one fresh shuffle-bag ball,
-## so recycling cannot starve the independent infinite source. The live array stays
-## bounded; the rollover cache intentionally grows linearly with legitimate exits.
-func _feed_right_edge() -> void:
-	var right_edge := lane_width - radius
-	while balls.size() < max_auto_population:
-		if not balls.is_empty() and float(balls[-1].x) + spacing > right_edge + 0.001:
-			break
-		var use_return := pending_cache_returns > 0 and not cache.is_empty() and _returns_since_fresh < cache_return_batch
-		if use_return:
-			_append_on_right(cache.pop_front())
-			pending_cache_returns -= 1
-			total_cache_returned += 1
-			_returns_since_fresh += 1
-		else:
-			_append_on_right(_draw_fresh_identity())
-			total_fresh_generated += 1
-			_returns_since_fresh = 0
+func _create_tail_recoil(segment_id: int, removed_count: int) -> void:
+	if segment_id < 0:
+		return
+	_remove_tail_recoil(segment_id)
+	tail_recoils.append({
+		"id": _next_gap_id,
+		"segment_id": segment_id,
+		"remaining": minf(spacing * removed_count, spacing * TAIL_RECOIL_SPACING_FACTOR),
+		"speed": ROLLBACK_INITIAL_SPEED,
+		"step_distance": 0.0,
+	})
+	_next_gap_id += 1
+	_register_rollback_started()
+
+func _remove_tail_recoil(segment_id: int) -> void:
+	for index in range(tail_recoils.size() - 1, -1, -1):
+		if int(tail_recoils[index].segment_id) == segment_id:
+			tail_recoils.remove_at(index)
+
+func _register_rollback_started() -> void:
+	total_rollbacks_started += 1
+	_refresh_rollback_snapshot()
+
+func _new_gap(type: int, removed_count := 0) -> Dictionary:
+	var result := {
+		"id": _next_gap_id,
+		"type": type,
+		"speed": ROLLBACK_INITIAL_SPEED if type == GapType.CAUSAL else 0.0,
+		"removed_count": removed_count,
+	}
+	_next_gap_id += 1
+	return result
+
+func _new_segment(members: Array[Dictionary], anchor_x: float) -> Dictionary:
+	var result := {"id": _next_segment_id, "anchor_x": anchor_x, "members": members}
+	_next_segment_id += 1
+	return result
+
+func _new_segment_from_members(members: Array, anchor_x: float) -> Dictionary:
+	var typed_members: Array[Dictionary] = []
+	for member in members:
+		typed_members.append(member)
+	return _new_segment(typed_members, anchor_x)
+
+func _new_member(identity: int) -> Dictionary:
+	var result := {"uid": _next_ball_id, "identity": posmod(identity, TeamData.COUNT)}
+	_next_ball_id += 1
+	return result
+
+func _make_ball(identity: int, logical_x: float, display_x := NAN) -> Dictionary:
+	var member := _new_member(identity)
+	var resolved_display := logical_x if is_nan(display_x) else display_x
+	return {"uid": member.uid, "identity": member.identity, "x": logical_x, "display_x": resolved_display}
+
+func _live_count() -> int:
+	var count := 0
+	for segment in segments:
+		count += (segment.members as Array).size()
+	return count
+
+func _refresh_snapshot() -> void:
+	balls.clear()
+	for segment in segments:
+		var members: Array = segment.members
+		for index in range(members.size()):
+			var x := float(segment.anchor_x) + index * spacing
+			balls.append({"uid": int(members[index].uid), "identity": int(members[index].identity), "x": x, "display_x": x})
+	_refresh_rollback_snapshot()
+	_validate_invariants()
+
+func _refresh_rollback_snapshot() -> void:
+	rollback_gaps.clear()
+	for index in range(segment_gaps.size()):
+		var gap := segment_gaps[index]
+		if int(gap.type) != GapType.CAUSAL:
+			continue
+		var left_members: Array = segments[index].members
+		var right_members: Array = segments[index + 1].members
+		rollback_gaps.append({
+			"id": int(gap.id),
+			"left_uid": int(left_members[-1].uid),
+			"right_uid": int(right_members[0].uid),
+			"tail_remaining": 0.0,
+			"speed": float(gap.speed),
+		})
+	for recoil in tail_recoils:
+		var segment_index := _segment_index_by_id(int(recoil.segment_id))
+		if segment_index < 0:
+			continue
+		var members: Array = segments[segment_index].members
+		rollback_gaps.append({
+			"id": int(recoil.id),
+			"left_uid": int(members[-1].uid),
+			"right_uid": -1,
+			"tail_remaining": float(recoil.remaining),
+			"speed": float(recoil.speed),
+		})
+
+func _validate_invariants() -> void:
+	var step_min_logical := INF
+	var step_min_display := INF
+	var seen := {}
+	var valid := segment_gaps.size() == maxi(0, segments.size() - 1)
+	for index in range(balls.size()):
+		var ball := balls[index]
+		var uid := int(ball.uid)
+		valid = valid and not seen.has(uid) and is_finite(float(ball.x)) and is_finite(float(ball.display_x))
+		seen[uid] = true
+		if index > 0:
+			var logical_gap := float(ball.x) - float(balls[index - 1].x)
+			var display_gap := float(ball.display_x) - float(balls[index - 1].display_x)
+			step_min_logical = minf(step_min_logical, logical_gap)
+			step_min_display = minf(step_min_display, display_gap)
+			valid = valid and logical_gap >= radius * 2.0 - POSITION_EPSILON and display_gap >= radius * 2.0 - POSITION_EPSILON
+	for segment in segments:
+		var members: Array = segment.members
+		valid = valid and not members.is_empty()
+	min_logical_spacing = minf(min_logical_spacing, step_min_logical)
+	min_display_spacing = minf(min_display_spacing, step_min_display)
+	if not valid:
+		invariant_violations += 1
 
 func _draw_fresh_identity() -> int:
 	if _fresh_run_remaining <= 0:
@@ -606,14 +792,3 @@ func _draw_fresh_run_length() -> int:
 		if roll <= cumulative:
 			return index + 1
 	return FRESH_RUN_LENGTH_WEIGHTS.size()
-
-func _make_ball(identity: int, logical_x: float, display_x := NAN) -> Dictionary:
-	var resolved_display := logical_x if is_nan(display_x) else display_x
-	var result := {
-		"uid": _next_ball_id,
-		"identity": posmod(identity, TeamData.COUNT),
-		"x": logical_x,
-		"display_x": resolved_display,
-	}
-	_next_ball_id += 1
-	return result
