@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The mailbox state is in `.ai/TASK.md`. P001–P007 have been reviewed at the source/handoff level. No development task is active while the user performs a second playtest. Only ChatGPT advances this ledger.
+The active task is in `.ai/TASK.md`. P001–P007 have been reviewed at source/handoff level; the second playtest generated P008. Only ChatGPT advances this ledger.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -12,4 +12,6 @@ The mailbox state is in `.ai/TASK.md`. P001–P007 have been reviewed at the sou
 | LBS-P006 | IMPLEMENTATION COMPLETE — `2ffcf3f`, handoff `2d740e0`; Web/Android exports and physical-device QA pending toolchains | Web/Android export configuration, mobile touch QA, layout/accessibility refinements, balancing and regression tests |
 | LBS-P007 | COMPLETE — code `ab5359f`, handoff `5b0e7c8`; desktop visual playtest pending | Double conveyor speed to 68 px/s; perpetual fresh + FIFO-fed top chain; tier-2 one-hit kills and tier-3 two-adjacent-lane clears; hop-driven enemies with grounded pauses; tests and visual feedback |
 
-Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007. Second user playtest is next; Web/Android export artifacts and physical-device testing remain pending external toolchains.
+| LBS-P008 | ACTIVE | 0.20s shooter travel across layouts, enemy average speed 0.24, weighted same-color chain clusters incl. seven without passive removal, seven synthesized event-driven SFX, regression tests |
+
+Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008. Web/Android exported artifacts and physical-device testing remain pending toolchains.
