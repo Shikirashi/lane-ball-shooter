@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The active task is in `.ai/TASK.md`. P001–P020 implementations were source/handoff reviewed. **P021 is the ONLY active Codex task**: add a Web-only main menu/fullscreen YES-NO dialog and produce a real local Godot Web export ZIP. P022 (Mintbase hosting) is queued for the user's later authorization, NOT ACTIVE.
+The mailbox is in `.ai/TASK.md`. P001–P021 implementations were source/handoff reviewed; P021 Web menu/export is accepted pending interactive browser playtest. P022 Mintbase deployment is QUEUED, NOT ACTIVE; no Codex task is currently authorized.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -27,7 +27,7 @@ The active task is in `.ai/TASK.md`. P001–P020 implementations were source/han
 | LBS-P019 | COMPLETE — source/handoff `eb65018`, graphical/device QA pending | Add four enemy types as 3D primitive variants of existing Hopper: Hopper 2HP hop/orange permanent horns, Heavy wider orange 4HP slide 0.7x, Sickle Snake taller yellow 2HP slide 2x, Healyzard 0.7-size green stationary; no health bars/horns on other types; deterministic 50/20/20/10 weighted global spawning, one-snake global cap, 15s post-death cooldown, stats, visuals and regression tests |
 | LBS-P020 | COMPLETE — source/handoff `8f37cb8`; graphical/device QA pending | Snake nonlethal-hit 0.5s freeze then valid random adjacent-lane transfer preserving enemy identity, quota and global Snake gate; stationary Healyzard heals other non-Healyzards in own lane +1HP/15s and emits soft yellow radial aura behind body; tests and polish |
 
-| LBS-P021 | ACTIVE — `.ai/TASK.md` | Web-only dark main menu START GAME -> modal 'Play in fullscreen?' with YES (request browser fullscreen in click handler) and NO (in-page); real single-thread Godot Web export to ignored `exports/web/` + portable ZIP, local HTTP smoke tests, README/handoff, no Mintbase deployment yet |
+| LBS-P021 | COMPLETE — source/handoff `f21e363`, browser interaction QA pending | Web-only dark main menu START GAME -> modal 'Play in fullscreen?' with YES (request browser fullscreen in click handler) and NO (in-page); real single-thread Godot Web export to ignored `exports/web/` + portable ZIP, local HTTP smoke tests, README/handoff, no Mintbase deployment yet |
 | LBS-P022 | QUEUED — NOT ACTIVE; `.ai/TASKS/LBS-P022.md` | After P021 is reviewed and user requests deployment, transfer verified exported Web build to Mintbase and host over static HTTP at mintbaseIP:PORT on permitted LAN/Tailscale interface with supervised service, access/testing and update workflow; public exposure only if separately authorized |
 
-Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017 -> P018 -> P019 -> P020 -> P021 -> P022. P020 source-reviewed and accepted; P021 is active and P022 is queued for later request; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
+Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017 -> P018 -> P019 -> P020 -> P021 -> P022. P020 source-reviewed and accepted; P021 source-reviewed and accepted; P022 remains queued pending user browser playtest and explicit hosting request; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
