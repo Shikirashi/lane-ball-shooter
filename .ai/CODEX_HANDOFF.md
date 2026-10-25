@@ -1,55 +1,73 @@
-# Codex Handoff — LBS-P010
+# Codex Handoff — LBS-P011
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** `891ad0d` (`Implement P010 staged insertion cascades`)
+**Implementation commit:** `696a1f0` (`Rebuild P011 conveyor with rigid segments`)
 
-**Mailbox:** remains on LBS-P010; task, ledger, decision and protocol files were not changed.
+**Mailbox:** remains on LBS-P011; task, ledger, decision and protocol files were not changed.
 
-## Implemented
+## Architecture and implementation
 
-- Accepted shots now become visible UID-addressed chain balls immediately and register an independent simulation-time settle state. Their display position eases into the moving logical slot; the insert SFX still fires at contact.
-- Matching the inserted UID is deferred until exactly `ChainModel.INSERT_SETTLE_TIME = 0.05` seconds. At 0.049 seconds the full group remains present; at 0.050 seconds the connected group is recomputed and, if eligible, emits one match event. Misses create no timer, unmatched shots retire normally, removed/exited UIDs cancel stale checks, and reset clears all pending states.
-- `advance()` now bounds steps at both 1/60 second and the next settle deadline. Large deltas therefore preserve insertion, initial match, rollback, contact and cascade ordering instead of collapsing them into one handler/timestamp. Match log entries include deterministic simulation timestamps.
-- Replaced P009 constant-speed rollback with one motor per UID-anchored gap: 60 px/s initial speed, 900 px/s² acceleration and 420 px/s cap. The complete connected left/front segment receives the same logical and rendered displacement each substep; the receiving right section retains ordinary 34 px/s conveyor travel. Contact is clamped to exact spacing.
-- Same-color cascades remain causal and occur only when the physical rollback boundary reconnects. Each stage emits one later `match_completed` event. Different-color ends merge without a scan, and passive feeder/cache runs remain untouched.
-- Main now advances the combo timer to each chain event's simulation time while processing a frame, then advances the remainder. This keeps score, combo/fever, match SFX and defender response ordered at their actual yellow/red event times, including a larger frame delta.
-- Game over continues to freeze the model because Main stops advancing it. Restart clears settle clocks, rollback motors, event time and existing SFX/progression/combat state. F3 diagnostics now report pending SETTLE and ROLLBACK counts.
-- Preserved P009 rollback direction, far-right-only fresh/FIFO feed, stable identities, continuous generation, 34 px/s conveyor, 0.20-second player projectile, enemy hop balance, combat tiers, revival and all seven P008 procedural cues.
-- Updated only older assertions whose approved synchronous-match assumption changed. Added `tests/p010_staged_cascade_test.gd` with 190 checks covering exact timing, rigid acceleration, contact-only cascade, 30/60/120 FPS and large deltas, guard cases, concurrent/rollback-time shots, cleanup, and live SFX/score/attack ordering. README documents the P010 sequence and tunables.
+- Rebuilt `ChainModel` around authoritative ordered rigid segments. Each segment owns one X anchor and ordered persistent UID/color members; every member center is derived as `anchor + index * 58`. The public `balls` array is now a flattened compatibility/render snapshot, never the physics authority.
+- Added typed FEED and CAUSAL edges between segments plus UID-derived rollback diagnostics. All normal 34 px/s travel, feeder catch-up, 60/900/420 accelerated causal rollback and bounded tail recoil produce one desired translation per segment. One constraint solver clamps those translations before application, so no segment can cross or overlap a neighbor and no ball receives competing motor movement.
+- Stable per-step event order is: integrate all segment translations and solve constraints; clamp/merge physical contacts and resolve eligible causal cascades; process legitimate left rollover; admit right-edge FIFO/fresh balls or empty recovery; expire 50 ms insertion checks; rebuild/validate the snapshot. `advance()` remains bounded to 1/60 second and exact pending-settle deadlines.
+- Insertion contacts actual rendered centers using the documented 22 px chain radius + 12 px projectile radius. Inserting opens one exact slot in the contacted segment and coherently moves every following segment by the same slot width, preserving all external gaps. The new member is physically legal immediately and scales from 72% to 100% during its 50 ms settle, avoiding both logical and visual overlap.
+- Match removal splits the authoritative segment while preserving every survivor position. The resulting causal edge moves only its immediate left/front rigid segment. At exact spacing, segments merge in UID order; only matching ends on a causal edge run one local cascade. FEED contacts and passive seeded 3–7+ groups never auto-clear.
+- Fresh weighted runs and requested cached colors now share one far-right segment admission interface. Admission occurs only when an exact legal slot exists, never inside internal clear gaps. Distant noncontinuous/FIFO returns form a FEED segment and reconnect physically; FIFO order, 24 automatic-live cap, infinite fresh generation and linear legitimate cache storage remain intact.
+- Added bounded diagnostics: segment and typed-gap counts, maximum match events per substep, historical minimum logical/render spacing and invariant violations. F3 displays these alongside settle/rollback state.
+- Moved loaded/next and the 64×56 swap button into a compact safe-area HUD-right panel above the chain. The shooter track now spans chain coordinates with symmetric 24 px margins at all four landscape sizes. The panel is outside the firing playfield, so extreme-left/right touch drags remain available and swap taps cannot fire.
+- Updated the canonical palette to saturated BLUE `#3677E8` and emerald GREEN `#37C45A`, neutralized 3D ambient lighting, named palette-derived lane materials for verification, and enlarged lane status labels. Balls, shooter/magazine, stripes, defender bodies, effects and projectiles continue to derive from `TeamData`; square/diamond redundancy is unchanged.
+- Preserved the 0.20-second shot, 0.4-second cooldown, 0.05-second settle, P010 staged event/SFX/score/attack timing, enemy 0.24 hop pace, tier/revival/game-over rules and all seven procedural cues.
+
+## Regression coverage and measured stress run
+
+Added `tests/p011_segment_chain_stress_test.gd`. Independent assertions reconstruct every ball from segment anchors and verify unique ordered UIDs, exact internal 58 px slots, at least physical-diameter spacing across all neighbors, identical legal rendered centers, typed edge cardinality and zero model-recorded violations after every tiny update.
+
+Reproduction seed: `0x5011CAFE`.
+
+- 16,258 checks across 2,400 seeded rapid operations.
+- 2,460 accepted physical insertions, including concurrent settles and moving-endpoint shots.
+- 635 real staged match events.
+- 669 fresh admissions and 6 cache/return activities, plus a 45-second rollover/feed tail.
+- Mixed external deltas: 1/120, 1/60, 1/30, 0.08 and repeated 0.21-second long updates.
+- Zero logical/rendered overlap, duplicate UID, ordering, segment-spacing or edge-count violations.
+- Automatic live population remained bounded; maximum events per internal substep remained within the asserted bound of four.
+- Runtime was under one second in this environment.
 
 ## Validation
 
 Engine: `Godot 4.7.2.stable.official.ed1daf0bf`.
 
-- `godot --headless --path . --script res://tests/headless_smoke.gd` — P001 PASS.
-- `godot --headless --path . --script res://tests/p002_logic_test.gd` — P002 PASS (61 checks).
-- `godot --headless --path . --script res://tests/p003_logic_test.gd` — P003 PASS (73 checks).
-- `godot --headless --path . --script res://tests/p004_combat_test.gd` — P004 PASS (42 checks).
-- `godot --headless --path . --script res://tests/p005_survival_test.gd` — P005 PASS (63 checks).
-- `godot --headless --path . --script res://tests/p006_platform_qa_test.gd` — P006 PASS (66 checks).
-- `godot --headless --path . --script res://tests/p007_playtest_revision_test.gd` — P007 PASS (49 checks).
-- `godot --headless --path . --script res://tests/p008_gamefeel_sfx_test.gd` — P008 PASS (82 checks).
-- `godot --headless --path . --script res://tests/p009_zuma_rollback_test.gd` — P009 PASS (58 checks).
-- `godot --headless --path . --script res://tests/p010_staged_cascade_test.gd` — P010 PASS (190 checks).
-- Bounded startup at 960×540, 1280×720 and 1600×720 — all exit 0.
+- P001 headless smoke — PASS.
+- P002 gameplay logic — PASS (61 checks).
+- P003 progression/magazine — PASS (73 checks).
+- P004 lane combat — PASS (42 checks).
+- P005 survival — PASS (63 checks).
+- P006 platform/input QA — PASS (69 checks).
+- P007 playtest revision — PASS (49 checks).
+- P008 gamefeel/SFX — PASS (82 checks).
+- P009 rollback — PASS (58 checks).
+- P010 staged cascade — PASS (190 checks).
+- P011 segment stress — PASS (16,258 checks and counters above).
+- Bounded startup at 960×540, 1280×720, 1600×720 and 2400×1080 — all exit 0.
 - `git diff --check`, export-binary scan and credential-pattern scan — PASS.
 
-Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable; every suite and startup returned exit 0. No Web/Android export or physical-device/audio listening test was attempted because those external toolchains/devices remain outside this environment.
+Every Godot invocation printed the known non-fatal sandbox diagnostic because `user://logs` is not writable; every suite and startup returned exit 0. No Web/Android export or physical-device run was attempted because those external toolchains/devices remain unavailable.
 
-## Manual playtest
+## Manual QA
 
-1. Arrange `[RED][RED] [YELLOW][YELLOW] [RED][RED]` and shoot YELLOW into the pair. At contact, hear only insert and see seven real balls. The three yellows should remain visible for 50 ms, then pop together with one match cue, score/combo step and yellow defender response.
-2. Watch the remaining left red pair: both balls should reverse right together, start gently, accelerate, and preserve their spacing. The right red pair should continue ordinary left conveyor travel without jumping into the hole.
-3. Verify no red response occurs before contact. When the pairs meet, one four-red cascade should pop with a separate later cue, larger score award, second combo step and red defender response.
-4. Repeat with different exposed colors, long groups, three-stage cascades, two quick shots and a shot into the retracting section. Check that gaps remain physical, ordering stays stable, passive 3–7+ runs survive and no event/SFX duplicates.
-5. Let balls roll into FIFO cache and return while gaps close; confirm fresh generation remains at the far right and cached identity order is unchanged. Trigger game over during settle/rollback, wait, then restart and verify no stale match, motor, cue or attack resumes.
+1. Rapidly make several matches before earlier 50 ms settles/rollbacks finish, including shots directly at a moving seam. Watch every ball: none should overlap or pass through another; connected runs should remain rigid. F3 should keep `I0` and show logical/display minimum spacing at 58.
+2. Reproduce RED RED / YELLOW YELLOW / RED RED. Verify insert scale-in, 50 ms yellow pause/pop, accelerating rigid left-red rollback, physical contact, then the separate four-red cascade with correctly ordered cues, score and attacks.
+3. Exercise mismatched reconnection, a seven-plus-shot clear, multi-stage cascades, two independent gaps, left/tail/full clears and restart during settle/rollback. Confirm no passive clear, stale motor, duplicate event or reordered identity.
+4. Let the stream run through rollover and trigger returns. Confirm new balls enter only at far right, cached order is exact, no incoming ball fills an internal match hole and visible objects remain bounded.
+5. At all four target sizes, drag/fire from the extreme left and right. Confirm both edge balls are targetable. Tap the compact HUD swap button and verify it swaps only; Space/right-click remain functional.
+6. At 960×540 and 1280×720, visually compare lane 2 BLUE with lane 4 GREEN across stripe, defender, projectile/status and chain/magazine balls. BLUE should remain saturated blue and GREEN clearly emerald, with square versus diamond symbols readable.
 
-## Notes / limitations
+## Limitations / assumptions
 
-- The 60/900/420 rollback profile closes the common three-ball hole in about 0.59 seconds before contact, within the requested theatrical range. Tail recoil uses the same motor profile but remains capped at P009's 1.25-spacing distance.
-- The 50 ms visual settle is intentionally brief: high-refresh displays show several easing frames, while a 30 FPS display normally shows contact plus one intermediate frame before the pop. Simulation timing remains exact and deterministic at all tested rates.
-- Procedural cue synthesis/routing is automated, but timbre, loudness and perceived separation still require human listening on desktop, browser and Android hardware.
-- Pre-existing local editor-generated changes in `project.godot`, `scenes/main.tscn`, `scripts/audio/sfx_manager.gd.uid`, `tests/p007_playtest_revision_test.gd.uid` and `tests/p008_gamefeel_sfx_test.gd.uid` were preserved and intentionally excluded.
+- The insertion settle uses non-overlapping scale-in rather than horizontal center interpolation; its center occupies a legal physical slot immediately. This preserves the requested visible settle while making overlap impossible by construction.
+- Headless tests verify canonical palette distance and palette-derived material colors, but cannot certify perceived color under a real display. BLUE/GREEN contrast and procedural audio still require the requested human desktop/Web/Android check.
+- The flattened `balls` snapshot remains publicly readable for compatibility. Direct external mutation is unsupported; P007's former private snapshot mutation was replaced by the explicit `add_test_segment` fixture helper.
+- Pre-existing local editor-generated changes in `project.godot`, `scenes/main.tscn`, and generated untracked `.uid` files were preserved and intentionally excluded.
