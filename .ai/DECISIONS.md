@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: P023 enemy speed/victory subtitle COMPLETE; P022 ×3 every enemy HP followed by new Web build and Mintbase hosting ACTIVE; P024 automatic post-push build/deploy QUEUED (2026-10-25).
+Status: P022 ACTIVE: triple enemy HP and revise skill tiers, rebuild Web and host on Mintbase. P024 auto-deploy QUEUED.
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
@@ -167,3 +167,9 @@ If necessary, implement conservative and configurable defaults and report decisi
 - Healyzard heals exactly **+1 HP** to every other non-Healyzard in its lane every 15 seconds and caps at their **new maximum**; no self- or other-healer heals. Snake still stuns 0.5s on nonfatal hit, switches adjacent lanes and retains damage and new 6HP max, only one globally and 15s after death before successor.
 - Keep P023 increased movement speeds 0.312/0.2184/0.624/0 and text `All enemies neutralized`, P021 fullscreen prompt, spawn distribution and conveyor, 32 enemies, death/VFX and victory delay unchanged. No visible health indicators, only decorative Hopper orange horns.
 - **P023's previously built Web ZIP is STALE with old HP**. P022 must run full P001–P023 regression and new HP tests, then build **new** local ignored `exports/web/` and ZIP with 6/12/6/6 HP, verify and only deploy that updated package to Mintbase. P024 future push-triggered auto-deploy still queued; P022 must not activate it.
+
+## P022 latest skill-tier decision (2026-10-25 21:35)
+- These latest rules override the previous P022 tier-2 and tier-3 rules as well as prior gameplay skills. Tier 1: one ordinary first-contact projectile that deals 1 HP damage to one enemy and stops. Tier 2: one penetrating projectile that deals 1 HP damage to EACH enemy it passes in the current lane, once per enemy. Tier 3: one wide penetrating projectile spanning the current lane and one randomly selected adjacent lane, dealing 1 HP damage to EACH enemy it passes in either lane, once per enemy. Tier 3 does NOT automatically remove all enemies in the two lanes.
+- Piercing projectiles travel normally and use moving swept hitboxes; enemies must actually be encountered during projectile travel. A Snake transferring between lanes cannot take repeat damage from the same wide projectile (use its immutable spawn identity).
+- The separate defender's one-time emergency discharge retains its full-lane instant removal. All enemies start with their newly tripled maximum HP: Hopper 6, Heavy 12, Snake 6, Healyzard 6. Healyzard still heals others by 1 per 15s, no healer self-healing.
+- P022 requires update of source, existing and new tests, and a fresh real Godot Web build containing both HP and tier changes BEFORE deploying on Mintbase. P024 post-push automation stays queued and inactive.
