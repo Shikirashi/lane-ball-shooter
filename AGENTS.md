@@ -54,3 +54,6 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 ## ACTIVE mailbox and release separation
 - P027 is currently the ONLY active Codex task in `.ai/TASK.md`: prepare and, only when signing and release permissions are available/approved, publish actual signed Android APK and matching existing-style portfolio download tile. Do not alter unrelated portfolio cards, switch Pages host, or mark empty/fake APK links live.
 - P024 builds/tests are validated by Actions run `40242224166`. Its publishing stage is NOT operational until user adds narrowly scoped `PORTFOLIO_PUBLISH_TOKEN` to game repo Actions secrets and manually dispatches a successful end-to-end run. Codex must not generate/borrow user credentials or claim publication complete. P027 can proceed independently.
+
+## P027 current checkpoint
+- P027 source scaffolding was pushed as `75f0dd75` and reviewed. Actual release APK/card remains BLOCKED by absent Android SDK, Android release template, signing identity and device. The ONLY active task is to safely bootstrap user-local Android toolchain per current `.ai/TASK.md`, test it and stop before creating a private keystore without explicit user approval. Preserve P024 Web CI and current public portfolio, do not publish placeholder APK links.
