@@ -2,12 +2,15 @@ class_name Battlefield
 extends Node3D
 
 signal game_over_requested(identity: int)
+signal encounter_cleared
+signal encounter_progress_changed(neutralized: int, total: int, remaining: int)
 signal defender_knocked_down(identity: int)
 signal defender_revived(identity: int)
 
 var lanes: Array[LaneActor] = []
 var attack_history: Array[Dictionary] = []
 var game_over := false
+var victory := false
 var _camera: Camera3D
 var _attack_rng := RandomNumberGenerator.new()
 var _attack_rng_seed := 0
@@ -28,6 +31,11 @@ func _ready() -> void:
 		lane.combat_model.breached.connect(_on_lane_breached)
 		lane.combat_model.defender_knocked_down.connect(_on_defender_knocked_down)
 		lane.combat_model.defender_revived.connect(_on_defender_revived)
+		lane.combat_model.encounter_state_changed.connect(_on_encounter_state_changed)
+	_publish_encounter_progress()
+
+func _process(_delta: float) -> void:
+	_evaluate_terminal_state()
 
 func fire_for_match(result: Dictionary) -> Dictionary:
 	var outcome := handle_match(result)
@@ -36,7 +44,7 @@ func fire_for_match(result: Dictionary) -> Dictionary:
 	return {}
 
 func handle_match(result: Dictionary) -> Dictionary:
-	if game_over:
+	if game_over or victory:
 		return {"action": "ignored"}
 	for lane in lanes:
 		if lane.combat_model.check_terminal_breach():
@@ -64,14 +72,73 @@ func get_lane(identity: int) -> LaneActor:
 
 func reset_run() -> void:
 	game_over = false
+	victory = false
 	attack_history.clear()
 	_attack_rng.seed = _attack_rng_seed
 	for lane in lanes:
 		lane.reset_run()
+	_publish_encounter_progress()
 
 func set_attack_rng_seed(seed_value: int) -> void:
 	_attack_rng_seed = seed_value if seed_value != 0 else 1
 	_attack_rng.seed = _attack_rng_seed
+
+func encounter_total() -> int:
+	var total := 0
+	for lane in lanes:
+		total += lane.combat_model.enemy_spawn_budget
+	return total
+
+func encounter_spawned() -> int:
+	var total := 0
+	for lane in lanes:
+		total += lane.combat_model.spawned_this_encounter
+	return total
+
+func encounter_live() -> int:
+	var total := 0
+	for lane in lanes:
+		total += lane.combat_model.active_enemy_count()
+	return total
+
+func encounter_neutralized() -> int:
+	var total := 0
+	for lane in lanes:
+		total += lane.combat_model.total_neutralized()
+	return total
+
+func encounter_remaining() -> int:
+	return maxi(0, encounter_total() - encounter_neutralized())
+
+func _all_spawn_quotas_complete() -> bool:
+	if lanes.size() != TeamData.COUNT:
+		return false
+	for lane in lanes:
+		if not lane.combat_model.encounter_spawn_complete():
+			return false
+	return true
+
+func _evaluate_terminal_state() -> void:
+	if game_over or victory or lanes.size() != TeamData.COUNT:
+		return
+	# Loss always wins a same-update race with the final neutralization.
+	for lane in lanes:
+		if lane.combat_model.check_terminal_breach():
+			return
+	if not _all_spawn_quotas_complete() or encounter_live() > 0:
+		return
+	victory = true
+	for lane in lanes:
+		lane.combat_model.set_game_over(true)
+	_publish_encounter_progress()
+	encounter_cleared.emit()
+
+func _publish_encounter_progress() -> void:
+	encounter_progress_changed.emit(encounter_neutralized(), encounter_total(), encounter_remaining())
+
+func _on_encounter_state_changed() -> void:
+	_publish_encounter_progress()
+	_evaluate_terminal_state()
 
 func _resolve_tier3_attack(origin_lane: int, attack: Dictionary) -> Dictionary:
 	var neighbors: Array[int] = []
@@ -102,7 +169,7 @@ func configure_viewport_aspect(aspect: float) -> void:
 	_camera.size = clampf(31.0 / maxf(aspect, 1.0), 10.0, 11.5)
 
 func _on_lane_breached(identity: int, _enemy_uid: int) -> void:
-	if game_over:
+	if game_over or victory:
 		return
 	game_over = true
 	for lane in lanes:

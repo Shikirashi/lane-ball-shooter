@@ -96,7 +96,7 @@ func _test_actual_segment_velocities() -> void:
 		_check(front_delta_a > 0.0 and absf(front_delta_a - front_delta_b) < 0.001, "front reds move RIGHT together over %.2fs" % duration)
 		_check(absf(rear_delta_a + model.speed * duration) < 0.002 and absf(rear_delta_a - rear_delta_b) < 0.001, "rear blues retain only -34 px/s baseline over %.2fs" % duration)
 		_check(int(model.segment_gaps[0].id) == gap_id and int(model.segment_gaps[0].left_segment_id) == left_segment_id and int(model.segment_gaps[0].right_segment_id) == right_segment_id, "causal edge binding survives %.2fs integration" % duration)
-		_check(model.active_causal_motor_count == 1 and model.active_feed_motor_count == 0 and model.last_causal_reverse_displacement > 0.0, "diagnostics report one real causal reverse and zero feed motors")
+		_check(model.unsupported_segment_count == 1 and model.gravity_gap_count == 1 and model.last_gravity_displacement > 0.0, "diagnostics report one unsupported segment and positive gravity motion")
 		var front_motion := _motion(model, left_segment_id)
 		var rear_motion := _motion(model, right_segment_id)
 		_check(not front_motion.is_empty() and int(front_motion.right_gap_type) == ChainModel.GapType.CAUSAL and float(front_motion.velocity) > 0.0, "motion log identifies positive causal-front velocity")
@@ -132,9 +132,9 @@ func _test_feed_during_causal_rollback() -> void:
 	var entrant_before := _position(model, entrant_uid)
 	model.advance(0.1)
 	_check(_position(model, front_uid) > front_before, "front rollback persists while an entrant is offscreen")
-	_check(absf(_position(model, rear_uid) - rear_before + 3.4) < 0.002, "causal right endpoint stays at baseline with incoming feed")
+	_check(_position(model, rear_uid) > rear_before, "intermediate rear segment is unsupported by the separated entrant and also falls right")
 	_check(absf(_position(model, entrant_uid) - entrant_before + 3.4) < 0.002, "offscreen entrant stays at baseline 34 px/s")
-	_check(model.active_feed_motor_count == 0 and model.segment_gaps.any(func(gap): return int(gap.id) == causal_gap_id and int(gap.type) == ChainModel.GapType.CAUSAL), "feed cannot consume or replace causal motor")
+	_check(model.unsupported_segment_count == 2 and model.segment_gaps.any(func(gap): return int(gap.id) == causal_gap_id and int(gap.type) == ChainModel.GapType.CAUSAL), "unified gravity preserves causal authorization while both gaps close")
 	model.advance(2.0)
 	if model._ball_index_by_uid(entrant_uid) >= 0:
 		var visible_before := _position(model, entrant_uid)
@@ -176,7 +176,7 @@ func _test_two_causal_gaps_and_fifo() -> void:
 		var left_id := int(binding[1])
 		if model._segment_index_by_id(left_id) >= 0:
 			_check(_segment_anchor(model, left_id) > float(anchors[left_id]), "causal front segment %d moves right as a rigid motor" % left_id)
-	_check(model.active_feed_motor_count == 0 and _invariants_hold(model), "FIFO batch adds no competing motor across two causal gaps")
+	_check(model.gravity_gap_count >= 1 and _invariants_hold(model), "FIFO and causal gaps share one rigid gravity integrator")
 
 func _test_insertion_during_rollback() -> void:
 	var model := _setup_clear(MAIN_PATTERN)
@@ -226,7 +226,7 @@ func _test_long_mixed_stream() -> void:
 			_check(model.balls.size() <= model.max_auto_population + 8 and model.offscreen_right_count() <= model.max_auto_population, "120s mixed stream remains bounded at second %d" % floori(frame / 60.0))
 	_check(accepted > 100 and model.total_match_events > 100 and model.total_rollbacks_started > 0, "long stress exercises rapid shots, many matches and causal rollback (%d/%d/%d)" % [accepted, model.total_match_events, model.total_rollbacks_started])
 	_check(model.total_fresh_generated > model.initial_population, "long stress preserves continuing offscreen fresh arrivals")
-	_check(model.active_feed_motor_count == 0 and model.invariant_violations == 0, "long stress finishes without feed sprint or overlap")
+	_check(model.invariant_violations == 0, "long stress finishes without feed sprint or overlap")
 
 func _finish() -> void:
 	if _failures.is_empty():

@@ -23,6 +23,7 @@ var _touch_started_in_playfield := false
 var _playfield_rect := Rect2()
 var _safe_rect := Rect2()
 var _game_over := false
+var _victory := false
 var _progression_chain_time := 0.0
 var _processing_chain := false
 
@@ -35,12 +36,15 @@ func _ready() -> void:
 	_progression.state_changed.connect(_on_progression_state_changed)
 	_progression.match_resolved.connect(_on_match_resolved)
 	_battlefield.game_over_requested.connect(_on_game_over_requested)
+	_battlefield.encounter_cleared.connect(_on_encounter_cleared)
+	_battlefield.encounter_progress_changed.connect(_on_encounter_progress_changed)
 	_battlefield.defender_knocked_down.connect(_on_defender_knocked_down)
 	_battlefield.defender_revived.connect(_on_defender_revived)
 	_game_over_overlay.restart_requested.connect(_restart_run)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
 	_progression.publish_state()
+	_on_encounter_progress_changed(_battlefield.encounter_neutralized(), _battlefield.encounter_total(), _battlefield.encounter_remaining())
 	_layout()
 
 func _process(delta: float) -> void:
@@ -159,14 +163,30 @@ func _on_game_over_requested(_identity: int) -> void:
 	if _game_over:
 		return
 	_game_over = true
+	_victory = false
 	_sfx.set_gameplay_enabled(false)
 	_clear_touch_ownership()
 	_shooter_view.set_simulation_paused(true)
 	_chain_view.set_settling_visuals_visible(false)
 	_game_over_overlay.show_game_over(_progression.score)
 
+func _on_encounter_cleared() -> void:
+	if _game_over:
+		return
+	_game_over = true
+	_victory = true
+	_sfx.set_gameplay_enabled(false)
+	_clear_touch_ownership()
+	_shooter_view.set_simulation_paused(true)
+	_chain_view.set_settling_visuals_visible(false)
+	_game_over_overlay.show_wave_cleared(_progression.score)
+
+func _on_encounter_progress_changed(neutralized: int, total: int, remaining: int) -> void:
+	_hud_view.set_enemy_progress(neutralized, total, remaining)
+
 func _restart_run() -> void:
 	_game_over = false
+	_victory = false
 	_sfx.reset_run()
 	_cooldown_remaining = 0.0
 	_clear_touch_ownership()

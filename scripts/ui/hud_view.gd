@@ -6,6 +6,9 @@ var combo_count := 0
 var tier := 0
 var fever_active := false
 var window_ratio := 0.0
+var enemies_neutralized := 0
+var enemies_total := 32
+var enemies_remaining := 32
 var _fever_pulse := 0.0
 
 func _ready() -> void:
@@ -18,6 +21,12 @@ func set_progress(score_value: int, combo_value: int, tier_value: int, fever_val
 	tier = tier_value
 	fever_active = fever_value
 	window_ratio = clampf(ratio_value, 0.0, 1.0)
+	queue_redraw()
+
+func set_enemy_progress(neutralized: int, total: int, remaining: int) -> void:
+	enemies_neutralized = maxi(0, neutralized)
+	enemies_total = maxi(0, total)
+	enemies_remaining = maxi(0, remaining)
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -36,6 +45,7 @@ func _draw() -> void:
 	var baseline := minf(25.0, size.y - 13.0)
 
 	draw_string(ThemeDB.fallback_font, Vector2(14.0, baseline), "LBS" if compact else "LANE BALL SHOOTER", HORIZONTAL_ALIGNMENT_LEFT, -1.0, title_font_size, Color(0.92, 0.96, 1.0))
+	draw_string(ThemeDB.fallback_font, Vector2(14.0, minf(size.y - 12.0, baseline + 22.0)), "ENEMIES %02d/%02d" % [enemies_neutralized, enemies_total], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 11 if compact else 12, Color(0.62, 0.9, 0.72))
 	draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.30, baseline), "SCORE  %06d" % score, HORIZONTAL_ALIGNMENT_LEFT, -1.0, value_font_size, Color.WHITE)
 	var combo_color := Color(0.82, 0.9, 1.0) if combo_count > 0 else Color(0.52, 0.59, 0.7)
 	draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.54, baseline), "COMBO  x%d" % combo_count, HORIZONTAL_ALIGNMENT_LEFT, -1.0, value_font_size, combo_color)

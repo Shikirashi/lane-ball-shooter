@@ -17,9 +17,13 @@ const MATCH_SIZE := 3
 const DEFAULT_SHOT_RADIUS := 12.0
 const ENTRY_MARGIN := 4.0
 const INSERT_SETTLE_TIME := 0.05
-const ROLLBACK_INITIAL_SPEED := 60.0
-const ROLLBACK_ACCELERATION := 900.0
-const ROLLBACK_MAX_SPEED := 420.0
+const GRAVITY_INITIAL_RIGHT_SPEED := 60.0
+const GRAVITY_ACCELERATION := 900.0
+const GRAVITY_MAX_RIGHT_SPEED := 420.0
+# Compatibility aliases for older regression fixtures and tuning references.
+const ROLLBACK_INITIAL_SPEED := GRAVITY_INITIAL_RIGHT_SPEED
+const ROLLBACK_ACCELERATION := GRAVITY_ACCELERATION
+const ROLLBACK_MAX_SPEED := GRAVITY_MAX_RIGHT_SPEED
 const ROLLBACK_CONTACT_EPSILON := 0.05
 const TAIL_RECOIL_SPACING_FACTOR := 1.25
 const MAX_SIMULATION_STEP := 1.0 / 60.0
@@ -77,10 +81,11 @@ var max_concurrent_events := 0
 var min_logical_spacing := INF
 var min_display_spacing := INF
 var invariant_violations := 0
-var active_causal_motor_count := 0
-var active_feed_motor_count := 0
-var last_causal_reverse_displacement := 0.0
-var total_causal_reverse_distance := 0.0
+var unsupported_segment_count := 0
+var gravity_gap_count := 0
+var max_gravity_speed := 0.0
+var last_gravity_displacement := 0.0
+var total_gravity_distance := 0.0
 var segment_motion_log: Array[Dictionary] = []
 
 var _next_ball_id := 1
@@ -123,10 +128,11 @@ func reset_run() -> void:
 	min_logical_spacing = INF
 	min_display_spacing = INF
 	invariant_violations = 0
-	active_causal_motor_count = 0
-	active_feed_motor_count = 0
-	last_causal_reverse_displacement = 0.0
-	total_causal_reverse_distance = 0.0
+	unsupported_segment_count = 0
+	gravity_gap_count = 0
+	max_gravity_speed = 0.0
+	last_gravity_displacement = 0.0
+	total_gravity_distance = 0.0
 	segment_motion_log.clear()
 	_next_ball_id = 1
 	_next_segment_id = 1
@@ -246,10 +252,11 @@ func set_test_state(identities_value: Array[int], start_x := 100.0, cached: Arra
 	min_logical_spacing = INF
 	min_display_spacing = INF
 	invariant_violations = 0
-	active_causal_motor_count = 0
-	active_feed_motor_count = 0
-	last_causal_reverse_displacement = 0.0
-	total_causal_reverse_distance = 0.0
+	unsupported_segment_count = 0
+	gravity_gap_count = 0
+	max_gravity_speed = 0.0
+	last_gravity_displacement = 0.0
+	total_gravity_distance = 0.0
 	segment_motion_log.clear()
 	_next_segment_id = 1
 	_next_gap_id = 1
@@ -336,70 +343,48 @@ func _insert_into_segment(identity: int, segment_index: int, insert_index: int) 
 
 func _integrate_segments(delta: float) -> void:
 	if segments.is_empty() or delta <= 0.0:
-		active_causal_motor_count = 0
-		active_feed_motor_count = 0
-		last_causal_reverse_displacement = 0.0
+		unsupported_segment_count = 0
+		gravity_gap_count = 0
+		max_gravity_speed = 0.0
+		last_gravity_displacement = 0.0
 		segment_motion_log.clear()
 		return
 	var before_anchors := {}
 	for segment in segments:
 		before_anchors[int(segment.id)] = float(segment.anchor_x)
-	var adjustments: Array[float] = []
-	adjustments.resize(segments.size())
-	adjustments.fill(0.0)
+	var displacements: Array[float] = []
+	displacements.resize(segments.size())
+	displacements.fill(0.0)
+	unsupported_segment_count = maxi(0, segments.size() - 1)
+	gravity_gap_count = segment_gaps.size()
+	max_gravity_speed = 0.0
+
+	# The rightmost segment is attached to the virtual source/pusher. Every
+	# segment left of a real gap is unsupported, so its one rigid anchor falls
+	# RIGHT. Baseline -34 is overridden (not added) while unsupported.
 	for index in range(segments.size()):
 		var segment := segments[index]
-		segment.anchor_x = float(segment.anchor_x) - speed * delta
+		if index == segments.size() - 1:
+			segment.supported = true
+			segment.gravity_speed = 0.0
+			displacements[index] = -speed * delta
+		else:
+			var gravity_speed := float(segment.get("gravity_speed", 0.0))
+			if bool(segment.get("supported", true)) or gravity_speed <= 0.0:
+				gravity_speed = GRAVITY_INITIAL_RIGHT_SPEED
+			var acceleration_time := minf(delta, maxf(0.0, (GRAVITY_MAX_RIGHT_SPEED - gravity_speed) / GRAVITY_ACCELERATION))
+			displacements[index] = gravity_speed * acceleration_time + 0.5 * GRAVITY_ACCELERATION * acceleration_time * acceleration_time + GRAVITY_MAX_RIGHT_SPEED * (delta - acceleration_time)
+			segment.gravity_speed = minf(GRAVITY_MAX_RIGHT_SPEED, gravity_speed + GRAVITY_ACCELERATION * delta)
+			segment.supported = false
+			max_gravity_speed = maxf(max_gravity_speed, float(segment.gravity_speed))
 		segments[index] = segment
 
-	active_causal_motor_count = 0
-	# Only the stable LEFT endpoint of a CAUSAL edge owns a special motor. FEED
-	# trains retain the baseline conveyor velocity and never sprint into a gap.
-	for gap_index in range(segment_gaps.size()):
-		var gap := segment_gaps[gap_index]
-		if int(gap.type) == GapType.CAUSAL:
-			var left_index := _segment_index_by_id(int(gap.left_segment_id))
-			var right_index := _segment_index_by_id(int(gap.right_segment_id))
-			if left_index < 0 or right_index != left_index + 1:
-				continue
-			var distance := _accelerated_distance(gap, delta)
-			gap.speed = minf(ROLLBACK_MAX_SPEED, float(gap.speed) + ROLLBACK_ACCELERATION * delta)
-			segment_gaps[gap_index] = gap
-			adjustments[left_index] = maxf(adjustments[left_index], distance)
-			active_causal_motor_count += 1
-	active_feed_motor_count = 0
-
-	for recoil_index in range(tail_recoils.size() - 1, -1, -1):
-		var recoil := tail_recoils[recoil_index]
-		var segment_index := _segment_index_by_id(int(recoil.segment_id))
-		if segment_index < 0:
-			tail_recoils.remove_at(recoil_index)
-			continue
-		var distance := minf(float(recoil.remaining), _accelerated_distance(recoil, delta))
-		recoil.speed = minf(ROLLBACK_MAX_SPEED, float(recoil.speed) + ROLLBACK_ACCELERATION * delta)
-		adjustments[segment_index] = maxf(adjustments[segment_index], distance)
-		recoil.step_distance = distance
-		tail_recoils[recoil_index] = recoil
-
-	_solve_non_overlap(adjustments)
+	_solve_non_overlap(displacements)
 	for index in range(segments.size()):
 		var segment := segments[index]
-		segment.anchor_x = float(segment.anchor_x) + adjustments[index]
+		segment.anchor_x = float(segment.anchor_x) + displacements[index]
 		segments[index] = segment
 	_record_segment_motion(before_anchors, delta)
-	for recoil_index in range(tail_recoils.size() - 1, -1, -1):
-		var recoil := tail_recoils[recoil_index]
-		var segment_index := _segment_index_by_id(int(recoil.segment_id))
-		if segment_index < 0:
-			tail_recoils.remove_at(recoil_index)
-			continue
-		var actual_move := maxf(0.0, adjustments[segment_index])
-		recoil.remaining = maxf(0.0, float(recoil.remaining) - minf(actual_move, float(recoil.step_distance)))
-		if float(recoil.remaining) <= ROLLBACK_CONTACT_EPSILON:
-			tail_recoils.remove_at(recoil_index)
-			total_rollbacks_completed += 1
-		else:
-			tail_recoils[recoil_index] = recoil
 	_refresh_rollback_snapshot()
 
 func _solve_non_overlap(adjustments: Array[float]) -> void:
@@ -442,6 +427,8 @@ func _process_contacts() -> void:
 		for member in right_members:
 			left_members.append(member)
 		left_segment.members = left_members
+		left_segment.gravity_speed = float(right_segment.get("gravity_speed", 0.0))
+		left_segment.supported = bool(right_segment.get("supported", false))
 		segments[contact_index] = left_segment
 		segments.remove_at(contact_index + 1)
 		segment_gaps.remove_at(contact_index)
@@ -480,7 +467,10 @@ func _remove_group(segment_index: int, start: int, count: int, identity: int) ->
 		segment.members = left_members
 		segments[segment_index] = segment
 		var right_anchor := original_anchor + float(start + count) * spacing
-		segments.insert(segment_index + 1, _new_segment_from_members(right_members, right_anchor))
+		var right_segment := _new_segment_from_members(right_members, right_anchor)
+		right_segment.gravity_speed = float(segment.get("gravity_speed", 0.0))
+		right_segment.supported = bool(segment.get("supported", true))
+		segments.insert(segment_index + 1, right_segment)
 		segment_gaps.insert(segment_index, _new_gap(GapType.CAUSAL, count))
 		_register_rollback_started()
 	elif not left_members.is_empty():
@@ -489,8 +479,6 @@ func _remove_group(segment_index: int, start: int, count: int, identity: int) ->
 		if has_next:
 			segment_gaps[segment_index] = _new_gap(GapType.CAUSAL, count)
 			_register_rollback_started()
-		else:
-			_create_tail_recoil(int(segment.id), count)
 	elif not right_members.is_empty():
 		segment.members = right_members
 		segment.anchor_x = original_anchor + float(start + count) * spacing
@@ -499,16 +487,13 @@ func _remove_group(segment_index: int, start: int, count: int, identity: int) ->
 			segment_gaps[segment_index - 1] = _new_gap(GapType.CAUSAL, count)
 			_register_rollback_started()
 	else:
-		var removed_segment_id := int(segment.id)
 		segments.remove_at(segment_index)
-		_remove_tail_recoil(removed_segment_id)
 		if has_previous and has_next:
 			segment_gaps.remove_at(segment_index)
 			segment_gaps[segment_index - 1] = _new_gap(GapType.CAUSAL, count)
 			_register_rollback_started()
 		elif has_previous:
 			segment_gaps.remove_at(segment_index - 1)
-			_create_tail_recoil(int(segments[segment_index - 1].id), count)
 		elif has_next:
 			segment_gaps.remove_at(0)
 
@@ -590,9 +575,7 @@ func _roll_off_left() -> bool:
 		_retire_pending_insertion(int(exited.uid))
 		rolled_off = true
 		if members.is_empty():
-			var segment_id := int(first.id)
 			segments.remove_at(0)
-			_remove_tail_recoil(segment_id)
 			if not segment_gaps.is_empty():
 				segment_gaps.remove_at(0)
 		else:
@@ -683,30 +666,6 @@ func _segment_end_x(segment: Dictionary) -> float:
 func _gap_distance(index: int) -> float:
 	return float(segments[index + 1].anchor_x) - _segment_end_x(segments[index])
 
-func _accelerated_distance(state: Dictionary, delta: float) -> float:
-	var current_speed := float(state.speed)
-	var acceleration_time := minf(delta, maxf(0.0, (ROLLBACK_MAX_SPEED - current_speed) / ROLLBACK_ACCELERATION))
-	return current_speed * acceleration_time + 0.5 * ROLLBACK_ACCELERATION * acceleration_time * acceleration_time + ROLLBACK_MAX_SPEED * (delta - acceleration_time)
-
-func _create_tail_recoil(segment_id: int, removed_count: int) -> void:
-	if segment_id < 0:
-		return
-	_remove_tail_recoil(segment_id)
-	tail_recoils.append({
-		"id": _next_gap_id,
-		"segment_id": segment_id,
-		"remaining": minf(spacing * removed_count, spacing * TAIL_RECOIL_SPACING_FACTOR),
-		"speed": ROLLBACK_INITIAL_SPEED,
-		"step_distance": 0.0,
-	})
-	_next_gap_id += 1
-	_register_rollback_started()
-
-func _remove_tail_recoil(segment_id: int) -> void:
-	for index in range(tail_recoils.size() - 1, -1, -1):
-		if int(tail_recoils[index].segment_id) == segment_id:
-			tail_recoils.remove_at(index)
-
 func _register_rollback_started() -> void:
 	total_rollbacks_started += 1
 	_refresh_rollback_snapshot()
@@ -715,7 +674,6 @@ func _new_gap(type: int, removed_count := 0, left_segment_id := -1, right_segmen
 	var result := {
 		"id": _next_gap_id,
 		"type": type,
-		"speed": ROLLBACK_INITIAL_SPEED if type == GapType.CAUSAL else 0.0,
 		"removed_count": removed_count,
 		"left_segment_id": left_segment_id,
 		"right_segment_id": right_segment_id,
@@ -732,7 +690,7 @@ func _bind_gap_endpoints() -> void:
 
 func _record_segment_motion(before_anchors: Dictionary, delta: float) -> void:
 	segment_motion_log.clear()
-	last_causal_reverse_displacement = 0.0
+	last_gravity_displacement = 0.0
 	for index in range(segments.size()):
 		var segment := segments[index]
 		var segment_id := int(segment.id)
@@ -741,10 +699,10 @@ func _record_segment_motion(before_anchors: Dictionary, delta: float) -> void:
 		var displacement := float(segment.anchor_x) - float(before_anchors[segment_id])
 		var left_gap := segment_gaps[index - 1] if index > 0 else {}
 		var right_gap := segment_gaps[index] if index < segment_gaps.size() else {}
-		var is_causal_front := not right_gap.is_empty() and int(right_gap.type) == GapType.CAUSAL and int(right_gap.left_segment_id) == segment_id
-		if is_causal_front:
-			last_causal_reverse_displacement = maxf(last_causal_reverse_displacement, maxf(0.0, displacement))
-			total_causal_reverse_distance += maxf(0.0, displacement)
+		var unsupported := not bool(segment.get("supported", true))
+		if unsupported:
+			last_gravity_displacement = maxf(last_gravity_displacement, maxf(0.0, displacement))
+			total_gravity_distance += maxf(0.0, displacement)
 		segment_motion_log.append({
 			"segment_id": segment_id,
 			"before_x": float(before_anchors[segment_id]),
@@ -753,6 +711,8 @@ func _record_segment_motion(before_anchors: Dictionary, delta: float) -> void:
 			"velocity": displacement / delta,
 			"relative_to_normal": displacement / delta + speed,
 			"members": (segment.members as Array).size(),
+			"supported": not unsupported,
+			"gravity_speed": float(segment.get("gravity_speed", 0.0)),
 			"left_gap_type": int(left_gap.get("type", -1)),
 			"left_gap_id": int(left_gap.get("id", -1)),
 			"right_gap_type": int(right_gap.get("type", -1)),
@@ -760,7 +720,7 @@ func _record_segment_motion(before_anchors: Dictionary, delta: float) -> void:
 		})
 
 func _new_segment(members: Array[Dictionary], anchor_x: float) -> Dictionary:
-	var result := {"id": _next_segment_id, "anchor_x": anchor_x, "members": members}
+	var result := {"id": _next_segment_id, "anchor_x": anchor_x, "members": members, "gravity_speed": 0.0, "supported": true}
 	_next_segment_id += 1
 	return result
 
@@ -811,21 +771,7 @@ func _refresh_rollback_snapshot() -> void:
 			"left_uid": int(left_members[-1].uid),
 			"right_uid": int(right_members[0].uid),
 			"tail_remaining": 0.0,
-			"speed": float(gap.speed),
-		})
-	for recoil in tail_recoils:
-		var segment_index := _segment_index_by_id(int(recoil.segment_id))
-		if segment_index < 0:
-			continue
-		var members: Array = segments[segment_index].members
-		rollback_gaps.append({
-			"id": int(recoil.id),
-			"left_segment_id": int(segments[segment_index].id),
-			"right_segment_id": -1,
-			"left_uid": int(members[-1].uid),
-			"right_uid": -1,
-			"tail_remaining": float(recoil.remaining),
-			"speed": float(recoil.speed),
+			"speed": float(segments[index].get("gravity_speed", 0.0)),
 		})
 
 func _validate_invariants() -> void:

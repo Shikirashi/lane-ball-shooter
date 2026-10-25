@@ -10,6 +10,7 @@ signal emergency_discharged(identity: int, cleared_count: int)
 signal revival_progressed(identity: int, progress: int, required: int)
 signal defender_revived(identity: int, repelled_count: int)
 signal breached(identity: int, enemy_uid: int)
+signal encounter_state_changed
 
 enum DefenderState { ACTIVE, DOWN }
 
@@ -25,6 +26,7 @@ const DEFAULT_PROJECTILE_DAMAGE := 1
 const TIER_TWO_PROJECTILE_DAMAGE := 2
 const DEFAULT_SPAWN_INTERVAL := 5.5
 const DEFAULT_MAX_ENEMIES := 5
+const DEFAULT_ENEMIES_PER_LANE := 8
 const PROJECTILE_LIFETIME := 2.2
 const BURST_INTERVAL := 0.14
 const HIT_DISTANCE := 0.4
@@ -43,6 +45,8 @@ var projectile_speed := DEFAULT_PROJECTILE_SPEED
 var projectile_damage := DEFAULT_PROJECTILE_DAMAGE
 var spawn_interval := DEFAULT_SPAWN_INTERVAL
 var max_enemies := DEFAULT_MAX_ENEMIES
+var enemy_spawn_budget := DEFAULT_ENEMIES_PER_LANE
+var spawned_this_encounter := 0
 var auto_spawn := true
 var spawn_timer := DEFAULT_SPAWN_INTERVAL
 var defender_state := DefenderState.ACTIVE
@@ -110,8 +114,12 @@ func handle_match(match_result: Dictionary) -> Dictionary:
 		defender_revived.emit(team_identity, repelled_count)
 	return {"action": "revival", "revived": completed, "progress": revival_progress}
 
-func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1) -> int:
+## Manual/test spawns count against the encounter quota by default. Tests that
+## need an out-of-budget fixture may explicitly pass counts_toward_budget=false.
+func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1, counts_toward_budget := true) -> int:
 	if enemies.size() >= max_enemies:
+		return -1
+	if counts_toward_budget and spawned_this_encounter >= enemy_spawn_budget:
 		return -1
 	var resolved_hp := enemy_max_hp if hp_value < 0 else maxi(1, hp_value)
 	var enemy := {
@@ -127,9 +135,12 @@ func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1) -> int:
 	_sync_enemy_hop_state(enemy)
 	_next_enemy_uid += 1
 	total_spawned += 1
+	if counts_toward_budget:
+		spawned_this_encounter += 1
 	enemies.append(enemy)
 	enemies.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.x) < float(b.x))
 	enemy_spawned.emit(enemy.duplicate(true))
+	encounter_state_changed.emit()
 	return int(enemy.uid)
 
 func update(delta: float) -> void:
@@ -154,6 +165,7 @@ func clear_for_test() -> void:
 	attack_history.clear()
 	hit_history.clear()
 	total_spawned = 0
+	spawned_this_encounter = 0
 	total_killed = 0
 	total_emergency_cleared = 0
 	total_breaches = 0
@@ -175,6 +187,23 @@ func reset_run(initial_enemy_x := NAN, initial_spawn_delay := DEFAULT_SPAWN_INTE
 
 func set_game_over(value: bool) -> void:
 	game_over = value
+
+func set_enemy_spawn_budget(value: int) -> void:
+	enemy_spawn_budget = maxi(0, value)
+	spawned_this_encounter = mini(spawned_this_encounter, enemy_spawn_budget)
+	encounter_state_changed.emit()
+
+func remaining_to_spawn() -> int:
+	return maxi(0, enemy_spawn_budget - spawned_this_encounter)
+
+func encounter_spawn_complete() -> bool:
+	return spawned_this_encounter >= enemy_spawn_budget
+
+func total_neutralized() -> int:
+	return total_killed + total_emergency_cleared
+
+func encounter_cleared() -> bool:
+	return encounter_spawn_complete() and enemies.is_empty()
 
 func active_enemy_count() -> int:
 	return enemies.size()
@@ -267,6 +296,7 @@ func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
 			enemies.remove_at(index)
 			total_killed += 1
 			enemy_killed.emit(enemy_uid, impact_x)
+			encounter_state_changed.emit()
 		else:
 			enemies[index] = enemy
 			enemy_hit.emit(enemy_uid, int(enemy.hp), impact_x)
@@ -297,12 +327,14 @@ func _update_enemies(delta: float) -> void:
 		_trigger_breach(breached_uid)
 
 func _update_spawning(delta: float) -> void:
-	if not auto_spawn or game_over:
+	if not auto_spawn or game_over or encounter_spawn_complete():
 		return
 	spawn_timer -= delta
-	while spawn_timer <= 0.0:
-		if enemies.size() < max_enemies:
-			spawn_enemy()
+	while spawn_timer <= 0.0 and not encounter_spawn_complete():
+		if enemies.size() >= max_enemies:
+			break
+		if spawn_enemy() < 0:
+			break
 		spawn_timer += maxf(spawn_interval, 0.1)
 
 func _first_defender_contact(previous_positions: Dictionary) -> int:
@@ -356,6 +388,7 @@ func _discharge_emergency() -> void:
 	total_emergency_cleared += cleared_count
 	enemies.clear()
 	emergency_discharged.emit(team_identity, cleared_count)
+	encounter_state_changed.emit()
 
 func _repel_nearby_enemies() -> int:
 	var safe_x := DEFENDER_X + REVIVAL_SAFE_OFFSET
@@ -375,6 +408,7 @@ func _trigger_breach(enemy_uid: int) -> void:
 	game_over = true
 	total_breaches += 1
 	breached.emit(team_identity, enemy_uid)
+	encounter_state_changed.emit()
 
 func clear_enemies_for_tier3() -> int:
 	if game_over or _enemy_already_breached() >= 0:
@@ -384,6 +418,8 @@ func clear_enemies_for_tier3() -> int:
 	for enemy in victims:
 		total_killed += 1
 		enemy_killed.emit(int(enemy.uid), float(enemy.x))
+	if not victims.is_empty():
+		encounter_state_changed.emit()
 	return victims.size()
 
 func check_terminal_breach() -> bool:

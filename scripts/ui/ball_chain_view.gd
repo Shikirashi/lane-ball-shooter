@@ -85,8 +85,8 @@ func _debug_text() -> String:
 	var logical_minimum := model.min_logical_spacing if is_finite(model.min_logical_spacing) else 0.0
 	var display_minimum := model.min_display_spacing if is_finite(model.min_display_spacing) else 0.0
 	if model.last_match_identity < 0:
-		return "B%d S%d G%d/%d MC%d MF%d R%.1f SET%d I%d" % [model.balls.size(), model.segments.size(), int(gap_counts.feed), int(gap_counts.causal), model.active_causal_motor_count, model.active_feed_motor_count, model.last_causal_reverse_displacement, model.pending_insertions.size(), model.invariant_violations]
-	return "B%d S%d G%d/%d MC%d MF%d R%.1f M%.0f/%.0f I%d" % [model.balls.size(), model.segments.size(), int(gap_counts.feed), int(gap_counts.causal), model.active_causal_motor_count, model.active_feed_motor_count, model.last_causal_reverse_displacement, logical_minimum, display_minimum, model.invariant_violations]
+		return "B%d S%d U%d G%d V%.0f D%.1f SET%d I%d" % [model.balls.size(), model.segments.size(), model.unsupported_segment_count, model.gravity_gap_count, model.max_gravity_speed, model.last_gravity_displacement, model.pending_insertions.size(), model.invariant_violations]
+	return "B%d S%d U%d G%d V%.0f D%.1f M%.0f/%.0f I%d" % [model.balls.size(), model.segments.size(), model.unsupported_segment_count, model.gravity_gap_count, model.max_gravity_speed, model.last_gravity_displacement, logical_minimum, display_minimum, model.invariant_violations]
 
 func _on_match_completed(identity: int, group_size: int) -> void:
 	_feedback_identity = identity

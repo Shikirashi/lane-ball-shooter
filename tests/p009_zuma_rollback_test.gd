@@ -143,11 +143,11 @@ func _test_wide_and_end_clears() -> void:
 	var tail_uid := int(tail_clear.balls[1].uid)
 	tail_clear.try_insert_shot(TeamData.Identity.BLUE, float(tail_clear.balls[-1].display_x) + 4.0)
 	tail_clear.advance(ChainModel.INSERT_SETTLE_TIME)
-	_check(tail_clear.rollback_gaps.size() == 1 and int(tail_clear.rollback_gaps[0].right_uid) < 0, "right-tail clear creates bounded recoil state")
+	_check(tail_clear.rollback_gaps.is_empty(), "right-tail clear creates no unsupported gap or ghost actor")
 	var tail_after_clear := _position_for_uid(tail_clear, tail_uid)
 	tail_clear.advance(1.0)
 	var tail_net_move := _position_for_uid(tail_clear, tail_uid) - tail_after_clear
-	_check(tail_clear.rollback_gaps.is_empty() and tail_net_move > 0.0 and tail_net_move <= tail_clear.spacing * ChainModel.TAIL_RECOIL_SPACING_FACTOR, "tail recoil is visible, bounded and terminates")
+	_check(tail_clear.rollback_gaps.is_empty() and absf(tail_net_move + tail_clear.speed) < 0.001, "rightmost surviving tail train remains source-supported at -34 px/s")
 
 	var all_clear := ChainModel.new()
 	var pair: Array[int] = [TeamData.Identity.YELLOW, TeamData.Identity.YELLOW]
@@ -169,7 +169,7 @@ func _test_multiple_gaps_and_restart() -> void:
 	model.try_insert_shot(TeamData.Identity.BLUE, float(model.balls[3].display_x) + 4.0)
 	model.try_insert_shot(TeamData.Identity.YELLOW, float(model.balls[-1].display_x) + 4.0)
 	model.advance(ChainModel.INSERT_SETTLE_TIME)
-	_check(model.rollback_gaps.size() == 2, "two quick shots create two explicit rollback states")
+	_check(model.rollback_gaps.size() == 1, "middle clear creates one gap while right-tail clear creates no ghost state")
 	var remained_sorted := true
 	for unused in range(180):
 		model.advance(1.0 / 60.0)

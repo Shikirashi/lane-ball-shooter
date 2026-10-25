@@ -108,7 +108,7 @@ func _test_concurrent_gaps_fifo_and_restart() -> void:
 	var moving_uid := int(model.rollback_gaps[0].left_uid)
 	var moving_index := model._ball_index_by_uid(moving_uid)
 	_check(moving_index >= 0 and model.try_insert_shot(TeamData.Identity.GREEN, float(model.balls[moving_index].display_x) + 2.0), "shot can insert at a moving rollback endpoint")
-	_advance_checked(model, 2.0, 1.0 / 120.0, "multiple gap closure")
+	_advance_checked(model, 4.0, 1.0 / 120.0, "multiple gravity gap closure")
 	_check(model.rollback_gaps.is_empty() and _invariants_hold(model), "multiple motors and rollback-time insertion terminate without overlap")
 	var fifo := ChainModel.new()
 	var fifo_tail: Array[int] = [TeamData.Identity.YELLOW]
@@ -116,9 +116,8 @@ func _test_concurrent_gaps_fifo_and_restart() -> void:
 	fifo.set_test_state(fifo_tail, 500.0, cached)
 	fifo.return_cached(3)
 	_check(fifo.identities().slice(-3) == cached, "FIFO return colors retain exact order through segment admission")
-	var fifo_gap := fifo._gap_distance(0)
-	_advance_checked(fifo, 8.0, 1.0 / 30.0, "FIFO normal entry")
-	_check(_invariants_hold(fifo) and fifo.segment_gaps.size() == 1 and absf(fifo._gap_distance(0) - fifo_gap) < 0.001, "separated FIFO batch stays rigid at normal speed without passive match or overlap")
+	_advance_checked(fifo, 8.0, 1.0 / 30.0, "FIFO gravity closure")
+	_check(_invariants_hold(fifo) and fifo.segment_gaps.is_empty(), "separated FIFO batch reconnects through rigid gravity without passive match or overlap")
 
 	var restart := ChainModel.new()
 	restart.set_test_state(identities, 100.0)
