@@ -1,134 +1,54 @@
-# Codex Handoff — LBS-P022 HP, penetrating attacks, and private Mintbase hosting
+# Codex Handoff — LBS-P026 public GitHub Pages release
 
 **Status:** COMPLETE
 
-**Branch:** `master`
+**Game branch:** `master`
 
-**Gameplay/build source commit:** `cca99ba` (`Rebalance enemy HP and projectile tiers`)
+**Accepted gameplay/build source:** `cca99baba7805dd05c358c70ffa105aecc75efdc` (`Rebalance enemy HP and projectile tiers`)
 
-**Mailbox:** remains on LBS-P022. P024 automation was not activated, no CI runner/webhook was installed, and ChatGPT-owned mailbox files were not edited.
+**Portfolio release commit:** `e087383653bac3e459f92e1acedc558f485a0b2a` (`Publish Lane Ball Shooter Web build`)
 
-## Gameplay implementation
+**Public URL:** [https://shikirashi.github.io/lane-ball-shooter/](https://shikirashi.github.io/lane-ball-shooter/)
 
-- Canonical spawn/max HP is now Hopper 6, Heavy 12, Sickle Snake 6, and Healyzard 6. `LaneCombatModel.DEFAULT_ENEMY_HP` is 6. Explicit low-HP test fixtures retain canonical `max_hp`, so healer caps stay correct.
-- Tier 1 creates one 1-damage non-piercing projectile and stops at the earliest physical contact.
-- Tier 2 creates one 1-damage penetrating projectile which continues through every physically encountered enemy in the matched lane.
-- Tier 3/FEVER creates one visible wide penetrating wave spanning the matched lane and one adjacent lane chosen once at launch. An invisible synchronized adjacent-lane collision proxy shares the same attack identity/hit set; audio and rendering still represent one attack.
-- Piercing projectiles store immutable global `spawn_id` hits. Each enemy can take at most one hit per projectile even across frame overlap or a Snake UID remap/lane transfer. Later enemies behind an already-passed projectile are not hit retroactively.
-- Swept contacts are sorted by impact time (then spawn ID), remain deterministic at 30/60/120 Hz and 0.08-second steps, and preserve Hopper hop, Heavy/Snake slide, and Healyzard stationary collision models.
-- Live tier 3 no longer calls `clear_enemies_for_tier3`; full-health enemies take only 1 damage and do not increment neutralization/victory counters. The existing one-use emergency discharge remains an immediate full-lane clear at any HP.
-- Wide visuals use one coherent cross-lane primitive; tier 2 is visually elongated. Collision proxies are never drawn and do not request duplicate launch SFX.
-- Healyzard pulses remain +1 every 15 seconds, capped at the new 6/12/6 target maxima. Snake stun, transfer, global uniqueness/cooldown, roster weights, movement speeds, death VFX/SFX, finite encounter, victory delay, conveyor, Web menu, and exact victory copy are unchanged.
+The mailbox remains on LBS-P026. ChatGPT-owned task, decision, ledger, and protocol files were not edited. P024 automation and Tailscale Serve were not configured.
 
-Older P004, P005, P007, P018, P019, and P020 assertions were updated only for the approved HP/projectile changes. Their routing, revival, VFX/SFX, spawning, Snake, healer, and survival coverage remains.
+## Publication
 
-## New P022 coverage
+- Pulled both repositories with `git pull --ff-only` and verified their `master` branches and GitHub remotes.
+- Used the accepted P022 release already present on Mintbase and confirmed it was byte-identical to the ignored `exports/web/` build before publication.
+- Replaced only `lane-ball-shooter/` in `Shikirashi/Shikirashi.github.io`. The existing site root, `.nojekyll`, and every other portfolio page were preserved.
+- Removed the folder's placeholder `.gitkeep` and committed exactly the nine actual Godot runtime files listed below.
+- Confirmed `index.wasm` and `index.pck` are normal Git blobs with no LFS filter or pointer content.
+- Pushed portfolio `master`; GitHub Pages workflow run `40239268461` completed successfully for commit `e087383`.
 
-Added `tests/p022_hp_penetrating_attacks_test.gd` — PASS (48 checks):
+| Runtime file | Bytes | SHA-256 |
+|---|---:|---|
+| `index.html` | 5,447 | `6b94a111a6c79b5811b9d43a6e73bf7c5be40b8ecaeafab72c4e1d7bfd3c18a7` |
+| `index.js` | 279,815 | `33c94cb3175f3333b82e2a3be5e8e86f77986f0aa2042b1631f6367a4e5bb6ba` |
+| `index.wasm` | 39,514,754 | `fc74679e3b97f76878947fcd4fbe1268cbfa6188182a2e33bbc3f5dc9bfa57d0` |
+| `index.pck` | 357,672 | `887b08c77b71283a388836c054294042cc84ff755852d38c9de5e039634ce619` |
+| `index.audio.worklet.js` | 7,298 | `5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3` |
+| `index.audio.position.worklet.js` | 2,973 | `be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8` |
+| `index.png` | 21,443 | `3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e` |
+| `index.icon.png` | 5,700 | `ad3c35ad0facf487c618204bd98db543034fc95224eadc7f08c7a9ff38d5b3b5` |
+| `index.apple-touch-icon.png` | 11,944 | `01d4f63e525941e06ce74f5187dad030d20a8d52a07ce365ae4e94af97a3b1f5` |
 
-- canonical/full/current HP and explicit damaged fixtures;
-- tier-1 first-contact and lethal-first-target stopping;
-- tier-2 three-target penetration, once-only hits, normal expiry, 30/60/120 Hz and 0.08-second sweeps;
-- no retroactive damage to a later enemy behind the projectile;
-- tier-3 exact two-lane 1-damage routing, full-HP Heavy survival, edge/middle selection, seeded near-50/50 middle-lane distribution, and untouched other lanes;
-- shared immutable-spawn-ID deduplication after a Snake is remapped into the other selected lane;
-- +1 healer caps at 6/12/6 and emergency clearing of full-HP typed enemies.
+The accepted P022 archive SHA-256 remains `5711dbb5341d6546e564e96ab059801cf8df389687687942b583cc392b2749d4` and its PCK hash matches the published file above. The archive and release manifest were not published because P026 authorizes only the nine browser runtime files.
 
-## Full validation
+## Verification
 
-Godot `4.7.2.stable.official.ed1daf0bf`, all passing:
+- Before commit, served the nested portfolio checkout over loopback HTTP. All nine paths returned 200 with correct HTML, JavaScript, WASM, PCK, and PNG MIME types; downloaded WASM/PCK hashes matched the source release.
+- After Pages deployment, all nine public HTTPS paths returned 200. Every downloaded byte count and SHA-256 matched the table above.
+- `http://shikirashi.github.io/lane-ball-shooter/` returned 301 to the requested HTTPS game path.
+- Headless Google Chrome loaded the public HTTPS release through the Godot/WebGL splash at both 1280×720 and 1920×1080. In a persistent 1280×720 session after 12 seconds, the page reported `isSecureContext == true`, title `Lane Ball Shooter`, one live canvas, and no remaining HTML loader/status element, confirming runtime handoff beyond the splash.
+- P021 Web menu/export regression passed all 46 checks. P022 HP/penetrating-attacks regression executed directly from the published build's local PCK and passed all 48 checks. The recurring sandbox denial for `user://logs/godot.log` was nonfatal.
+- Headless canvas pixels are not DOM text, and repository rules prohibit GUI/mouse automation, so visual interaction with `LANE BALL SHOOTER`, fullscreen YES/NO behavior, sound, and gameplay still require ordinary browser QA.
+- The portfolio repository was clean and exactly synchronized with `origin/master` after its push.
 
-- P001 smoke — PASS.
-- P002 — 66 checks.
-- P003 — 73 checks.
-- P004 — 43 checks.
-- P005 — 63 checks.
-- P006 — 69 checks.
-- P007 — 55 checks.
-- P008 — 84 checks.
-- P009 — 46 checks.
-- P010 — 162 checks.
-- P011 stress — **16,485 checks**, seed `5011CAFE`, 2,400 operations; not skipped.
-- P012 — 366 checks.
-- P013 — 50 checks.
-- P014 — 289 checks.
-- P015 — 524 checks.
-- P016 — 76 checks.
-- P017 — 352 checks.
-- P018 — 41 checks.
-- P019 — 117 checks.
-- P020 — 67 checks.
-- P021 — 46 checks.
-- P023 — 38 checks.
-- P022 new suite — 48 checks.
-- `git diff --check` — PASS.
+No gameplay source changed in P026, so the already accepted P001–P023 regression results and exact P022 build remain authoritative. P026 adds publication verification rather than rebuilding or modifying the binary.
 
-Native gameplay and forced Web-menu preview startup both passed bounded three-second runs at 960×540, 1280×720, 1600×720, and 2400×1080. The recurring sandbox denial for `user://logs/godot.log` is harmless.
+## Hosting disposition
 
-## Exact-source Web build
+The preferred player endpoint is now the public GitHub Pages HTTPS URL. The prior Mintbase release and its user service were left intact, but its plain-HTTP tailnet URL is retained only as a legacy/private source because modern browser security checks can reject it. No Tailscale Serve, Funnel, firewall, DNS, or P024 automation changes were made.
 
-The build was made from a clean temporary `git archive` of source commit `cca99ba`, not the dirty primary checkout:
-
-```sh
-./scripts/build_web.sh
-```
-
-The matching official Godot 4.7.2 single-thread Web template and Compatibility renderer produced:
-
-| File | Bytes |
-|---|---:|
-| `index.html` | 5,447 |
-| `index.js` | 279,815 |
-| `index.wasm` | 39,514,754 |
-| `index.pck` | 357,672 |
-| `index.audio.worklet.js` | 7,298 |
-| `index.audio.position.worklet.js` | 2,973 |
-| `index.png` | 21,443 |
-| `index.icon.png` | 5,700 |
-| `index.apple-touch-icon.png` | 11,944 |
-
-`exports/lane-ball-shooter-web.zip` contains exactly those nine files at archive root.
-
-- New P022 ZIP SHA-256: `5711dbb5341d6546e564e96ab059801cf8df389687687942b583cc392b2749d4`
-- New P022 PCK SHA-256: `887b08c77b71283a388836c054294042cc84ff755852d38c9de5e039634ce619`
-- Rebuilt clean P023 PCK for comparison: `52052b2380bb4ca978ffd3ba3483acd567c19c7f7e5596cf7da7aa958caea5c4`
-- Stale P023 archive SHA from prior handoff: `08a8d52201b1d3fd03c983267bd54659a5350db109a07bc31e6f09526e5dfccb`; it was not deployed.
-
-Running the P022 regression directly from the exported PCK via `godot --headless --main-pack exports/web/index.pck --script res://tests/p022_hp_penetrating_attacks_test.gd` passed all 48 checks, proving the deployed pack includes the new HP and attack code. Export printed known nonfatal Android-tools/editor-socket/settings warnings; Web output completed.
-
-## Mintbase deployment
-
-Mintbase is the current Linux host. The new build is live at:
-
-**`http://100.79.250.8:8770/`** (Tailscale tailnet only)
-
-- Service: systemd user unit `lane-ball-shooter-web.service`, enabled and active.
-- Serving user: `shiki` (UID 1000); Python static server is not root.
-- Bind: exactly `100.79.250.8:8770`, not `0.0.0.0`; LAN/public Internet exposure was not enabled.
-- User lingering: enabled, so the user service starts persistently without an interactive login.
-- Release root: `/home/shiki/srv/lane-ball-shooter-web/releases/`.
-- Live pointer: `/home/shiki/srv/lane-ball-shooter-web/current -> releases/cca99ba-p022`.
-- Manifest: `/home/shiki/srv/lane-ball-shooter-web/current/release-manifest.txt`, recording source/ZIP and per-file SHA-256 values.
-- Unit: `/home/shiki/.config/systemd/user/lane-ball-shooter-web.service`.
-- Environment: `/home/shiki/.config/lane-ball-shooter-web/environment`.
-- Logs: `journalctl --user -u lane-ball-shooter-web.service`.
-- The existing rembg site on 8765 and its tailnet proxy on 8766 were inspected and left unchanged.
-
-All nine runtime assets plus the manifest returned HTTP 200 from the actual tailnet URL. MIME checks passed: HTML, JavaScript, `application/wasm`, PCK `application/octet-stream`, and PNG. The deployed PCK hash exactly equals the local P022 PCK. A supervised service restart returned to active state and HTTP succeeded afterward.
-
-`scripts/deploy_web_release.sh` validates all runtime files, refuses overwrite, stages a versioned release, writes a hash manifest, and atomically promotes `current`. On subsequent promotion it records the former live target as `previous`; rollback swaps those pointers without restarting the server:
-
-```sh
-./scripts/deploy_web_release.sh rollback "$HOME/srv/lane-ball-shooter-web"
-```
-
-Atomic two-release promotion and rollback were exercised successfully in an isolated temporary deployment root. Because this is the first real hosted release, the real deployment has no older known-good hosted version yet; `previous` will be created by the next manual/P024 deployment.
-
-## Manual verification / limitations
-
-1. From an authorized tailnet device, open `http://100.79.250.8:8770/`; confirm the Web menu, NO windowed start, and YES fullscreen request/start.
-2. Confirm all types spawn with 6/12/6/6 HP behavior: tier 1 stops on the first enemy, tier 2 penetrates one lane, tier 3 crosses exactly two lanes for 1 damage each, and the emergency still wipes its lane.
-3. Watch a Snake move between both wave lanes without taking a second hit from that same wave; verify Healyzard +1 healing caps.
-4. Complete the encounter and verify the unchanged three-second delayed WAVE CLEARED copy.
-
-No second online tailnet client was available during deployment (`shikilaptop` was offline), and no GUI/mouse automation was used, so actual remote browser rendering, audio, and YES/NO interaction remain manual QA. The host itself verified the private Tailscale URL and all assets. No firewall, router, Funnel, reverse proxy, public DNS, or public exposure changes were made. P024 automation remains uninstalled.
+For a later manually approved release, rebuild with `./scripts/build_web.sh`, validate all nine files, pull the portfolio repository, replace only `lane-ball-shooter/`, inspect the staged paths and hashes, then commit/push portfolio `master` and wait for its Pages workflow. P024 may automate that cross-repository sequence later; it remains inactive.

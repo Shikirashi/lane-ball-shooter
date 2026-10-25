@@ -94,9 +94,27 @@ The build helper runs the equivalent export command `godot --headless --path . -
 
 Open `http://127.0.0.1:8765/`. Do not open `index.html` directly with a `file://` URL: WASM/PCK loading requires an HTTP server. The preset uses Godot's single-threaded Web template and Compatibility renderer, so cross-origin-isolation headers are not required. A current browser with WebAssembly and WebGL 2 is required; fullscreen remains subject to browser/OS user-gesture policy. The game has no remote URLs or runtime network dependency.
 
-### Private Mintbase hosting
+### Public GitHub Pages release
 
-The validated P022 build is hosted on Mintbase at **`http://100.79.250.8:8770/`**. The server binds only Mintbase's Tailscale address, so this URL is available to authorized devices on the same tailnet and is not exposed to the LAN or public Internet. The unrelated rembg service and its existing 8765/8766 path are untouched.
+The verified P022 Web build is publicly playable at **[https://shikirashi.github.io/lane-ball-shooter/](https://shikirashi.github.io/lane-ball-shooter/)**. GitHub Pages supplies the trusted HTTPS origin required by current browsers and redirects the matching HTTP URL to HTTPS. The release is stored under `lane-ball-shooter/` on the `master` branch of `Shikirashi/Shikirashi.github.io`; the site's root and its other pages are unchanged.
+
+The published folder contains exactly the nine generated runtime files: `index.html`, `index.js`, `index.wasm`, `index.pck`, both audio worklet scripts, and the three PNG icons/splash images. The WASM and PCK are ordinary Git blobs, not Git LFS pointers. The deployed PCK SHA-256 is `887b08c77b71283a388836c054294042cc84ff755852d38c9de5e039634ce619`, matching the accepted P022 build from source commit `cca99baba7805dd05c358c70ffa105aecc75efdc`.
+
+Manual publication of a later approved build is deliberately a two-repository operation:
+
+```sh
+./scripts/build_web.sh
+git -C ../Shikirashi.github.io pull --ff-only
+# Replace only ../Shikirashi.github.io/lane-ball-shooter/ with the nine files
+# from exports/web/, then review, commit, and push that repository's master.
+curl -I https://shikirashi.github.io/lane-ball-shooter/index.wasm
+```
+
+Verify the generated files and hashes before replacement, stage only the nested game folder, and wait for the portfolio repository's Pages deployment to finish before testing the public URL. P024 automatic cross-repository publication is not configured yet.
+
+### Legacy private Mintbase hosting
+
+The same validated P022 build remains hosted on Mintbase at **`http://100.79.250.8:8770/`**. This is no longer the preferred player URL: its plain-HTTP tailnet origin can be rejected by browser security requirements even though the files themselves are valid. The server still binds only Mintbase's Tailscale address and is not exposed to the LAN or public Internet. P026 did not configure Tailscale Serve, change this service, or touch the unrelated rembg service and its existing 8765/8766 path.
 
 Hosting uses the unprivileged systemd user service `lane-ball-shooter-web.service`, with user lingering enabled for restart persistence. Files live under `~/srv/lane-ball-shooter-web/releases/<release-id>/`; `~/srv/lane-ball-shooter-web/current` is the atomically promoted live symlink and `previous` is populated on the second deployment for one-command rollback. The initial release is `cca99ba-p022`. Its manifest records source commit `cca99ba`, Web archive SHA-256 `5711dbb5341d6546e564e96ab059801cf8df389687687942b583cc392b2749d4`, and PCK SHA-256 `887b08c77b71283a388836c054294042cc84ff755852d38c9de5e039634ce619`.
 
@@ -121,7 +139,7 @@ systemctl --user start lane-ball-shooter-web.service
 ./scripts/deploy_web_release.sh rollback "$HOME/srv/lane-ball-shooter-web"
 ```
 
-The committed service template is `deploy/lane-ball-shooter-web.service`; its private bind settings are in `deploy/lane-ball-shooter-web.environment.example` and installed at `~/.config/lane-ball-shooter-web/environment`. P024 automatic build/deployment is not active: later source pushes do not update this host until that separate task is authorized and installed.
+The committed service template is `deploy/lane-ball-shooter-web.service`; its private bind settings are in `deploy/lane-ball-shooter-web.environment.example` and installed at `~/.config/lane-ball-shooter-web/environment`. P024 automatic build/publication is not active: later source pushes update neither this host nor GitHub Pages until that separate task is authorized and installed.
 
 Android debug export requires matching Android export templates plus a JDK and Android SDK configured under Godot's Editor Settings (`Java SDK Path` and `Android SDK Path`). The SDK must include `platform-tools`, a supported platform, build-tools and its `apksigner`. Then run:
 
