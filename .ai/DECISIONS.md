@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: P020 enemy abilities source-reviewed and complete; P021 Web main menu/fullscreen prompt + export ACTIVE; P022 Mintbase static hosting is a future queued task (2026-10-25). Latest explicit user decisions override older notes.
+Status: P021 Web main menu and real local browser export source/handoff accepted, browser fullscreen QA pending; P022 Mintbase static hosting QUEUED and NOT ACTIVE (2026-10-25). Earlier completed P020 enemy abilities preserved.
 
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
