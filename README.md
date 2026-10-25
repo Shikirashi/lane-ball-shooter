@@ -81,7 +81,7 @@ Eight soft-arcade SFX are synthesized in memory as 22.05 kHz, mono, 16-bit PCM: 
 
 ## Export
 
-The committed `export_presets.cfg` contains `Web` and `Android Debug` presets. Install the **Godot 4.7.2 Standard** export templates matching the editor build before exporting. Mono templates do not satisfy this GDScript editor's template lookup.
+The committed `export_presets.cfg` contains `Web`, `Android Debug`, and `Android Release` presets. Install the **Godot 4.7.2 Standard** export templates matching the editor build before exporting. Mono templates do not satisfy this GDScript editor's template lookup.
 
 Web export, packaging, and local serving:
 
@@ -113,7 +113,7 @@ Cross-repository pushes require one user-created Actions secret; no credential i
 - Repository permission: **Contents — Read and write**. Metadata read is implicit; Actions, Pages, Administration and other permissions are not required.
 - A suitable expiration, followed by rotation before it expires.
 
-Store it in the `Shikirashi/lane-ball-shooter` repository as an Actions repository secret named exactly `PORTFOLIO_PUBLISH_TOKEN`. Do not paste the token into a command, issue, log, source file, Pages content or chat. Until that secret exists, the build/test job can pass but the publish job deliberately fails at its explicit credential checkpoint and the existing P026 release stays live.
+Store it in the `Shikirashi/lane-ball-shooter` repository as an Actions repository secret named exactly `PORTFOLIO_PUBLISH_TOKEN`. Do not paste the token into a command, issue, log, source file, Pages content or chat. The `PORTFOLIO_PUBLISH_TOKEN` secret has now been configured by the repository owner. Cross-repository publication and Pages deployment are verified in Actions run [`40246262499`](https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40246262499), with successful build/test, asset-byte validation, and secure browser startup. These token-creation instructions are retained for future credential rotation or fresh setup.
 
 After adding the secret, start the first authorized release from the game repository's Actions page or with an already authenticated GitHub CLI:
 
