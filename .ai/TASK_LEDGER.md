@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The mailbox state is in `.ai/TASK.md`. P001–P018 implementations have been source/handoff reviewed. P018 adds enemy death SFX/VFX and a 3-second delay before WAVE CLEARED; awaiting graphical/audio playtest. Historical `LBS` prefixes are internal identifiers, not branding. Only ChatGPT advances this ledger.
+The active task is in `.ai/TASK.md`. P001–P018 implementations were source/handoff reviewed. P019 is the ONLY active Codex task (typed enemy roster, primitive variants, weighted spawning). P020 is QUEUED, not yet authorized (Snake lane switching and Healyzard healing/glow). ChatGPT advances the ledger after review; historical LBS prefixes are task IDs, not game branding.
 
 | ID | Status | Goal |
 |---|---|---|
