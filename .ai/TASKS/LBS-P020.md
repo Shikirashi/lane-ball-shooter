@@ -1,7 +1,7 @@
-# QUEUED TASK: LBS-P020 — Sickle Snake lane switching and Healyzard healing
+# ACTIVE TASK: LBS-P020 — Sickle Snake lane switching and Healyzard healing
 
-**Status: QUEUED, NOT ACTIVE.** Only the task in .ai/TASK.md authorizes Codex work. ChatGPT will activate P020 after source-reviewing P019. Do not work on P020 while P019 is active.
-**Dependency:** P019 adds all four typed procedural enemy models, stats, weighted spawn director, global one-Snake limit and 15-second postdeath cooldown. P019 implementation SHA TBD.
+**Status: READY FOR CODEX — ACTIVE.** ChatGPT source-reviewed and accepted P019; P020 is now the ONLY active task in `.ai/TASK.md`. Implement ONLY P020, commit/push and STOP.
+**Dependency:** P019 has been source-reviewed and accepted. Its implementation commit is `eb6501842e86f43001e4b8c220a75127d8188609`, adding all four typed primitive enemies, canonical stats, weighted global spawn director, single-Snake live limit and 15-second death cooldown.
 **User rules:** No rejected concept vector art. Sickle Snake is tall yellow sliding Hopper, 2× Hopper speed and standard 2 HP; after a nonlethal hit, stop for 0.5s and move to a random adjacent lane (edge lanes only have one valid choice). Healyzard is stationary rearmost green 0.7× Hopper; every 15 seconds heal ALL other non-Healyzard enemies currently in its lane by 1 HP (max their own HP), and display a soft yellow circular radial glow with transparent edges BEHIND healer while healing. Decorative orange top squares belong only to Hopper; no HP bars/pips.
 
 ## A. Sickle Snake: damage stun and adjacent-lane relocation
@@ -39,6 +39,14 @@
 7. P019 spawn distribution, global single-Snake live cap, cooldown, 8 spawns per lane/32 total, three-second victory presentation and death animations remain correct after transfers/heals.
 8. No change to 102px/s conveyor and offscreen-left original-UID gravity return (P017); no health UI or orange squares outside Hopper.
 9. Run P001–P019 suites plus P020. Update only superseded assumptions; preserve test coverage. Godot 4.7.2 headless bounded start 960x540, 1280x720, 1600x720, 2400x1080 and git diff --check.
+
+## Existing P019 APIs and migration notes
+
+- Canonical `EnemyTypes.Type` lives at `scripts/world/enemy_types.gd`; runtime global scheduling and Snake occupancy live in `scripts/world/battlefield.gd` (`_living_snake_spawn_id`, `_snake_cooldown_until`, `_spawn_simulation_time`); typed authoritative enemy dictionaries and HP/linear/hop sweep are in `scripts/world/lane_combat_model.gd` (`spawn_id` immutable); 3D variants and P018 death actors are in `scripts/world/lane_actor.gd`.
+- Very important: moving an enemy into another lane requires preserving its `spawn_id` and its entire dictionary, not calling `spawn_directed_enemy` or `spawn_enemy`, so the quota and global Snake cap remain untouched. Lane-local `uid` can COLLIDE with a UID already in the destination; define a deterministic collision-safe remap for local presentation UID at transfer while KEEPING the immutable global `spawn_id`, or refactor visuals/collisions to globally unique IDs. Test transfers into a lane with matching local UIDs and make sure it cannot delete somebody else's live mesh, projectile target or death VFX. Only one Snake ever exists globally.
+- Healyzard's P019 rear positions come from `_healyzard_spawn_x` in Battlefield and it is already stationary. Pulse timers must persist through normal lane updates, not be overwritten by visual synchronization.
+- The director's existing 15-second Snake cooldown starts ONLY on actual neutralization. A nonfatal Snake hit/lane transfer must not free it. Ensure transferring a Snake still counts toward `encounter_live()` correctly and never creates a transient false victory when the last quota is exhausted. Damage and transfer ownership transitions must be atomic with respect to state-change signals.
+- As before, P019's global spawn RNG is independent of tier-3 target RNG. Keep P020 direction RNG separately seeded.
 
 ## Finish
 Update README and .ai/CODEX_HANDOFF.md with actual state machine, visual radial texture implementation, testing, and human visual QA steps. Code-only; no GUI/mouse operations. Commit/push master, STOP. Do not change ChatGPT-owned .ai/TASK.md, .ai/TASK_LEDGER.md, .ai/DECISIONS.md, .ai/PROTOCOL.md; do not activate P021.
