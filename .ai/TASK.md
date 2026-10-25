@@ -1,24 +1,32 @@
-# Lane Ball Shooter — P026 Published to GitHub Pages / Awaiting Human Browser QA
+# ACTIVE TASK: LBS-P024 — Automatically build and publish future Web updates to portfolio GitHub Pages
 
-**Status:** P026 IMPLEMENTED AND SOURCE/PAGES WORKFLOW VERIFIED. NO ACTIVE CODEX IMPLEMENTATION TASK.
-**Game repo branch:** `master`
-**Published public site:** `https://shikirashi.github.io/lane-ball-shooter/` (HTTPS, no tailnet access required).
-**Portfolio repo:** `Shikirashi/Shikirashi.github.io` (`master`) game export at `lane-ball-shooter/`.
-**Portfolio publication commit:** `e087383653bac3e459f92e1acedc558f485a0b2a`.
-**Game handoff/docs commit:** `53bfadbffb520ed9656ff95dad61cfd556d9dcb1`.
-**Pages workflow run:** `40239268461` — build, report-build-status and deploy jobs completed successfully (independently checked with GitHub connector). No automatic Web rebuild from future gameplay pushes yet.
+**Status:** READY FOR CODEX / ONLY ACTIVE TASK. User confirmed on 2026-10-25 22:39 that the public GitHub Pages Web game ACTUALLY WORKS in a normal browser, although gameplay is quite challenging. P026 public portfolio release is accepted. This task implements future automated builds and publication; NO gameplay difficulty/balance changes in P024.
+**Security approval:** The user's standing request authorizes designing and implementing an auto-publish workflow, but **does not authorize silently creating a new Personal Access Token, installing credentials, authorizing a third-party app, or granting additional repository/account permissions**. If cross-repo publishing requires user-granted credentials, implement all safe scaffolding, explain the exact minimal approval/setup and STOP at that action. Never request tokens or keys in chat, store them only in appropriate GitHub secrets through the user's explicit action. Do not claim the workflow is fully functional without this.
+**User standing goal:** After initial hosting works, every future APPROVED gameplay code update should automatically test/build the latest Godot Web export and publish it to the same browser URL without manually exporting, copying files, or restarting a server.
 
-## Reviewed outcome
+## Current target (supersedes prior Mintbase automation proposal)
 
-- All NINE required Web runtime files present as real Git blobs in `lane-ball-shooter/`: `index.html`, `index.js`, `index.wasm` (39,514,754 bytes), `index.pck` (357,672 bytes), two audio worklets, three PNG assets. No Git LFS placeholders or old `.gitkeep`. Existing portfolio homepage and other demos retained.
-- Published game's PCK SHA-256 is Codex-verified as `887b08c77b71283a388836c054294042cc84ff755852d38c9de5e039634ce619`, matching the accepted P022 HP/tier update from source `cca99baba7805dd05c358c70ffa105aecc75efdc`.
-- Godot 4.7.2 Compatibility single-threaded Web output at public HTTPS URL, no Tailscale Serve or Mintbase service changes. Codex reports all nine public asset URLs returned HTTP 200 with size/hash agreement; `isSecureContext == true`, Chrome headless loaded the canvas and removed loader overlay past splash. P021 Web menu 46 checks and P022 game logic PCK 48 checks reported passing. This is Codex's actual Web probe, not independently rerun via browser by ChatGPT. GitHub's Pages workflow success is independently confirmed.
-- **Remaining QA:** User should open public HTTPS page in a normal browser and verify visual main menu START GAME, NO windowed, YES browser fullscreen, Escape exit, visible live gameplay, sound, tier1 first-hit, tier2 piercing lane, tier3 wide two-lane piercing, 6/12/6/6 enemy HP and correct victory subtitle. Codex did NOT exercise mouse/keyboard interaction in GUI.
-- Public game URL is WORLDWIDE visible. Prior Tailscale-IP HTTP Web site on Mintbase remains legacy and may fail secure-context startup; P025 Tailscale Serve plan was SUPERSEDED. Do not modify Mintbase/rembg, network/DNS/SSL for this publishing.
-- NO ACTIVE task. Queued `LBS-P024` at `.ai/TASKS/LBS-P024.md` is now scoped to **future automatically building the Godot Web export upon approved GAME master source pushes and publishing verified new artifacts to the existing PORTFOLIO Pages game folder**, with tightly scoped cross-repo credentials/workflow; do not enable until user verifies public browser gameplay and authorizes the publishing workflow. Current Pages build/deploy workflow from a manual portfolio push is working, but source-game -> Web export -> cross-repo push is NOT automated.
+- GAME source: `Shikirashi/lane-ball-shooter`, `master`; Godot 4.7.2 standard Web build, Compatibility renderer, single-threaded.
+- PUBLIC portfolio site: `Shikirashi/Shikirashi.github.io`, `master`, static assets in `lane-ball-shooter/`; public URL `https://shikirashi.github.io/lane-ball-shooter/`.
+- Pages already provides HTTPS and global reachability; a Mintbase systemd server, local Tailscale Serve/HTTPS, a tailnet agent, and a Mintbase CI runner should NOT be required for the public game. Keep any old Mintbase site untouched unless user separately asks to retire it.
+- `Shikirashi.github.io` retains all existing portfolio pages/demos. Its root `.nojekyll` protects raw Godot WASM/PCK assets. Never replace portfolio home page with a game-only site.
 
-## Manual browser test
+## Automatic update contract
 
-Visit `https://shikirashi.github.io/lane-ball-shooter/` from desktop/phone; START GAME > NO, reload and YES; check game and sound. If loader errors, screenshot browser console, capture HTTPS asset requests and compare PCK; avoid testing legacy HTTP tailnet address.
+1. Codex/user intentionally implements an active approved task and tests, **commits and pushes** the game source to trusted `master`.
+2. A trusted CI event triggers a pinned Godot 4.7.2 Web build from **that exact source commit**; run relevant/full regression suites, validate generated static assets and package metadata, and ensure no stale exported binaries are used. Restrict automatic triggers to game source/build/workflow changes; do not republish ~40MB for unrelated mailbox-only documentation edits. Allow manually dispatched rebuilds for maintenance.
+3. Via a secure, minimal-privilege cross-repository deployment mechanism, publish all *nine* generated static Web files as a coherent release to `Shikirashi.github.io/lane-ball-shooter/`; rest of public portfolio tree stays exactly unchanged. Normal GitHub Pages publication makes the new game available on the SAME HTTPS URL (reload for an update).
+4. Maintain logs showing source SHA, build/test results, publishing commit/artifact SHA and Pages HTTPS smoke result; never claim published until online. A failing test/build/deploy must leave the prior good public game functional.
+5. Don't automatically commit unreviewed working-tree changes; no force pushes or untrusted PR execution, and no generated binaries in GAME SOURCE repository Git history.
+6. Restrict any cross-repo deploy token/SSH deploy key to the portfolio repository and required permissions; **never** write secrets or key material in repo, logs, Pages content, or chat. Obtain user approval for granting deploy credentials before configuring. Check the Pages publishing mode; GitHub's `GITHUB_TOKEN` commits to a branch do NOT themselves trigger a fresh Pages branch build. Consider first-party Pages `actions/upload-pages-artifact` + `actions/deploy-pages` with the complete portfolio site, or a GitHub App / narrowly scoped token that can update the portfolio branch and trigger Pages. Choose an approach that preserves all portfolio content and uses minimum required credentials. Never deploy only the game artifact as the *entire* Pages site, replacing the portfolio root.
+7. If using git-history copies of large binaries, Godot `index.wasm` is about 39.5MB; do not use Git LFS (not served transparently by Pages), keep Git objects under 100MiB and monitor portfolio repo history/size. Prefer reusable binary artifacts + direct Pages Actions deploy when practical after analyzing existing site settings.
+8. Prevent overlapping pushes deploying out of order: serialize releases and do not let older build override newer; stage/validate before switching. Keep a known-good rollback path to a prior tested Pages release.
+9. All assets served from `https://shikirashi.github.io/lane-ball-shooter/` must be same HTTPS origin and relative URLs; verify secure context, WASM MIME, PCK, UI menu YES/NO fullscreen and basic gameplay.
 
-Once user confirms actual browser gameplay, ChatGPT can activate queued P024 for implementation; until then, wait for user feedback. Do not task Codex with any more changes yet.
+## Verification and handoff
+
+- Create reproducible workflow/script and minimal doc commands for manual trigger and rollback. Before editing portfolio publishing settings, inspect actual existing GitHub Pages configuration and branch deployment workflow. Keep the original portfolio's published root/homepage and every other existing demo intact. Keep automatic workflow source in GAME repository; avoid unnecessary new files on portfolio except intended game release. Pin trusted CI actions by full commit SHA when practical.
+- Demonstrate at least one safely authorized game source push that runs full workflow and updates exactly nine Pages game assets without changing other portfolio files. Test failure path without damaging production. If the deploy permission/credential is not yet authorized, perform dry-run build/test and document BLOCKED deploy step instead of pretending full automation has been verified.
+- Test public Pages URL, ensure `window.isSecureContext === true` and launch goes past Godot splash screen. Stop for real browser QA if browser automation unavailable.
+- Update GAME `README.md` and `.ai/CODEX_HANDOFF.md` with true source and portfolio deployment identifiers, job links/status, security limitations and operational instructions; push and STOP.
+- Do not edit ChatGPT-owned task/ledger/decision documents; do not configure unrelated Tailscale or Mintbase services.
