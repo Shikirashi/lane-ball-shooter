@@ -45,3 +45,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 ## Current automation scope (P024 active)
 - P024 implements approved game source push -> tests/pinned Web export -> portfolio GitHub Pages folder publication; excludes game difficulty tweaks and docs-only mailbox changes. P026 game build remains hosted/playable while setup occurs.
 - Respect cross-repository credential limits: if a new narrow-scope token, deploy key or GitHub App authorization is necessary, stop at a clear approval/setup checkpoint rather than committing credentials or claiming fully operational automation. No Mintbase runners, Tailscale Serve or public port changes.
+
+## Next after P024 — queued Android portfolio release (P027)
+- **P024 remains ONLY ACTIVE task.** P027 is archived in `.ai/TASKS/LBS-P027.md` and queued for Android APK export, signing, release asset publication and native-looking card on existing portfolio homepage. Do not start P027 until ChatGPT explicitly activates it.
+- Portfolio actual `index.html` cards are existing Bootstrap/Isotope `item-wrap` screenshot-with-hover-overlay tiles; clone style for new `Lane Ball Shooter` Mobile/Download APK card. Only show working link after verified release-signed APK is published, ideally GitHub Releases CDN; don't bulk-commit Android APK into portfolio Git history. Preserve existing `lane-ball-shooter/` Web assets and P024 updates.
+- Never publish debug-signed APK as public production build, commit app signing secrets, or change Google Play settings without explicit approval. Report precise missing JDK/Android SDK/keystore/permission blockers to user and stop safely.
