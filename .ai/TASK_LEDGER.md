@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The mailbox state is in `.ai/TASK.md`. P001–P016 implementations have been source/handoff reviewed; waiting for user playtest of 102 px/s conveyor and automatic FIFO return. Historical `LBS` prefixes are internal identifiers, not branding. Only ChatGPT advances this ledger.
+The active task is in `.ai/TASK.md`. P001–P016 were source/handoff reviewed; P017 restores match-triggered strategic FIFO reserve returns after user playtest revealed P016 automatic releases undermined combo setup. Historical `LBS` prefixes are internal identifiers, not branding. Only ChatGPT advances this ledger.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -22,5 +22,6 @@ The mailbox state is in `.ai/TASK.md`. P001–P016 implementations have been sou
 | LBS-P014 | COMPLETE — implementation `589846c`, handoff `441bdf3`; graphical QA pending | Restore front/LEFT segment's accelerating RIGHT rollback into player-created match gaps; keep fresh/FIFO balls entering smoothly from offscreen RIGHT at normal speed, without individual catch-up overtaking causal gap closure; stress tests and diagnostics |
 | LBS-P015 | COMPLETE — code/handoff `3d2623e`; graphical/device QA pending | Replace gap-reason motors with virtual rightward gravity for every unsupported rigid segment and a right-side pusher for supported chain; preserve infinite conveyor/shot balls, staged causal cascades and mask; cap enemy spawns at 8/lane (32 total) and award victory when all scheduled enemies are resolved |
 | LBS-P016 | COMPLETE — implementation and handoff `ed0b3cf`; graphical/device QA pending | Triple upper conveyor speed to 102 px/s; auto-schedule FIFO return whenever balls leave LEFT (without match), preserve fair fresh-ball generation and right-side masked entry, P015 gravity, 32-enemy victory, and test return bookkeeping/long runs |
+| LBS-P017 | ACTIVE | Trace ball exit-to-return lifecycle and fix strategic reserve: fully LEFT-exited colors remain FIFO banked until a player-caused match, which authorizes all currently banked colors for smooth offscreen RIGHT reentry; no duplicates, bounded feeder, 102 px/s and P015 gravity retained |
 
-Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016. P016 source-reviewed and accepted; no active Codex task until new user feedback; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
+Dependency order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017. P016 source-reviewed and accepted; P017 is the ONLY active Codex task; the original P010 brief is archived at `.ai/TASKS/LBS-P010.md`. Web/Android exported artifacts and physical-device testing remain pending toolchains.
