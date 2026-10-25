@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-The active task is in `.ai/TASK.md`. P001–P021 and P023 are source/handoff reviewed; **P023 accepted**, and **P022 is now the ONLY ACTIVE Codex task** for ×3 enemy HP rebalance, fresh Web build and initial Mintbase LAN/Tailscale hosting. P024 automatic post-push CI/build/deploy remains QUEUED, NOT ACTIVE.
+The active task is `.ai/TASK.md`: P022 is the ONLY ACTIVE Codex task. Revise skills, triple HP, rebuild Web and then host the new version on Mintbase. Tier 3 is a wide projectile (not instant lane clearance). P024 automatic post-push deployment remains QUEUED.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -28,7 +28,7 @@ The active task is in `.ai/TASK.md`. P001–P021 and P023 are source/handoff rev
 | LBS-P020 | COMPLETE — source/handoff `8f37cb8`; graphical/device QA pending | Snake nonlethal-hit 0.5s freeze then valid random adjacent-lane transfer preserving enemy identity, quota and global Snake gate; stationary Healyzard heals other non-Healyzards in own lane +1HP/15s and emits soft yellow radial aura behind body; tests and polish |
 
 | LBS-P021 | COMPLETE — source/handoff `f21e363`, browser interaction QA pending | Web-only dark main menu START GAME -> modal 'Play in fullscreen?' with YES (request browser fullscreen in click handler) and NO (in-page); real single-thread Godot Web export to ignored `exports/web/` + portable ZIP, local HTTP smoke tests, README/handoff, no Mintbase deployment yet |
-| LBS-P022 | ACTIVE — `.ai/TASK.md`; archived `.ai/TASKS/LBS-P022.md` | Triple every enemy's HP (Hopper 6, Heavy 12, Snake 6, Healyzard 6), retain tier3/emergency instant clears, run full regression, then REBUILD the Web version and host updated build on Mintbase over static HTTP at mintbaseIP:PORT on permitted LAN/Tailscale interface with supervised service, access/testing and update workflow; public exposure only if separately authorized |
+| LBS-P022 | ACTIVE — `.ai/TASK.md`; archived `.ai/TASKS/LBS-P022.md` | Triple enemy HP (6/12/6/6); skill tier1 one 1-damage first-hit shot, tier2 one piercing 1-damage-per-enemy shot in current lane, tier3 one wide piercing 1-damage-per-enemy shot across current and one adjacent lane; retain separate emergency full-lane clear; comprehensive regressions, new Web build and initial Mintbase hosting; P024 queued |
 | LBS-P023 | COMPLETE — code/handoff `0378d45`, browser difficulty QA pending | Change WAVE CLEARED subtitle to 'All enemies neutralized'; multiply base moving-enemy speed ×1.30 (Hopper 0.312, Heavy 0.2184, Sickle Snake 0.624, Healyzard 0), preserve all other mechanics; update tests and regenerate real local Web export/ZIP |
 | LBS-P024 | QUEUED — NOT ACTIVE; `.ai/TASKS/LBS-P024.md` | AFTER P022 Mintbase hosting works: every deliberate trusted master commit/push automatically triggers pinned Godot Web release build/test and safe atomic static deployment on Mintbase, no routine service restart, with SHA/status, failure rollback and no generated binaries committed |
 
