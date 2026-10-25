@@ -46,8 +46,8 @@ func _test_three_ball_threshold() -> void:
 	var model := ChainModel.new()
 	var reds: Array[int] = [TeamData.Identity.RED]
 	var cached: Array[int] = [TeamData.Identity.GREEN]
-	model.set_test_state(reds, 100.0, cached)
-	model.try_insert_shot(TeamData.Identity.RED, 110.0)
+	model.set_test_state(reds, 300.0, cached)
+	model.try_insert_shot(TeamData.Identity.RED, 310.0)
 	_check(model.identities() == [TeamData.Identity.RED, TeamData.Identity.RED], "two adjacent balls remain")
 	_check(model.total_match_events == 0, "two adjacent balls emit no match")
 	model.advance(0.2)

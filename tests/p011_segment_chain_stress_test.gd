@@ -98,8 +98,8 @@ func _test_segment_authority_and_theatrical_sequence() -> void:
 func _test_concurrent_gaps_fifo_and_restart() -> void:
 	var model := ChainModel.new()
 	var identities: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.BLUE, TeamData.Identity.GREEN, TeamData.Identity.GREEN, TeamData.Identity.YELLOW, TeamData.Identity.YELLOW, TeamData.Identity.RED, TeamData.Identity.RED]
-	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
-	model.set_test_state(identities, 100.0, cached)
+	var no_cache: Array[int] = []
+	model.set_test_state(identities, 100.0, no_cache)
 	model.try_insert_shot(TeamData.Identity.BLUE, float(model.balls[3].display_x) + 4.0)
 	model.try_insert_shot(TeamData.Identity.YELLOW, float(model.balls[7].display_x) + 4.0)
 	_check(model.pending_insertions.size() == 2 and _invariants_hold(model), "two same-window insertions remain legal and independent")
@@ -110,10 +110,14 @@ func _test_concurrent_gaps_fifo_and_restart() -> void:
 	_check(moving_index >= 0 and model.try_insert_shot(TeamData.Identity.GREEN, float(model.balls[moving_index].display_x) + 2.0), "shot can insert at a moving rollback endpoint")
 	_advance_checked(model, 2.0, 1.0 / 120.0, "multiple gap closure")
 	_check(model.rollback_gaps.is_empty() and _invariants_hold(model), "multiple motors and rollback-time insertion terminate without overlap")
-	model.return_cached(3)
-	_check(model.identities().slice(-3) == cached, "FIFO return colors retain exact order through segment admission")
-	_advance_checked(model, 8.0, 1.0 / 30.0, "FIFO catchup")
-	_check(_invariants_hold(model) and model.segment_gaps.is_empty(), "feed segment physically reconnects without passive match or overlap")
+	var fifo := ChainModel.new()
+	var fifo_tail: Array[int] = [TeamData.Identity.YELLOW]
+	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
+	fifo.set_test_state(fifo_tail, 500.0, cached)
+	fifo.return_cached(3)
+	_check(fifo.identities().slice(-3) == cached, "FIFO return colors retain exact order through segment admission")
+	_advance_checked(fifo, 8.0, 1.0 / 30.0, "FIFO catchup")
+	_check(_invariants_hold(fifo) and fifo.segment_gaps.is_empty(), "feed segment physically reconnects without passive match or overlap")
 
 	var restart := ChainModel.new()
 	restart.set_test_state(identities, 100.0)

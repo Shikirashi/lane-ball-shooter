@@ -281,15 +281,16 @@ func _insert_into_segment(identity: int, segment_index: int, insert_index: int) 
 	var members: Array = segment.members
 	insert_index = clampi(insert_index, 0, members.size())
 	var member := _new_member(identity)
-	if insert_index == 0:
-		segment.anchor_x = float(segment.anchor_x) - spacing
-	else:
-		# The inserted slot expands the contacted segment to the right. Move every
-		# following segment by exactly the same slot width, preserving every gap.
-		for following in range(segment_index + 1, segments.size()):
-			var shifted := segments[following]
-			shifted.anchor_x = float(shifted.anchor_x) + spacing
-			segments[following] = shifted
+	# The conveyor flows right-to-left. Open the new slot by advancing the entire
+	# front prefix one spacing LEFT: all earlier segments plus this segment's old
+	# members before insert_index. Moving this segment's anchor left while adding
+	# the member at insert_index leaves its old suffix at the exact same world X.
+	# Translating every preceding segment equally also preserves all typed gaps.
+	for preceding in range(segment_index):
+		var shifted := segments[preceding]
+		shifted.anchor_x = float(shifted.anchor_x) - spacing
+		segments[preceding] = shifted
+	segment.anchor_x = float(segment.anchor_x) - spacing
 	members.insert(insert_index, member)
 	segment.members = members
 	segments[segment_index] = segment

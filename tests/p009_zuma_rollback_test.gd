@@ -60,8 +60,8 @@ func _test_front_rolls_back_and_right_section_does_not_jump() -> void:
 	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	var left_after_clear := _position_for_uid(model, left_uid)
 	var right_after_clear := _position_for_uid(model, right_uid)
-	_check(is_equal_approx(left_after_clear, left_before - model.speed * ChainModel.INSERT_SETTLE_TIME), "left/front section receives only normal travel before delayed clear")
-	_check(is_equal_approx(right_after_clear, right_before + model.spacing - model.speed * ChainModel.INSERT_SETTLE_TIME), "right/trailing section reflects insertion spacing and normal travel, not clear teleport")
+	_check(is_equal_approx(left_after_clear, left_before - model.spacing - model.speed * ChainModel.INSERT_SETTLE_TIME), "insertion advances the left/front section one slot before delayed clear")
+	_check(is_equal_approx(right_after_clear, right_before - model.speed * ChainModel.INSERT_SETTLE_TIME), "right/trailing section receives normal travel only, never insertion push")
 	_check(model.rollback_gaps.size() == 1, "middle clear creates one causal rollback gap")
 	_check(right_after_clear - left_after_clear > model.spacing * 3.0, "removed middle group leaves a visible spatial gap")
 	var left_display := _display_for_uid(model, left_uid)
@@ -135,18 +135,18 @@ func _test_wide_and_end_clears() -> void:
 	left_clear.try_insert_shot(TeamData.Identity.BLUE, float(left_clear.balls[1].display_x) + 4.0)
 	left_clear.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(left_clear.rollback_gaps.is_empty(), "left-edge clear manufactures no reverse actor")
-	_check(is_equal_approx(_position_for_uid(left_clear, surviving_uid), surviving_before + left_clear.spacing - left_clear.speed * ChainModel.INSERT_SETTLE_TIME), "left-edge trailing section receives insertion spacing and normal travel only")
+	_check(is_equal_approx(_position_for_uid(left_clear, surviving_uid), surviving_before - left_clear.speed * ChainModel.INSERT_SETTLE_TIME), "left-edge trailing section stays pinned apart from normal travel")
 
 	var tail_clear := ChainModel.new()
 	var tail_ids: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.BLUE]
 	tail_clear.set_test_state(tail_ids, 100.0)
 	var tail_uid := int(tail_clear.balls[1].uid)
-	var tail_before := _position_for_uid(tail_clear, tail_uid)
 	tail_clear.try_insert_shot(TeamData.Identity.BLUE, float(tail_clear.balls[-1].display_x) + 4.0)
 	tail_clear.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(tail_clear.rollback_gaps.size() == 1 and int(tail_clear.rollback_gaps[0].right_uid) < 0, "right-tail clear creates bounded recoil state")
+	var tail_after_clear := _position_for_uid(tail_clear, tail_uid)
 	tail_clear.advance(1.0)
-	var tail_net_move := _position_for_uid(tail_clear, tail_uid) - tail_before
+	var tail_net_move := _position_for_uid(tail_clear, tail_uid) - tail_after_clear
 	_check(tail_clear.rollback_gaps.is_empty() and tail_net_move > 0.0 and tail_net_move <= tail_clear.spacing * ChainModel.TAIL_RECOIL_SPACING_FACTOR, "tail recoil is visible, bounded and terminates")
 
 	var all_clear := ChainModel.new()
