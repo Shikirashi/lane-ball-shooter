@@ -181,25 +181,39 @@ godot --headless --path . --export-debug "Android Debug" exports/android/lane-ba
 adb install -r exports/android/lane-ball-shooter-debug.apk
 ```
 
-Public release creation is currently blocked: this workstation has no approved release keystore, Android SDK/build-tools, or Godot 4.7.2 Android export template. Consequently there is no verified APK, GitHub Release asset, public APK URL, or portfolio download card yet. A debug-signed placeholder is deliberately not published.
-
-To authorize and prepare the release without disclosing secrets:
-
-1. Install Godot 4.7.2's official Standard Android export template so `~/.local/share/godot/export_templates/4.7.2.stable/android_release.apk` exists. Install an Android SDK with platform-tools, a supported platform and build-tools providing `apksigner`, `aapt` and `zipalign`; configure those SDK/JDK paths in Godot.
-2. Create or explicitly approve a dedicated long-lived release keystore outside this repository. A new key can be created interactively with `keytool -genkeypair -v -keystore "$HOME/.local/share/lane-ball-shooter/signing/lane-ball-shooter-release.jks" -alias lane-ball-shooter -keyalg RSA -keysize 4096 -validity 10000`. Create its parent directory with mode `0700` first, use the same key and store password as Godot currently requires, and back up the keystore and password securely. Do not paste either into chat or commit them.
-3. In a clean checkout, export the local paths and secret values only in the shell, then run the guarded builder:
+The user-local bootstrap is repeatable:
 
 ```sh
-export ANDROID_HOME=/absolute/path/to/Android/Sdk
-export JAVA_HOME=/absolute/path/to/jdk
-export GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/absolute/private/path/lane-ball-shooter-release.jks
-export GODOT_ANDROID_KEYSTORE_RELEASE_USER=lane-ball-shooter
-read -rsp 'Release keystore password: ' GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD
-export GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD
+./scripts/setup_android_toolchain.sh
+```
+
+It downloads checksum-pinned official Godot 4.7.2 templates and Eclipse Temurin JDK 17, stages them under user-owned cache/data directories, and copies only `android_debug.apk` and `android_release.apk` into the existing template directory. It therefore preserves the installed single-threaded Web templates. It then installs exactly `platform-tools`, `build-tools;35.0.1` and `platforms;android-35` only when Google's command-line tools and a pre-existing Android SDK license receipt are present. The script never invokes `sudo`, pipes acceptance into `sdkmanager`, or runs `sdkmanager --licenses`.
+
+Installed local components:
+
+- JDK: `/home/shiki/.local/share/lane-ball-shooter/toolchains/temurin-17.0.21+9`
+- Godot templates: `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/android_debug.apk` and `android_release.apk`
+- Dedicated release key: `/home/shiki/.local/share/lane-ball-shooter/signing/lane-ball-shooter-release.jks`
+- Protected signing environment: `/home/shiki/.local/share/lane-ball-shooter/signing/release-signing.env` (mode `0600`)
+
+The release key was created only after explicit user approval. Its public SHA-256 certificate fingerprint is `79:6F:2C:67:9D:96:2A:81:95:EB:F1:A3:8D:95:90:02:82:95:61:DF:D2:6D:2D:AE:86:E5:2C:CD:EC:72:24:FC`. Back up both signing files securely and together; losing either prevents compatible upgrades. Never paste the environment file into chat or commit it.
+
+Android SDK installation remains at a license checkpoint. Review Google's current Android SDK terms on the [official Android Studio download page](https://developer.android.com/studio#command-tools), install its Linux command-line tools at `/home/shiki/Android/Sdk/cmdline-tools/latest/`, and personally run:
+
+```sh
+/home/shiki/Android/Sdk/cmdline-tools/latest/bin/sdkmanager \
+  --sdk_root=/home/shiki/Android/Sdk --licenses
+./scripts/setup_android_toolchain.sh
+```
+
+Codex did not accept these terms. Once the script reports the SDK toolchain verified, configure Godot's Android SDK path as `/home/shiki/Android/Sdk` and Java SDK path as the JDK directory above. Then use a clean checkout, load the protected environment, and run the guarded builder:
+
+```sh
+source /home/shiki/.local/share/lane-ball-shooter/signing/release-signing.env
 ./scripts/build_android.sh
 ```
 
-The builder refuses dirty sources, missing/mismatched Godot templates, in-repository or debug signing keys, and incomplete SDK/JDK setups. It exports `exports/android/lane-ball-shooter.apk`; the verifier then requires a valid non-debug signature, package/version metadata, ARM64-only native code, a declared minimum SDK, zip alignment, no unexpected sensitive permissions, and prints the APK SHA-256 and byte size.
+The builder refuses dirty sources, missing/mismatched Godot templates, in-repository or debug signing keys, and incomplete SDK/JDK setups. It exports `exports/android/lane-ball-shooter.apk`; the verifier then requires a valid non-debug signature, package/version metadata, ARM64-only native code, a declared minimum SDK, zip alignment, no unexpected sensitive permissions, and prints the APK SHA-256 and byte size. Until the SDK license/tool checkpoint is completed there is no verified APK, GitHub Release asset, public APK URL, or portfolio download card; a debug-signed placeholder is deliberately not published.
 
 After physical-device installation/startup, landscape controls, audio, restart and performance pass, publish the exact verified bytes as `lane-ball-shooter-android.apk` on a non-prerelease game GitHub Release. Release notes must include version/code, source commit, SHA-256, ARM64-only support and a sideload warning. Only then may the portfolio link point to `https://github.com/Shikirashi/lane-ball-shooter/releases/latest/download/lane-ball-shooter-android.apk`. GitHub APK downloads do not auto-update installed copies; later releases must preserve the signing identity and increment `version/code`.
 
