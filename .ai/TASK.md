@@ -1,33 +1,51 @@
-# Lane Ball Shooter — USER PLAYTEST AFTER P016 / NO ACTIVE CODEX TASK
+# ACTIVE TASK: LBS-P017 — Preserve deliberately passed balls for match-triggered FIFO return
 
-**Status:** WAITING FOR USER PLAYTEST
+**Status:** READY FOR CODEX
 **Branch:** `master`
-**P016 implementation:** `ed0b3cf` (source and handoff reviewed). All P001–P016 headless suites reported passing, including P016 72 checks and P011 16,485 stress checks. User graphical review is still required.
-**Workflow:** Only ChatGPT activates future coding tasks; Codex must STOP. Historical `LBS-P...` prefix is an internal identifier, not branding.
+**User playtest (2026-10-25):** P015 virtual-gravity motion feels good and P016's **102 px/s** conveyor feels better. However, the user deliberately lets some balls pass completely beyond the LEFT edge to set up a bigger combo, then makes a match, and **those passed balls do not appear to come back**. Investigate and fix this exact gameplay scenario, not merely a unit counter.
+**User-approved intent:** Left-exited balls are a **strategic reserve**. A successful match should bring them back from the RIGHT in exit FIFO order, preserving their color identities, so letting balls pass is an intentional setup rather than wasting them.
+**Supersession:** P016 introduced immediate automatic eligibility for every left-exit, *before* a match, using a 3-return/1-fresh feeder. This can consume the very colors the player intended to save before they match; additionally `return_cached()` currently just asks the normal feeder for an available slot and cannot ensure match-triggered priority. **The latest playtest supersedes P016's automatic-no-match release behavior.** Preserve continuous **FRESH** generation so the chain never runs out, but bank departed balls UNTIL an actual successful match authorizes their return. Don't quietly combine two irreconcilable semantics.
+**Baseline:** P016 implementation `ed0b3cf`, P015 gravity `3d2623e`. Read `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, current `.ai/TASK.md`, `.ai/CODEX_HANDOFF.md` before coding. Godot 4.7.2 GDScript Compatibility; code-only, no GUI automation.
 
-## Implemented and pending visual check
+## Root cause to establish and reproduce FIRST
 
-- Conveyor SOURCE-SUPPORTED segment speed is **102 px/s** (3× previous 34). Fired shots still travel vertically in 0.20 seconds, insertion settles 0.05 seconds, shooter cooldown 0.40 seconds, and P015 unsupported-group gravity uses 60/900/420 px/s units.
-- Every whole ball that exits beyond LEFT edge adds its identity ONCE to a canonical FIFO `cache`. It is automatically eligible to re-enter offscreen RIGHT without a match or manual `return_cached()`.
-- The feeder prioritizes up to **three queued FIFO colors, then one new weighted fresh color**; a match's legacy `return_cached()` call cannot schedule a duplicate. The user should observe automatic re-entry even when not shooting. Existing mask and 24 auto-live ball limit remain.
-- F3 diagnostics now include `Q` cache count, `P` eligible cache count, `X` total fully-left exits, `A` automatic returns admitted and `F` total fresh generated. `X = total_cache_returned + Q` should hold; `I0` expected.
-- P015 infinite ball supply, virtual-gravity reconnection and player-causal-only cascade logic, plus finite 8/lane (32 total) enemy encounter and WAVE CLEARED victory, remain unchanged.
-- **Accepted design trade-off:** Because every exited color is recycled forever while fresh colors are continually added, an infinite-duration run can accumulate a growing color-identity FIFO queue. Monitor memory at long durations; don't silently discard colors without authorization.
+Trace an individual ball (unique exit serial or original UID and color) end-to-end at each point:
+- `scripts/chain_model.gd:_roll_off_left` caches the exited color, `_sync_pending_cache_returns` makes it automatically eligible, `_feed_right_edge` admits it at once when a slot opens even with **no match**.
+- `_remove_group` / `_resolve_inserted_match` / `_process_contacts` call `return_cached(cache_return_batch)`, but P016's API merely opportunistically admits from the same already-active queue; no new meaningful release event or ordering guarantee.
+- Physical admissions require space after the source-side/rightmost ball, and the `max_auto_population=24` cap. Distinguish **banked**, **authorized/awaiting physical slot**, **already reentered**, and **truly missing**. Reproducing the mismatch should log the exit event sequence, time of player's next match, which colors were auto-returned before that match, which were released by it, and the eventual right-edge appearances. Preserve these findings in the handoff.
+- Review any alternate ball-disappearance paths (rollover, match removal, segment merge, virtual-gravity contacts, restart and victory); make sure a real exited ball is neither lost nor counted twice. Do not infer exact ball identity from color alone when identical colors repeat.
 
-## Suggested manual playtest
+## New gameplay model (priority: meaningful match returns)
 
-```sh
-cd ~/Documents/GitHub/laneballshooter
-git pull --ff-only
-godot --path .
-```
+1. **Bank rather than immediately re-admit:** Every ball which fully exits LEFT adds exactly one preserved color/exit-order entry to a FIFO **banked** reserve. It remains there until a **successful >=3 match** occurs (including a staged cascade). No-matches gameplay continues generating new weighted-run fresh balls indefinitely at normal 102 px/s. Left exit has no penalty, but its ball is intentionally withheld to support the player's setup.
+2. **Release ALL currently banked items on each successful match** as one logically authorized return wave, not merely the first three. Physical right entrance still feeds only at legal spacing, at 102 px/s, from fully offscreen RIGHT and under the 24-auto-live cap; a reserve wave therefore takes time to emerge. Preserve the exit order through several waves and concurrent deferred entries. A subsequent match may authorize any NEWLY banked items but cannot release or duplicate ones already authorized. The later authorized wave joins behind older still-pending released items.
+3. The feeder always prioritizes **already-authorized FIFO returns** over generating a fresh identity when a right-edge slot becomes free; only when authorized returns are exhausted should weighted fresh generation resume. Unreleased banked colors must not enter accidentally. One source entry slot, no overspawn, no pop-in, no teleporting banked balls into the visible lane, and no abrupt speed change. The feeder may continue fresh generation while the bank has not yet been released.
+4. Use a clean, auditable representation, e.g. one canonical FIFO of offscreen colors/exit records plus an **eligible-prefix count** (how many oldest entries have been released by matches). On left exit: append, do not increase eligible count. On successful match: set eligible count to total bank size (making all currently banked eligible); on return: pop front, decrement eligible count. Alternatively use separate banked/released queues with exact order preservation. Never use independent quota tokens that can double-schedule items. Reuse `return_cached` safely, but distinguish **authorization count** from **physical admission count** in API, diagnostics and tests. On full clear or restart, no stale eligibility.
+5. For reliable traceability, add a stable monotonically increasing **exit sequence**/ledger alongside saved color entries (or equivalent) and record which physical entrants correspond to which exits. Returned balls may get new live UIDs provided their original exit serial is tracked for testing. The exact exit color and relative order must be validated, not just totals. Avoid expensive retained unbounded per-frame histories; use bounded debug history and compact live/bank records.
+6. Do not change the user's other accepted mechanics: P015 unified rightward gravity for all unsupported groups, P012 ball-insertion pushes existing left prefix LEFT, P010 0.05s initial settle + separate physical-contact cascades, FEED connections never passive-match, P013 conveyor-only right clip, fixed 102 px/s normal flow, 60/900/420 rightward gravity, 0.20s shot travel, 0.40s cooldown, fresh weighted runs 1..7, magazine swap/next-ball UI, zero overlap, 8 enemies per lane/32 victory condition, revived defenders and SFX.
+7. This replaces only P016's always-auto-recycle requirement; **infinite total ball supply remains** (via independently generated fresh balls, irrespective of matches), even if the player banks hundreds of old colors.
 
-1. Watch the top chain move at 102 px/s. Newly generated and cached balls should reveal smoothly through the right-edge clip; no sudden speed changes or overlaps.
-2. **Do not shoot.** Observe several balls exit fully on the LEFT and verify their colors eventually reappear offscreen RIGHT in FIFO exit order. F3 `X` and `A` both increase; `Q/P` agree. If returns seem lost, report screenshot/video and F3 counters.
-3. Fire quickly, create multiple gaps, and verify every unsupported segment still accelerates RIGHT under virtual gravity; insertion still pushes earlier balls LEFT. Cascade only after player-caused reconnection. Check F3 `I0`.
-4. Complete or lose the finite encounter: 32 enemies across 4 lanes, victory `WAVE CLEARED` with score and restart, or `GAME OVER` on breach. Terminal state freezes stream; restart resets counters, FIFO, progression and enemy quotas.
-5. Touch/Web/Android exports remain separately unverified; no physical-device QA was run.
+## Regression suite: `tests/p017_match_reserve_return_test.gd`
 
-## Completion summary
+**Core reproduction:** With real continuous feed at 102 px/s, allow 2–8 known balls to fully exit LEFT without firing; verify they remain *banked*, **not admitted yet**, while new fresh entrants keep appearing. Insert a real player-fired color to form >=3 (50ms settle), verify ALL those specific known exit serials become eligible in exact FIFO order. Step the simulation far enough (allow physical right-edge slots/cap) and verify their exact colors/serials come back through the right boundary, without fresh balls overtaking an eligible return. The old P016 code should FAIL this fixture.
 
-Codex reports all P001–P016 Godot 4.7.2 headless suites PASS, including P016 72 checks; P011 16,485 stress checks. Startup passed at 960x540, 1280x720, 1600x720 and 2400x1080. Visual acceptance of 3× speed and return timing remains outstanding.
+Additional requirements:
+- Delayed return because the feeder is blocked by a dense 24-live chain: bank remains intact; after a match it stays eligible rather than disappearing, then physically enters when safe. Provide a bounded expected eventual-return test once capacity opens, not an impossible same-frame guarantee.
+- Repeated rapid matches, player-caused cascades, and multiple waves while older released colors are still waiting: every exited item admitted exactly ONCE in global exit order. Counting: total_exited == banked_unreleased + released_pending + total_returned (except documented preloaded test fixtures).
+- After long no-match interval, fresh balls remain infinite; reserve grows safely without accidentally reappearing; after one match, all banked entries are authorized and the backlog drains at normal conveyor throughput while live cap remains respected.
+- If returned balls exit LEFT again, they create a **new exit event** and may be banked for the next match. No duplicate reuse or deleted identity on initial return.
+- A match with zero banked balls proceeds normally; two matches in same frame cannot double-authorize; a naturally connected 7+ run without player action does not release banked entries or clear itself.
+- Ensure physical FEED joins versus causal cascades, right-edge mask handoff, gravity gaps, insertion left shift, cache FIFO and F3 invariant `I0` across 30/60/120 FPS and 0.08s delta.
+- Verify WAVE CLEARED/GAME OVER freeze, restart clears all bank/released/ledger state, finite 32-enemy encounters remain unchanged.
+- Run P001–P016 old suites and adjust P016 tests explicitly superseded by the new **match release** semantics. Keep P016's 102 px/s, source feed, FIFO/spacing/stress assertions; replace rather than silently delete the old no-match-return tests. Add P017 deterministic and long-run tests; bounded Godot startup at 960x540, 1280x720, 1600x720 and 2400x1080, `git diff --check`.
+
+## Observability / user experience
+
+- Update F3 to show clearly **B** banked waiting for match, **E** released/eligible awaiting right entrance, **X** total left exits, **R** successfully returned, **F** fresh generation, and `I0`. Do not claim items have returned while merely eligible; optionally show recent exit/return serials and a per-wave total. Bounded small HUD only.
+- In README explain strategic mechanic in natural language: *Let a color go left to bank it. On your next successful match, the bank is released and returns from the RIGHT in the same order, over time as slots become free.* Do NOT promise instant teleports or unlimited on-screen capacity.
+- Document that successful matches trigger releases (including contact-caused cascades), not mere insertion, passive color runs or enemy events. Players need visible/diagnosable feedback when a backlog is released; keep this subtle/nonintrusive.
+- In `.ai/CODEX_HANDOFF.md`, describe precisely why P016's always-auto behavior failed the user's intended strategy, old-version reproduction, implementation, test counts, and any residual limitations. Do not claim graphical Web/Android playtests completed.
+
+## Finish
+
+Edit implementation, README, and `.ai/CODEX_HANDOFF.md` only. Run all regression suites, commit/push `master`, then **STOP**. Do not edit `.ai/TASK.md`, `.ai/TASK_LEDGER.md`, `.ai/DECISIONS.md`, `.ai/PROTOCOL.md` or self-start P018. ChatGPT will review on next "check push".
