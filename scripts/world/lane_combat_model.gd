@@ -1,10 +1,13 @@
 class_name LaneCombatModel
 extends RefCounted
 
+const EnemyTypes = preload("res://scripts/world/enemy_types.gd")
+
 signal enemy_spawned(enemy: Dictionary)
 signal enemy_hit(enemy_uid: int, remaining_hp: int, impact_x: float)
 signal enemy_killed(enemy_uid: int, impact_x: float)
 signal enemy_neutralized(enemy_uid: int, impact_x: float, cause: StringName)
+signal enemy_neutralized_detail(enemy: Dictionary, cause: StringName, impact_x: float)
 signal projectile_spawned(projectile: Dictionary)
 signal defender_knocked_down(identity: int)
 signal emergency_discharged(identity: int, cleared_count: int)
@@ -117,23 +120,28 @@ func handle_match(match_result: Dictionary) -> Dictionary:
 
 ## Manual/test spawns count against the encounter quota by default. Tests that
 ## need an out-of-budget fixture may explicitly pass counts_toward_budget=false.
-func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1, counts_toward_budget := true) -> int:
+func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1, counts_toward_budget := true, enemy_type := EnemyTypes.Type.HOPPER, spawn_id := -1) -> int:
 	if enemies.size() >= max_enemies:
 		return -1
 	if counts_toward_budget and spawned_this_encounter >= enemy_spawn_budget:
 		return -1
-	var resolved_hp := enemy_max_hp if hp_value < 0 else maxi(1, hp_value)
+	var resolved_type := enemy_type if EnemyTypes.valid_type(enemy_type) else EnemyTypes.Type.HOPPER
+	var canonical_hp := EnemyTypes.max_hp(resolved_type)
+	var resolved_hp := canonical_hp if hp_value < 0 else maxi(1, hp_value)
 	var enemy := {
 		"uid": _next_enemy_uid,
+		"spawn_id": spawn_id if spawn_id >= 0 else _next_enemy_uid,
+		"type": resolved_type,
 		"x": x_position,
 		"hp": resolved_hp,
 		"max_hp": resolved_hp,
+		"speed": EnemyTypes.speed(resolved_type, enemy_speed),
 		"hop_clock": fmod(float(_next_enemy_uid - 1) * 0.31 + float(team_identity) * 0.17, HOP_CYCLE_DURATION),
 		"hop_airborne": false,
 		"hop_progress": 0.0,
 		"hit_flash": 0.0,
 	}
-	_sync_enemy_hop_state(enemy)
+	_sync_enemy_motion_state(enemy)
 	_next_enemy_uid += 1
 	total_spawned += 1
 	if counts_toward_budget:
@@ -256,8 +264,21 @@ func _first_swept_hit(projectile_x: float, active_start: float, active_delta: fl
 	var best_uid := -1
 	for enemy in enemies:
 		var uid := int(enemy.uid)
+		if not EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER))):
+			var slide_speed := float(enemy.get("speed", enemy_speed))
+			var slide_enemy_x := float(enemy_starts[uid]) - slide_speed * active_start
+			var relative_start := slide_enemy_x - projectile_x
+			var closing_speed := projectile_speed + slide_speed
+			var relative_end := relative_start - closing_speed * active_delta
+			if relative_start >= -HIT_DISTANCE and relative_end <= HIT_DISTANCE:
+				var contact_time := clampf((relative_start - HIT_DISTANCE) / maxf(closing_speed, 0.0001), 0.0, active_delta)
+				if contact_time < best_time:
+					best_time = contact_time
+					best_uid = uid
+			continue
 		var clock_at_active_start := float(enemy.hop_clock) + active_start
-		var enemy_x := float(enemy_starts[uid]) - _hop_displacement(float(enemy.hop_clock), active_start)
+		var hopper_speed := float(enemy.get("speed", enemy_speed))
+		var enemy_x := float(enemy_starts[uid]) - _hop_displacement(float(enemy.hop_clock), active_start, hopper_speed)
 		var elapsed := 0.0
 		while elapsed < active_delta - 0.000001:
 			var phase := fmod(clock_at_active_start + elapsed, HOP_CYCLE_DURATION)
@@ -266,7 +287,7 @@ func _first_swept_hit(projectile_x: float, active_start: float, active_delta: fl
 			var segment_duration := minf(active_delta - elapsed, phase_end - phase)
 			if segment_duration <= 0.000001:
 				segment_duration = minf(active_delta - elapsed, 0.000001)
-			var enemy_velocity := -_hop_air_speed() if airborne else 0.0
+			var enemy_velocity := -_hop_air_speed(hopper_speed) if airborne else 0.0
 			var projectile_at_segment := projectile_x + projectile_speed * elapsed
 			var relative_start := enemy_x - projectile_at_segment
 			var closing_speed := projectile_speed - enemy_velocity
@@ -296,6 +317,7 @@ func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
 		if int(enemy.hp) <= 0:
 			enemies.remove_at(index)
 			total_killed += 1
+			enemy_neutralized_detail.emit(enemy.duplicate(true), &"projectile", impact_x)
 			enemy_neutralized.emit(enemy_uid, impact_x, &"projectile")
 			enemy_killed.emit(enemy_uid, impact_x)
 			encounter_state_changed.emit()
@@ -310,9 +332,12 @@ func _update_enemies(delta: float) -> void:
 		previous_positions[int(enemy.uid)] = float(enemy.x)
 	for index in range(enemies.size()):
 		var enemy := enemies[index]
-		enemy.x = float(enemy.x) - _hop_displacement(float(enemy.hop_clock), delta)
-		enemy.hop_clock = fmod(float(enemy.hop_clock) + delta, HOP_CYCLE_DURATION)
-		_sync_enemy_hop_state(enemy)
+		if EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER))):
+			enemy.x = float(enemy.x) - _hop_displacement(float(enemy.hop_clock), delta, float(enemy.get("speed", enemy_speed)))
+			enemy.hop_clock = fmod(float(enemy.hop_clock) + delta, HOP_CYCLE_DURATION)
+		else:
+			enemy.x = float(enemy.x) - float(enemy.get("speed", 0.0)) * delta
+		_sync_enemy_motion_state(enemy)
 		enemy.hit_flash = maxf(0.0, float(enemy.hit_flash) - delta)
 		enemies[index] = enemy
 
@@ -391,6 +416,7 @@ func _discharge_emergency() -> void:
 	total_emergency_cleared += cleared_count
 	enemies.clear()
 	for enemy in victims:
+		enemy_neutralized_detail.emit(enemy.duplicate(true), &"emergency", float(enemy.x))
 		enemy_neutralized.emit(int(enemy.uid), float(enemy.x), &"emergency")
 	emergency_discharged.emit(team_identity, cleared_count)
 	encounter_state_changed.emit()
@@ -422,6 +448,7 @@ func clear_enemies_for_tier3() -> int:
 	enemies.clear()
 	for enemy in victims:
 		total_killed += 1
+		enemy_neutralized_detail.emit(enemy.duplicate(true), &"tier3", float(enemy.x))
 		enemy_neutralized.emit(int(enemy.uid), float(enemy.x), &"tier3")
 		enemy_killed.emit(int(enemy.uid), float(enemy.x))
 	if not victims.is_empty():
@@ -435,10 +462,11 @@ func check_terminal_breach() -> bool:
 	_trigger_breach(enemy_uid)
 	return true
 
-func _hop_air_speed() -> float:
-	return enemy_speed * HOP_CYCLE_DURATION / HOP_AIR_DURATION
+func _hop_air_speed(average_speed := -1.0) -> float:
+	var resolved_speed := enemy_speed if average_speed < 0.0 else average_speed
+	return resolved_speed * HOP_CYCLE_DURATION / HOP_AIR_DURATION
 
-func _hop_displacement(start_clock: float, duration: float) -> float:
+func _hop_displacement(start_clock: float, duration: float, average_speed := -1.0) -> float:
 	var remaining := maxf(duration, 0.0)
 	var clock := fmod(start_clock, HOP_CYCLE_DURATION)
 	var distance := 0.0
@@ -450,14 +478,18 @@ func _hop_displacement(start_clock: float, duration: float) -> float:
 			clock = 0.0
 			continue
 		if airborne:
-			distance += _hop_air_speed() * segment
+			distance += _hop_air_speed(average_speed) * segment
 		remaining -= segment
 		clock += segment
 		if clock >= HOP_CYCLE_DURATION - 0.000001:
 			clock = 0.0
 	return distance
 
-func _sync_enemy_hop_state(enemy: Dictionary) -> void:
+func _sync_enemy_motion_state(enemy: Dictionary) -> void:
+	if not EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER))):
+		enemy.hop_airborne = false
+		enemy.hop_progress = 0.0
+		return
 	var phase := fmod(float(enemy.hop_clock), HOP_CYCLE_DURATION)
 	enemy.hop_airborne = phase >= HOP_GROUND_DURATION
 	enemy.hop_progress = clampf((phase - HOP_GROUND_DURATION) / HOP_AIR_DURATION, 0.0, 1.0) if bool(enemy.hop_airborne) else 0.0

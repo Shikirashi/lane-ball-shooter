@@ -1,6 +1,8 @@
 class_name LaneActor
 extends Node3D
 
+const EnemyTypes = preload("res://scripts/world/enemy_types.gd")
+
 signal enemy_death_started(identity: int, enemy_uid: int, impact_x: float, cause: StringName)
 
 const STATE_EFFECT_DURATION := 0.45
@@ -12,6 +14,7 @@ const REVIVAL_FLASH_EXPANSION := 3.0
 var team_identity := 0
 var lane_index := 0
 var combat_model: LaneCombatModel
+var external_spawn_control := false
 
 var _defender_root: Node3D
 var _muzzle_flash: MeshInstance3D
@@ -26,9 +29,10 @@ var _attack_feedback := 0.0
 var _revive_feedback := 0.0
 var _last_status_key := ""
 
-func setup(identity: int, index: int) -> void:
+func setup(identity: int, index: int, director_controls_spawns := false) -> void:
 	team_identity = posmod(identity, TeamData.COUNT)
 	lane_index = index
+	external_spawn_control = director_controls_spawns
 	combat_model = LaneCombatModel.new(team_identity)
 
 func _ready() -> void:
@@ -36,11 +40,14 @@ func _ready() -> void:
 		combat_model = LaneCombatModel.new(team_identity)
 	_build_lane()
 	_build_defender()
-	combat_model.enemy_neutralized.connect(_on_enemy_neutralized)
+	combat_model.enemy_neutralized_detail.connect(_on_enemy_neutralized_detail)
 	combat_model.defender_knocked_down.connect(_on_defender_knocked_down)
 	combat_model.emergency_discharged.connect(_on_emergency_discharged)
 	combat_model.defender_revived.connect(_on_defender_revived)
-	combat_model.reset_run(3.6 + lane_index * 0.55, 2.8 + lane_index * 1.15)
+	if external_spawn_control:
+		combat_model.clear_for_test()
+	else:
+		combat_model.reset_run(3.6 + lane_index * 0.55, 2.8 + lane_index * 1.15)
 	_sync_visuals()
 	_update_status_visual()
 
@@ -79,7 +86,7 @@ func enemy_hop_height(enemy: Dictionary) -> float:
 		return 0.0
 	return sin(float(enemy.get("hop_progress", 0.0)) * PI) * 0.52
 
-func reset_run() -> void:
+func reset_run(spawn_initial := true) -> void:
 	for effect in _death_effects:
 		for key in ["root", "shadow", "burst"]:
 			var death_node: Node = effect.get(key)
@@ -93,7 +100,10 @@ func reset_run() -> void:
 	_state_effects.clear()
 	_attack_feedback = 0.0
 	_revive_feedback = 0.0
-	combat_model.reset_run(3.6 + lane_index * 0.55, 2.8 + lane_index * 1.15)
+	if spawn_initial:
+		combat_model.reset_run(3.6 + lane_index * 0.55, 2.8 + lane_index * 1.15)
+	else:
+		combat_model.clear_for_test()
 	_sync_visuals()
 	_last_status_key = ""
 	_update_status_visual()
@@ -159,7 +169,7 @@ func _sync_visuals() -> void:
 		var uid := int(enemy.uid)
 		live_enemy_ids[uid] = true
 		if not _enemy_visuals.has(uid):
-			_enemy_visuals[uid] = _create_enemy_visual(uid, int(enemy.max_hp))
+			_enemy_visuals[uid] = _create_enemy_visual(uid, int(enemy.get("type", EnemyTypes.Type.HOPPER)))
 		_update_enemy_visual(_enemy_visuals[uid], enemy)
 	for uid in _enemy_visuals.keys().duplicate():
 		if not live_enemy_ids.has(uid):
@@ -180,47 +190,92 @@ func _sync_visuals() -> void:
 			projectile_visual.queue_free()
 			_projectile_visuals.erase(uid)
 
-func _create_enemy_visual(uid: int, max_hp: int) -> Dictionary:
-	var shadow := PrimitiveFactory.cylinder(0.37, 0.37, 0.025, Color(0.015, 0.02, 0.03, 0.58), 20)
+func _create_enemy_visual(uid: int, enemy_type: int) -> Dictionary:
+	var resolved_type := enemy_type if EnemyTypes.valid_type(enemy_type) else EnemyTypes.Type.HOPPER
+	var shadow_radius := 0.47 if resolved_type == EnemyTypes.Type.HEAVY else (0.3 if resolved_type == EnemyTypes.Type.HEALYZARD else 0.37)
+	var shadow := PrimitiveFactory.cylinder(shadow_radius, shadow_radius, 0.025, Color(0.015, 0.02, 0.03, 0.58), 20)
 	shadow.name = "EnemyShadow_%d" % uid
 	shadow.position.y = 0.01
 	add_child(shadow)
 
 	var root := Node3D.new()
-	root.name = "Enemy_%d" % uid
+	root.name = "%s_%d" % [EnemyTypes.display_name(resolved_type).replace(" ", ""), uid]
 	add_child(root)
-	var body := PrimitiveFactory.sphere(0.4, 0.8, Color(0.23, 0.25, 0.31))
-	body.position.y = 0.35
+	var body_color := Color(0.23, 0.25, 0.31)
+	var helmet_color := Color(0.12, 0.14, 0.19)
+	var eye_color := Color(1.0, 0.44, 0.24)
+	var body_radius := 0.4
+	var body_height := 0.8
+	var body_y := 0.35
+	var helmet_top := 0.34
+	var helmet_bottom := 0.43
+	var helmet_height := 0.4
+	var helmet_y := 0.72
+	var eye_y := 0.7
+	var eye_x := 0.13
+	var base_scale := Vector3.ONE
+	match resolved_type:
+		EnemyTypes.Type.HEAVY:
+			body_color = Color(0.72, 0.27, 0.08)
+			helmet_color = Color(0.34, 0.12, 0.045)
+			eye_color = Color(0.98, 0.9, 0.58)
+			body_radius = 0.52
+			helmet_top = 0.46
+			helmet_bottom = 0.56
+			eye_x = 0.18
+		EnemyTypes.Type.SICKLE_SNAKE:
+			body_color = Color(0.9, 0.69, 0.08)
+			helmet_color = Color(0.47, 0.34, 0.035)
+			eye_color = Color(0.09, 0.12, 0.17)
+			body_radius = 0.34
+			body_height = 1.18
+			body_y = 0.52
+			helmet_top = 0.28
+			helmet_bottom = 0.37
+			helmet_y = 1.03
+			eye_y = 1.0
+		EnemyTypes.Type.HEALYZARD:
+			body_color = Color(0.12, 0.63, 0.25)
+			helmet_color = Color(0.055, 0.3, 0.12)
+			eye_color = Color(0.8, 0.95, 1.0)
+			base_scale = Vector3.ONE * 0.7
+	var body := PrimitiveFactory.sphere(body_radius, body_height, body_color)
+	body.name = "Body"
+	body.position.y = body_y
 	root.add_child(body)
-	var helmet := PrimitiveFactory.cylinder(0.34, 0.43, 0.4, Color(0.12, 0.14, 0.19), 8)
-	helmet.position.y = 0.72
+	var helmet := PrimitiveFactory.cylinder(helmet_top, helmet_bottom, helmet_height, helmet_color, 8)
+	helmet.name = "Helmet"
+	helmet.position.y = helmet_y
 	root.add_child(helmet)
 	for side in [-1.0, 1.0]:
-		var eye := PrimitiveFactory.sphere(0.045, 0.09, Color(1.0, 0.44, 0.24))
-		eye.position = Vector3(side * 0.13, 0.7, 0.34)
+		var eye := PrimitiveFactory.sphere(0.045, 0.09, eye_color)
+		eye.name = "Eye"
+		eye.position = Vector3(side * eye_x, eye_y, 0.34)
 		root.add_child(eye)
-	var pips: Array[MeshInstance3D] = []
-	for hp_index in range(max_hp):
-		var pip := PrimitiveFactory.box(Vector3(0.16, 0.07, 0.08), Color(1.0, 0.34, 0.24))
-		pip.position = Vector3((hp_index - (max_hp - 1) * 0.5) * 0.2, 1.08, 0.0)
-		root.add_child(pip)
-		pips.append(pip)
-	return {"root": root, "shadow": shadow, "pips": pips}
+	var horns: Array[MeshInstance3D] = []
+	if resolved_type == EnemyTypes.Type.HOPPER:
+		for side in [-1.0, 1.0]:
+			var horn := PrimitiveFactory.box(Vector3(0.16, 0.12, 0.12), Color(1.0, 0.34, 0.08))
+			horn.name = "HopperHorn"
+			horn.position = Vector3(side * 0.14, 1.04, 0.0)
+			root.add_child(horn)
+			horns.append(horn)
+	root.scale = base_scale
+	return {"root": root, "shadow": shadow, "horns": horns, "type": resolved_type, "base_scale": base_scale}
 
 func _update_enemy_visual(visual: Dictionary, enemy: Dictionary) -> void:
 	var root: Node3D = visual.root
 	var shadow: MeshInstance3D = visual.shadow
 	var hop_progress := float(enemy.get("hop_progress", 0.0))
 	var hop_height := enemy_hop_height(enemy)
-	var landing_amount := 0.16 if not bool(enemy.get("hop_airborne", false)) else pow(absf(cos(hop_progress * PI)), 10.0)
+	var is_hopper := EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER)))
+	var landing_amount := (0.16 if not bool(enemy.get("hop_airborne", false)) else pow(absf(cos(hop_progress * PI)), 10.0)) if is_hopper else 0.0
 	var hit_amount := clampf(float(enemy.hit_flash) / 0.16, 0.0, 1.0)
 	root.position = Vector3(float(enemy.x), 0.29 + hop_height, 0.0)
-	root.scale = Vector3(1.0 + landing_amount * 0.12 + hit_amount * 0.16, 1.0 - landing_amount * 0.16 - hit_amount * 0.08, 1.0 + landing_amount * 0.12 + hit_amount * 0.16)
+	var base_scale: Vector3 = visual.base_scale
+	root.scale = base_scale * Vector3(1.0 + landing_amount * 0.12 + hit_amount * 0.16, 1.0 - landing_amount * 0.16 - hit_amount * 0.08, 1.0 + landing_amount * 0.12 + hit_amount * 0.16)
 	shadow.position.x = float(enemy.x)
 	shadow.scale = Vector3(1.0 - hop_height * 0.35, 1.0, 1.0 - hop_height * 0.35)
-	var pips: Array = visual.pips
-	for index in range(pips.size()):
-		pips[index].visible = index < int(enemy.hp)
 
 func _free_enemy_visual(uid: int) -> void:
 	var visual: Dictionary = _enemy_visuals[uid]
@@ -268,7 +323,8 @@ func _update_status_visual() -> void:
 	_status_label.modulate = TeamData.color(team_identity).lightened(0.25) if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else Color(0.72, 0.75, 0.82)
 	_charge_orb.material_override = PrimitiveFactory.material(Color(1.0, 0.74, 0.18) if combat_model.emergency_available else Color(0.16, 0.17, 0.2))
 
-func _on_enemy_neutralized(enemy_uid: int, impact_x: float, cause: StringName) -> void:
+func _on_enemy_neutralized_detail(enemy: Dictionary, cause: StringName, impact_x: float) -> void:
+	var enemy_uid := int(enemy.uid)
 	if _death_uids.has(enemy_uid):
 		return
 	_death_uids[enemy_uid] = true
@@ -277,7 +333,7 @@ func _on_enemy_neutralized(enemy_uid: int, impact_x: float, cause: StringName) -
 		visual = _enemy_visuals[enemy_uid]
 		_enemy_visuals.erase(enemy_uid)
 	else:
-		visual = _create_enemy_visual(enemy_uid, combat_model.enemy_max_hp)
+		visual = _create_enemy_visual(enemy_uid, int(enemy.get("type", EnemyTypes.Type.HOPPER)))
 		var fallback_root: Node3D = visual.root
 		var fallback_shadow: Node3D = visual.shadow
 		fallback_root.position = Vector3(impact_x, 0.29, 0.0)

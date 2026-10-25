@@ -1,45 +1,52 @@
-# Codex Handoff — LBS-P018 enemy death presentation
+# Codex Handoff — LBS-P019 typed enemy roster and spawn director
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** this scoped P018 commit.
+**Implementation commit:** this scoped P019 commit.
 
-**Mailbox:** remains on LBS-P018. `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
+**Mailbox:** remains on LBS-P019. P020 abilities were not implemented, and `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
 
-## Root cause and event order
+## Authoritative roster
 
-The combat model removed the final enemy and synchronously announced victory. Battlefield then set every lane model `game_over=true`, while `LaneActor._process()` returned before visual synchronization or its small spark update. The already-instantiated enemy mesh could therefore remain standing behind an immediately displayed WAVE CLEARED overlay.
+Added `scripts/world/enemy_types.gd` as the single definition for type enum, display names, max HP, speed multipliers and base spawn weights:
 
-P018 introduces one typed `enemy_neutralized(uid, x, cause)` event for every logical removal path (`projectile`, `tier3`, `emergency`). It fires after accounting/removal but before encounter-state/victory evaluation. LaneActor first transfers that UID's existing body/shadow/pips out of the live dictionary into a transient death actor, then Battlefield forwards the scheduled event and Main requests its death cue. Only afterward can `encounter_state_changed` confirm victory. The legacy `enemy_killed` signal and killed-vs-emergency counters remain intact.
+- HOPPER: 2 HP, existing 0.24-unit/s average grounded/air hop, gray original silhouette and exactly two permanent orange top horns.
+- HEAVY: 4 HP, continuous 0.168-unit/s slide, wider dark-orange body/helmet and pale contrasting eyes, no horns.
+- SICKLE_SNAKE: 2 HP, continuous 0.48-unit/s slide, taller strong-yellow body and dark eyes, no horns.
+- HEALYZARD: 2 HP, zero velocity, green 0.7-scale body in a rear support slot, no horns.
 
-## Death VFX and SFX
+Enemy records now carry immutable `type`, `spawn_id`, canonical `max_hp` and per-instance `speed`. Historical `LaneCombatModel.spawn_enemy()` calls remain source-compatible and default to a 2-HP Hopper; tests may pass an explicit type and global ID. Only Hopper advances the existing hop clock/height/squash. Heavy and Snake use continuous swept linear movement; Healyzard remains stationary. Projectile collision now branches between the existing piecewise hop sweep and constant-speed/stationary sweep, avoiding tunneling at large frame steps.
 
-- The actual enemy root is retained for a 1.0-second cosmetic animation rather than recreated or freed. A primitive explosion core and eight sparks expand at the impact position.
-- The body eases to about 85 degrees around Z, settles near the ground, and body/helmet/eyes/HP pips/shadow fade with duplicated per-instance transparent materials. All transient nodes are freed at one second.
-- Death actors have a per-lane UID guard, so one enemy cannot create duplicate corpses/cues. Normal projectile kills, the real matched-plus-adjacent tier-3 route, and emergency discharge all use the same event.
-- LaneActor no longer returns early at terminal state: logical `combat_model.update()` remains frozen internally, while defender feedback, state effects, visual reconciliation and death cosmetics keep advancing.
-- `enemy_death` is a distinct synthesized 0.38-second low crunch/pop/explosion using 22.05 kHz mono 16-bit PCM, the existing envelope, -15 dB voices and 0.28 peak cap. Every UID is auditable in request/play counters; the existing ten-voice stealing pool bounds simultaneous multi-kill playback.
+All HP pips/health-bar behavior was removed. The two old orange top blocks are now named permanent Hopper horns and are independent of HP. Other types have zero horns. Hit flash, tier damage, emergency/tier-3 removal, P018 death actor capture and fades apply to every type. Typed neutralization detail carries the full removed record before legacy kill/state signals, so death fallback visuals retain the correct archetype.
 
-## Victory presentation
+## Global spawn director
 
-Battlefield still declares authoritative victory exactly once as soon as all quotas are spent and no living enemy remains, after its existing breach-priority check. Main immediately enters `_game_over + _victory_pending`: shooting, swapping, chain simulation, settling handoff, combat, spawns, attacks and scoring are locked. The overlay stays hidden and gameplay audio is not stopped yet, allowing the final death cue and one-second animation to finish.
+Live-game automatic spawning now has one Battlefield-owned scheduler instead of four lane RNGs. Battlefield owns a spawn-only RNG (`0x19E019` default), injectible through `set_spawn_rng_seed()` and reseeded on restart independently of conveyor and tier-3 target RNGs. It samples configured base weights 50/20/20/10. When Snake is ineligible, only its weight is removed, producing a 50:20:10 eligible pool; capacity rejection does not draw or consume quota.
 
-A delta-driven 3.0-second countdown then displays WAVE CLEARED and the captured final score and disables gameplay audio. There is no detached timer that can survive restart. GAME OVER remains immediate. Once Battlefield has emitted victory it is treated as irrevocable; the pre-victory terminal evaluation already gives a concurrent breach priority. Restart clears countdown state, transient bodies/effects, audio state, quotas and overlay whether invoked during or after the delay.
+Every directed spawn receives a unique encounter-wide `spawn_id`; lane-local UID remains unchanged for combat/visual compatibility. A successful Snake spawn registers occupancy before the next lane can spawn. Projectile, tier-3 and emergency neutralization release that exact spawn ID once and set `cooldown_until = simulation_time + 15.0`. The Battlefield gameplay clock stops at victory/defeat. Nonfatal damage does not release the gate, and eligibility becomes true at the exact 15-second boundary.
+
+Each lane remains capped at five living and eight successful encounter spawns. A full lane leaves its timer due and quota untouched. Initial enemies are also weighted, spawned sequentially only after all lane connections exist, and restart reproduces the same sequence from the configured seed. A weighted initial Healyzard goes directly to its rear slot. Multiple Healyzards receive descending 0.82-unit-separated support slots starting at x=6.7, leaving the ordinary x=7.6 entrance free.
+
+Standalone LaneActor/LaneCombatModel fixtures retain their prior local Hopper auto-spawn behavior. Runtime Battlefield lanes explicitly disable it and must use `spawn_directed_enemy`; direct model typed spawns are test fixtures and intentionally do not participate in global Snake ownership.
+
+## P020 boundary
+
+P019 does not implement post-hit Snake stun/lane switching, Healyzard healing, healing timers or yellow aura. Those remain queued in P020 exactly as required.
 
 ## Regression coverage
 
-Added `tests/p018_enemy_death_victory_delay_test.gd` — PASS (41 checks):
+Added `tests/p019_enemy_roster_spawning_test.gd` — PASS (117 checks):
 
-- verifies immediate logical removal plus transfer of the existing mesh, explosion/sparks, near-horizontal fall, alpha fade, cleanup and continued cosmetic advancement with the combat model frozen;
-- exercises projectile, actual two-lane tier-3 and emergency removals with once-per-UID causes, sounds and unchanged killed/emergency accounting;
-- checks death PCM length/peak, request/play counters and mute behavior;
-- confirms immediate authoritative victory and gameplay freeze, hidden overlay at t=0/1.0/2.9, VFX cleanup while terminal, WAVE CLEARED at t=3.0, no duplicate victory, correct score and audio ordering;
-- verifies immediate defeat plus restart during/after pending presentation;
-- protects 102 px/s chain speed, 0.20-second shot, 0.05-second settle, P017 UID retention and invariant `I0`.
-
-Updated P008 only to permit the new approved death cue's 0.38-second duration while retaining the old 0.35-second ceiling for all earlier cues. Updated P015's obsolete immediate-overlay assertion to require immediate freeze plus the exact three-second presentation delay.
+- canonical 2/4/2/2 HP and 0.24/0.168/0.48/0 speeds; Hopper-only hop and historical default spawn;
+- colors/scales, exactly two persistent Hopper horns, zero other horns and no HP meshes;
+- sliding/stationary projectile sweeps at 30/60/120 Hz and 0.08-second steps, including Heavy multi-hit durability;
+- 20,000 fully eligible draws within 2% of 50/20/20/10, 16,000 ineligible draws within 2% of normalized 50:20:10, and exact seeded sequence replay (`0x50102010`, `99173`);
+- global one-Snake gate, nonfatal retention and projectile/tier-3/emergency death cooldown checks at 14.999 and 15.000 seconds;
+- deterministic weighted initialization/restart, unique global IDs, capacity deferral, eight-spawn quotas, distinct healer support slots and continued ordinary movement/spawning;
+- a complete directed 32-enemy encounter with same-frame Snake/cap audits and preserved victory;
+- preserved 102 px/s P017 original-UID history, 0.05-second insertion and invariant `I0`.
 
 ## Validation
 
@@ -63,19 +70,21 @@ Godot 4.7.2 headless, all passing:
 - P016 speed/retained-history compatibility — PASS (76 checks).
 - P017 offscreen-left reentry — PASS (352 checks).
 - P018 enemy death/victory delay — PASS (41 checks).
+- P019 typed roster/spawning — PASS (117 checks).
 - `git diff --check` — PASS.
 
 Bounded main-scene startup reached the running game without project/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`; each was intentionally terminated by `timeout` after three seconds (exit 124). The sandbox still denies Godot's `user://logs/godot.log` rotation, producing the known harmless warning. Web/Android exports and physical-device QA were not exercised.
 
 ## Manual playtest
 
-1. Kill a single enemy with a projectile. Confirm the impact has a small orange explosion/sparks and distinct low pop/crunch, then the actual body falls sideways nearly horizontal and fades with its shadow/pips in about one second.
-2. Trigger tier-3 on an edge and middle lane, then an emergency discharge. Every removed enemy should animate once; listen for controlled multi-kill sound density and check that no standing ghost or permanent corpse remains.
-3. Neutralize the 32nd enemy. Gameplay should freeze instantly, with no WAVE CLEARED overlay for exactly three seconds. The last death should finish unobstructed, then the overlay/final score/restart should appear.
-4. Let a live enemy breach in a separate run. GAME OVER must appear immediately. Restart during a pending win (via code/debug if needed) and after either terminal screen; no old corpse, sound or delayed overlay should return.
-5. Recheck F3 `I0`, 102 px/s conveyor movement and the P017 same-UID return from offscreen LEFT; P018 does not change conveyor mechanics.
+1. Identify gray hopping Hopper/two orange horns, broad orange Heavy, tall fast yellow Snake and small stationary green Healyzard. Damage a Hopper to 1 HP: both horns must remain. No health display or non-Hopper horn should exist.
+2. Watch motion over several seconds: Hopper alone pauses then hops; Heavy slides slowly, Snake slides twice baseline speed and Healyzard stays in a rear slot. Shoot each type and confirm hits register throughout motion.
+3. Let several lanes spawn simultaneously. Never observe two living Snakes. Kill one by projectile, tier-3 and emergency in separate runs and confirm no replacement for 15 gameplay seconds.
+4. Let Healyzards coexist with later entrances. They should not stack or block spawning. They intentionally do not heal or glow yet.
+5. Complete the 32-enemy encounter and verify typed deaths, three-second WAVE CLEARED delay, immediate defeat, restart reseeding and all accepted conveyor behavior.
 
-## Limitations
+## Limitations / assumptions
 
-- Headless tests validate transforms, material alpha, lifecycle, synthesis and timing, but the fall silhouette, particle readability, perceived loudness/timbre and multi-kill mix still need desktop/Web/Android human playtesting.
-- The VFX use lightweight primitive meshes rather than GPU particles to stay within the Compatibility renderer and no-assets prototype constraint.
+- Headless checks validate model data and primitive/material properties; silhouette readability, grounding, color contrast and perceived relative speed still need desktop/Web/Android visual playtesting.
+- Base weights are probabilities, not a promised per-encounter composition, especially while the global Snake gate renormalizes the eligible pool.
+- Direct lane-model spawn calls remain intentionally local fixtures. Runtime callers requiring the global Snake invariant must use Battlefield's director API.
