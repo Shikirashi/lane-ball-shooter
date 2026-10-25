@@ -1,62 +1,51 @@
-# Codex Handoff — LBS-P027 Android toolchain continuation
+# Codex Handoff — LBS-P027 Android APK release and portfolio card
 
-**Status:** PARTIAL / BLOCKED AT USER-ACCEPTED ANDROID SDK LICENSE CHECKPOINT
+**Status:** COMPLETE; PHYSICAL-DEVICE QA PENDING
 
 **Branch:** `master`
 
-P027's user-local JDK, Godot Android templates and explicitly authorized release-signing identity are now installed. The Android SDK packages could not be installed without accepting new Google terms, which this task explicitly prohibited Codex from doing. No APK, GitHub Release, portfolio image/card, or placeholder download URL was created.
+## Published release
 
-## Installed locally
+- GitHub Release: [android-v0.1.0](https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.1.0)
+- Direct asset: [lane-ball-shooter-android.apk](https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.1.0/lane-ball-shooter-android.apk)
+- Source commit: `0e77dbdeadcab4fce4f4b3bf054d721ef479c5bf`
+- Package/version: `com.shikirashi.laneballshooter`, `0.1.0`, version code `1`
+- ABI: `arm64-v8a` only
+- Minimum/target SDK: 24 / 36
+- APK size: 26,807,776 bytes
+- APK SHA-256: `cf390a1abbbbe3e8e937710e46a32aede297ddf43c0c41507d29549e8450ea26`
+- Certificate SHA-256: `796f2c679d962a8195ebf1a38d959002829561dfd26d2dae86e52ccdec7224fc`
 
-- Eclipse Temurin JDK `17.0.21+9`, including `javac`, at `/home/shiki/.local/share/lane-ball-shooter/toolchains/temurin-17.0.21+9`.
-- Official Godot 4.7.2 `android_debug.apk` (127,260,725 bytes) and `android_release.apk` (104,803,333 bytes) under `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/`.
-- The pre-existing `web_nothreads_debug.zip` and `web_nothreads_release.zip` were preserved byte-for-byte. Their SHA-256 values remain `08962aef...626a0` and `d3ee2f08...032a0`.
-- Dedicated Lane Ball Shooter JKS at `/home/shiki/.local/share/lane-ball-shooter/signing/lane-ball-shooter-release.jks`, created only after the user's explicit approval. Directory mode is `0700`; keystore and credentials are both `0600`.
-- Protected environment file at `/home/shiki/.local/share/lane-ball-shooter/signing/release-signing.env`. Its secret was generated randomly and was neither printed nor committed.
-- Key alias `lane-ball-shooter`: 4096-bit RSA, SHA256withRSA, valid 2026-10-26 through 2054-03-13. Public certificate SHA-256 fingerprint: `79:6F:2C:67:9D:96:2A:81:95:EB:F1:A3:8D:95:90:02:82:95:61:DF:D2:6D:2D:AE:86:E5:2C:CD:EC:72:24:FC`.
+The APK was exported from a fresh isolated clone of exact source commit `0e77dbd`, not the dirty developer checkout. Godot 4.7.2 used the existing backed-up JKS and protected environment; no signing key was generated or replaced. The release uses APK signature schemes v2 and v3, one 4096-bit RSA signer, is non-debuggable, requests no runtime permissions reported by `aapt`, is zip-aligned, has only the two expected ARM64 native libraries, and declares landscape activity orientation. Downloading the public versioned asset reproduced the exact hash, size and signing certificate.
 
-The user must securely back up the JKS and credentials file together. Losing them prevents compatible APK upgrades; neither belongs in Git or chat.
+No Android device was connected. Installation, native startup, landscape controls, audio, restart and performance checks are accurately marked pending rather than claimed.
 
-## Repository changes
+## Source changes
 
-- Added `scripts/setup_android_toolchain.sh`, pinning and verifying both upstream archives:
-  - Godot template archive SHA-256 `f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011`.
-  - Temurin JDK archive SHA-256 `8b9b611d917e3dfd8419d3566b5949226f69b052fed7e109c1368add1dfe8711`.
-- The setup script uses only user-local directories, refuses root, preserves existing template files, installs Android templates atomically, and is idempotent from its verified cache.
-- It installs `platform-tools`, `build-tools;35.0.1`, and `platforms;android-35` only when official command-line tools and an existing license receipt are present. It never invokes sudo or automatically accepts licenses.
-- Added `scripts/ci/test_android_toolchain_setup.sh` for pinned versions/checksums and no-sudo/no-auto-accept policy.
-- Updated README with installed paths, backup warning, certificate fingerprint, exact license checkpoint and post-license commands.
-- Existing release preset/build/verifier from `75f0dd7` were not reimplemented. P024 workflow and publisher remain unchanged.
+- `3a2d212` fixes the Chrome profile cleanup race in `scripts/ci/verify_browser_startup.mjs`: it waits for Chrome exit, applies bounded TERM/KILL fallback, then retries safe removal. Secure context, exact title, one nonzero canvas and loader-removal assertions are unchanged.
+- `0e77dbd` enables ETC2/ASTC imports required by Godot Android export. Only this new setting was staged; pre-existing user changes in `project.godot` remain uncommitted.
+- Godot's user-local Java SDK setting now points at the existing Temurin 17 toolchain; Android SDK remains `/home/shiki/Android/Sdk`.
+- README records the immutable APK URL, hashes, source/version/device support and upgrade/signing limitations.
 
-## Required user action
+## Portfolio publication
 
-1. Review Google's current Android SDK terms and download/install the official Linux command-line tools so this file exists:
-   `/home/shiki/Android/Sdk/cmdline-tools/latest/bin/sdkmanager`
-2. Personally accept the applicable licenses:
-
-   ```sh
-   /home/shiki/Android/Sdk/cmdline-tools/latest/bin/sdkmanager \
-     --sdk_root=/home/shiki/Android/Sdk --licenses
-   ```
-
-3. Rerun `./scripts/setup_android_toolchain.sh`. It will install and verify platform-tools, build-tools 35.0.1 and android-35 without piping license answers.
-4. Back up `/home/shiki/.local/share/lane-ball-shooter/signing/` to secure offline storage before producing the first public APK.
-
-After that checkpoint, configure Godot's Android SDK and Java SDK paths, export from a separate clean checkout using the protected signing environment, run static APK verification and physical-device QA, and only then publish the release/card. Do not use the dirty developer checkout for a release.
+- Portfolio commit: `94c5e77a19ee3c9cf1411bb2f08d763ce8ffc15b` on `Shikirashi/Shikirashi.github.io/master`.
+- Pages run: [40246539248](https://github.com/Shikirashi/Shikirashi.github.io/actions/runs/40246539248), successful.
+- Added exactly one `item mobile col-sm-6 col-md-4 col-lg-4 mb-4` card inside the existing grid.
+- Card uses the immutable versioned APK URL, accessible label/alt text, a visible `DOWNLOAD APK` badge, hover styling and keyboard `:focus-visible` treatment.
+- `assets/img/laneBallShooter.png` is a 900×506 crop of an actual current gameplay frame captured from the public Godot game with headless Chrome. Public and committed image SHA-256 values match: `ed59c954aa79d053cf9a452057e62c32f82b95835bdd53dafd632c8f3dde2ba7`.
+- All previous cards and nested Web runtime files were preserved. A concurrent P024 nested-Web deployment was rebased underneath the card commit rather than overwritten.
 
 ## Validation
 
-- Official archive checksums: **PASS**.
-- Temurin `java` and `javac`: **17.0.21**, PASS.
-- Release key and public certificate metadata: **PASS**.
-- Repeated toolchain setup: **idempotent**, stops with exit 3 at the missing command-line-tools/license checkpoint.
-- Existing Web template before/after hashes: **identical**.
-- `test_android_toolchain_setup.sh`: **PASS**.
-- Existing `test_android_release_scaffolding.sh`: **PASS**.
-- Shell syntax and `git diff --check`: **PASS**.
-- Full Godot P001–P023 regression suite: **all 23 passed**, including P011's 16,485-check stress test.
-- Android SDK/APK/static signature validation: **BLOCKED** until the user completes the license checkpoint.
-- Physical Android QA: **PENDING**; no device was attached previously.
-- Portfolio repository remains clean and unchanged; all cards and Web runtime files are preserved.
+- Full local P001–P023 suite: **all 23 passed**, including P011's 16,485-check deterministic stress test.
+- Release build and `scripts/verify_android_release.sh`: **PASS**.
+- `apksigner verify --verbose --print-certs`: **PASS**, v2/v3, expected certificate.
+- `aapt dump badging/xmltree`: expected package/version, SDK 24/36, ARM64-only, landscape, no debuggable flag or listed runtime permissions.
+- Public asset download: HTTP attachment, expected APK MIME, exact 26,807,776-byte size/hash/signature.
+- Browser verifier local live-HTTPS run: strict assertions **PASS** and no new temporary Chrome profile remained.
+- P024 hosted run [40246262499](https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40246262499): **SUCCESS**, confirming the cleanup-race repair in CI.
+- Portfolio Pages run `40246539248`: **SUCCESS**; public card markup and byte-identical thumbnail verified over HTTPS.
+- Physical Android test: **PENDING — no connected device**.
 
-Pre-existing user modifications to `project.godot`, `scenes/main.tscn`, and untracked `.uid` files remain untouched and must not be included in this commit. Stop at P027; do not advance the mailbox.
+The backed-up release key and credentials remain outside Git. Existing `project.godot`, `scenes/main.tscn` and `.uid` working files remain preserved. Stop after P027; do not advance the mailbox.

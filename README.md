@@ -198,26 +198,20 @@ Installed local components:
 
 The release key was created only after explicit user approval. Its public SHA-256 certificate fingerprint is `79:6F:2C:67:9D:96:2A:81:95:EB:F1:A3:8D:95:90:02:82:95:61:DF:D2:6D:2D:AE:86:E5:2C:CD:EC:72:24:FC`. Back up both signing files securely and together; losing either prevents compatible upgrades. Never paste the environment file into chat or commit it.
 
-Android SDK installation remains at a license checkpoint. Review Google's current Android SDK terms on the [official Android Studio download page](https://developer.android.com/studio#command-tools), install its Linux command-line tools at `/home/shiki/Android/Sdk/cmdline-tools/latest/`, and personally run:
-
-```sh
-/home/shiki/Android/Sdk/cmdline-tools/latest/bin/sdkmanager \
-  --sdk_root=/home/shiki/Android/Sdk --licenses
-./scripts/setup_android_toolchain.sh
-```
-
-Codex did not accept these terms. Once the script reports the SDK toolchain verified, configure Godot's Android SDK path as `/home/shiki/Android/Sdk` and Java SDK path as the JDK directory above. Then use a clean checkout, load the protected environment, and run the guarded builder:
+The user completed Google's Android SDK license step. The configured SDK at `/home/shiki/Android/Sdk` contains platform-tools, build-tools 35.0.1 and platform android-35; Godot uses that SDK plus the Temurin JDK path above. For future releases, use a clean checkout, load the protected environment, and run the guarded builder:
 
 ```sh
 source /home/shiki/.local/share/lane-ball-shooter/signing/release-signing.env
 ./scripts/build_android.sh
 ```
 
-The builder refuses dirty sources, missing/mismatched Godot templates, in-repository or debug signing keys, and incomplete SDK/JDK setups. It exports `exports/android/lane-ball-shooter.apk`; the verifier then requires a valid non-debug signature, package/version metadata, ARM64-only native code, a declared minimum SDK, zip alignment, no unexpected sensitive permissions, and prints the APK SHA-256 and byte size. Until the SDK license/tool checkpoint is completed there is no verified APK, GitHub Release asset, public APK URL, or portfolio download card; a debug-signed placeholder is deliberately not published.
+The builder refuses dirty sources, missing/mismatched Godot templates, in-repository or debug signing keys, and incomplete SDK/JDK setups. It exports `exports/android/lane-ball-shooter.apk`; the verifier then requires a valid non-debug signature, package/version metadata, ARM64-only native code, a declared minimum SDK, zip alignment, no unexpected sensitive permissions, and prints the APK SHA-256 and byte size.
 
-After physical-device installation/startup, landscape controls, audio, restart and performance pass, publish the exact verified bytes as `lane-ball-shooter-android.apk` on a non-prerelease game GitHub Release. Release notes must include version/code, source commit, SHA-256, ARM64-only support and a sideload warning. Only then may the portfolio link point to `https://github.com/Shikirashi/lane-ball-shooter/releases/latest/download/lane-ball-shooter-android.apk`. GitHub APK downloads do not auto-update installed copies; later releases must preserve the signing identity and increment `version/code`.
+Android `0.1.0` is published as the non-prerelease [`android-v0.1.0`](https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.1.0) release. [Download the release-signed ARM64 APK](https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.1.0/lane-ball-shooter-android.apk). The exact public asset is 26,807,776 bytes with SHA-256 `cf390a1abbbbe3e8e937710e46a32aede297ddf43c0c41507d29549e8450ea26`; package `com.shikirashi.laneballshooter`, version code `1`, minimum SDK 24, target SDK 36 and source commit `0e77dbdeadcab4fce4f4b3bf054d721ef479c5bf`. Static signature, manifest, permission, alignment and downloaded-byte verification passed. No Android device was attached, so installation, controls, audio and performance QA remain pending.
 
-The P024 Web publisher intentionally replaces only `lane-ball-shooter/` in the portfolio repository. It does not build Android, touch a future root card/thumbnail, or use Android signing credentials; its separate `PORTFOLIO_PUBLISH_TOKEN` remains an explicit user setup item and was not changed for P027.
+The portfolio homepage now contains a Mobile-filtered Lane Ball Shooter card with a real gameplay thumbnail and visible `DOWNLOAD APK` affordance linked to that immutable versioned asset. GitHub APK downloads do not auto-update installed copies; later releases must preserve the signing identity and increment `version/code`.
+
+The P024 Web publisher intentionally replaces only `lane-ball-shooter/` in the portfolio repository. It does not build Android, touch the root Android card/thumbnail, or use Android signing credentials. Its credential is configured and run `40246262499` completed successfully after the Chrome verifier began waiting for process exit and retrying temporary-profile cleanup; secure-context, title, live-canvas, dimensions and loader-removal assertions remain unchanged.
 
 ## Regression and playtest checklist
 
