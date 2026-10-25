@@ -15,8 +15,10 @@ const MATCH_SIZE := 3
 const GAP_CLOSE_SPEED := 420.0
 const DEFAULT_SHOT_RADIUS := 12.0
 const RETURN_CATCHUP_SPEED := 120.0
-const ROLLBACK_SPEED := 360.0
-const MAGNETIC_ROLLBACK_SPEED := 480.0
+const INSERT_SETTLE_TIME := 0.05
+const ROLLBACK_INITIAL_SPEED := 60.0
+const ROLLBACK_ACCELERATION := 900.0
+const ROLLBACK_MAX_SPEED := 420.0
 const ROLLBACK_CONTACT_EPSILON := 0.05
 const TAIL_RECOIL_SPACING_FACTOR := 1.25
 const MAX_SIMULATION_STEP := 1.0 / 60.0
@@ -63,8 +65,10 @@ var fresh_run_length_counts: Array[int] = [0, 0, 0, 0, 0, 0, 0]
 var fresh_runs_generated := 0
 var longest_fresh_run := 0
 var rollback_gaps: Array[Dictionary] = []
+var pending_insertions: Array[Dictionary] = []
 var total_rollbacks_started := 0
 var total_rollbacks_completed := 0
+var simulation_time := 0.0
 
 var _next_ball_id := 1
 var _fresh_color_bag: Array[int] = []
@@ -97,9 +101,11 @@ func reset_run() -> void:
 	_reset_fresh_generator()
 	_returns_since_fresh = 0
 	rollback_gaps.clear()
+	pending_insertions.clear()
 	total_rollbacks_started = 0
 	total_rollbacks_completed = 0
 	_next_rollback_id = 1
+	simulation_time = 0.0
 	seed_stream()
 
 func advance(delta: float) -> void:
@@ -109,6 +115,9 @@ func advance(delta: float) -> void:
 		rolled_off = _advance_step(0.0)
 	while remaining > 0.000001:
 		var step := minf(remaining, MAX_SIMULATION_STEP)
+		var next_settle := _time_until_next_settle()
+		if next_settle > 0.000001:
+			step = minf(step, next_settle)
 		rolled_off = _advance_step(step) or rolled_off
 		remaining -= step
 	if delta > 0.0 or rolled_off:
@@ -122,22 +131,26 @@ func _advance_step(delta: float) -> bool:
 		ball.display_x -= travel
 		balls[index] = ball
 	_close_disconnected_gaps(delta)
+	simulation_time += delta
 	_update_rollbacks(delta)
 	for index in range(balls.size()):
 		var ball := balls[index]
-		ball.display_x = move_toward(float(ball.display_x), float(ball.x), GAP_CLOSE_SPEED * delta)
+		if not _is_pending_insertion_uid(int(ball.uid)):
+			ball.display_x = move_toward(float(ball.display_x), float(ball.x), GAP_CLOSE_SPEED * delta)
 		balls[index] = ball
 
 	var rolled_off := false
 	while not balls.is_empty() and float(balls[0].x) + radius < 0.0:
 		var exited: Dictionary = balls.pop_front()
 		cache.append(int(exited.identity))
+		_retire_pending_insertion(int(exited.uid))
 		rolled_off = true
 	if continuous_feed_enabled:
 		_feed_right_edge()
 	elif balls.is_empty():
 		_ensure_playable_stream()
 	_prune_invalid_rollbacks()
+	_update_pending_insertions(delta)
 	return rolled_off
 
 ## Returns true only when the projectile horizontally overlaps a rendered chain ball.
@@ -191,9 +204,11 @@ func set_test_state(identities: Array[int], start_x := 100.0, cached: Array[int]
 	pending_cache_returns = 0
 	_returns_since_fresh = 0
 	rollback_gaps.clear()
+	pending_insertions.clear()
 	total_rollbacks_started = 0
 	total_rollbacks_completed = 0
 	_next_rollback_id = 1
+	simulation_time = 0.0
 	for index in range(identities.size()):
 		balls.append(_make_ball(identities[index], start_x + spacing * index))
 	state_changed.emit()
@@ -245,11 +260,16 @@ func _insert_beside_contact(identity: int, contact_index: int, insert_after: boo
 	var inserted_ball := _make_ball(identity, logical_x, impact_x)
 	balls.insert(insert_index, inserted_ball)
 	_update_rollback_endpoint_after_insert(contact_uid, int(inserted_ball.uid), insert_after)
+	pending_insertions.append({
+		"uid": int(inserted_ball.uid),
+		"elapsed": 0.0,
+		"start_offset": impact_x - logical_x,
+	})
 	state_changed.emit()
-	_resolve_inserted_match(insert_index)
 
-func _resolve_inserted_match(insert_index: int) -> void:
-	if insert_index < 0 or insert_index >= balls.size():
+func _resolve_inserted_match(inserted_uid: int) -> void:
+	var insert_index := _ball_index_by_uid(inserted_uid)
+	if insert_index < 0:
 		return
 	var group := _group_at(insert_index)
 	if int(group.size) < MATCH_SIZE:
@@ -259,6 +279,49 @@ func _resolve_inserted_match(insert_index: int) -> void:
 	return_cached(cache_return_batch)
 	_ensure_playable_stream()
 	state_changed.emit()
+
+func _time_until_next_settle() -> float:
+	var result := INF
+	for state in pending_insertions:
+		result = minf(result, maxf(0.0, INSERT_SETTLE_TIME - float(state.elapsed)))
+	return result
+
+func _update_pending_insertions(delta: float) -> void:
+	if pending_insertions.is_empty():
+		return
+	for index in range(pending_insertions.size() - 1, -1, -1):
+		if _ball_index_by_uid(int(pending_insertions[index].uid)) < 0:
+			pending_insertions.remove_at(index)
+	var matured_uids: Array[int] = []
+	for index in range(pending_insertions.size()):
+		var state := pending_insertions[index]
+		var uid := int(state.uid)
+		var ball_index := _ball_index_by_uid(uid)
+		if ball_index < 0:
+			continue
+		state.elapsed = minf(INSERT_SETTLE_TIME, float(state.elapsed) + delta)
+		var ratio := clampf(float(state.elapsed) / INSERT_SETTLE_TIME, 0.0, 1.0)
+		var eased := ratio * ratio * (3.0 - 2.0 * ratio)
+		var ball := balls[ball_index]
+		ball.display_x = float(ball.x) + float(state.start_offset) * (1.0 - eased)
+		balls[ball_index] = ball
+		pending_insertions[index] = state
+		if float(state.elapsed) >= INSERT_SETTLE_TIME - 0.000001:
+			matured_uids.append(uid)
+	for uid in matured_uids:
+		_retire_pending_insertion(uid)
+		_resolve_inserted_match(uid)
+
+func _is_pending_insertion_uid(uid: int) -> bool:
+	for state in pending_insertions:
+		if int(state.uid) == uid:
+			return true
+	return false
+
+func _retire_pending_insertion(uid: int) -> void:
+	for index in range(pending_insertions.size() - 1, -1, -1):
+		if int(pending_insertions[index].uid) == uid:
+			pending_insertions.remove_at(index)
 
 func _group_at(index: int) -> Dictionary:
 	var identity := int(balls[index].identity)
@@ -273,13 +336,18 @@ func _group_at(index: int) -> Dictionary:
 func _remove_group(start: int, count: int, identity: int) -> void:
 	var left_uid := int(balls[start - 1].uid) if start > 0 else -1
 	var right_uid := int(balls[start + count].uid) if start + count < balls.size() else -1
+	var removed_uids: Array[int] = []
+	for index in range(start, start + count):
+		removed_uids.append(int(balls[index].uid))
 	for unused in range(count):
 		balls.remove_at(start)
+	for uid in removed_uids:
+		_retire_pending_insertion(uid)
 	_create_rollback(left_uid, right_uid, count)
 	total_match_events += 1
 	last_match_identity = identity
 	last_match_size = count
-	event_log.append({"identity": identity, "size": count})
+	event_log.append({"identity": identity, "size": count, "time": simulation_time})
 	match_completed.emit(identity, count)
 
 func _shift_logical_positions(from_index: int, through_index: int, amount: float) -> void:
@@ -332,6 +400,7 @@ func _create_rollback(left_uid: int, right_uid: int, removed_count: int) -> void
 		"left_uid": left_uid,
 		"right_uid": right_uid,
 		"tail_remaining": minf(spacing * removed_count, spacing * TAIL_RECOIL_SPACING_FACTOR) if right_uid < 0 else 0.0,
+		"speed": ROLLBACK_INITIAL_SPEED,
 	}
 	_next_rollback_id += 1
 	rollback_gaps.append(state)
@@ -353,9 +422,16 @@ func _update_rollbacks(delta: float) -> void:
 			rollback_gaps.remove_at(state_index)
 			continue
 		var segment_start := _connected_segment_start(left_index)
+		var current_speed := float(state.speed)
+		var next_speed := minf(ROLLBACK_MAX_SPEED, current_speed + ROLLBACK_ACCELERATION * delta)
+		var rollback_distance := current_speed * delta + 0.5 * ROLLBACK_ACCELERATION * delta * delta
+		if next_speed >= ROLLBACK_MAX_SPEED:
+			var acceleration_time := maxf(0.0, (ROLLBACK_MAX_SPEED - current_speed) / ROLLBACK_ACCELERATION)
+			rollback_distance = current_speed * acceleration_time + 0.5 * ROLLBACK_ACCELERATION * acceleration_time * acceleration_time + ROLLBACK_MAX_SPEED * (delta - acceleration_time)
+		state.speed = next_speed
 		var right_uid := int(state.right_uid)
 		if right_uid < 0:
-			var tail_move := minf(float(state.tail_remaining), ROLLBACK_SPEED * delta)
+			var tail_move := minf(float(state.tail_remaining), rollback_distance)
 			_shift_positions(segment_start, left_index, tail_move, true)
 			state.tail_remaining = float(state.tail_remaining) - tail_move
 			if float(state.tail_remaining) <= ROLLBACK_CONTACT_EPSILON:
@@ -370,13 +446,13 @@ func _update_rollbacks(delta: float) -> void:
 			rollback_gaps.remove_at(state_index)
 			continue
 		var gap := float(balls[right_index].x) - float(balls[left_index].x)
-		var matching_ends := int(balls[left_index].identity) == int(balls[right_index].identity)
-		var rollback_speed := MAGNETIC_ROLLBACK_SPEED if matching_ends else ROLLBACK_SPEED
-		var rollback_move := minf(maxf(0.0, gap - spacing), rollback_speed * delta)
+		var rollback_move := minf(maxf(0.0, gap - spacing), rollback_distance)
 		_shift_positions(segment_start, left_index, rollback_move, true)
 		gap -= rollback_move
 		if gap <= spacing + ROLLBACK_CONTACT_EPSILON:
 			_complete_rollback(state_id)
+		else:
+			rollback_gaps[state_index] = state
 
 func _complete_rollback(state_id: int) -> void:
 	var state_index := _rollback_index_by_id(state_id)

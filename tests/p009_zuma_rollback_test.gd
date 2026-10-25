@@ -34,6 +34,7 @@ func _middle_clear_model(left_identity: int, right_identity: int) -> ChainModel:
 	var identities: Array[int] = [left_identity, left_identity, TeamData.Identity.BLUE, TeamData.Identity.BLUE, right_identity, right_identity]
 	model.set_test_state(identities, 100.0)
 	model.try_insert_shot(TeamData.Identity.BLUE, float(model.balls[3].display_x) + 4.0)
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	return model
 
 func _run() -> void:
@@ -56,10 +57,11 @@ func _test_front_rolls_back_and_right_section_does_not_jump() -> void:
 	var left_before := _position_for_uid(model, left_uid)
 	var right_before := _position_for_uid(model, right_uid)
 	model.try_insert_shot(TeamData.Identity.BLUE, float(model.balls[3].display_x) + 4.0)
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	var left_after_clear := _position_for_uid(model, left_uid)
 	var right_after_clear := _position_for_uid(model, right_uid)
-	_check(is_equal_approx(left_after_clear, left_before), "left/front section retains its position immediately after clear")
-	_check(is_equal_approx(right_after_clear, right_before + model.spacing), "right/trailing section only reflects insertion spacing, not clear teleport")
+	_check(is_equal_approx(left_after_clear, left_before - model.speed * ChainModel.INSERT_SETTLE_TIME), "left/front section receives only normal travel before delayed clear")
+	_check(is_equal_approx(right_after_clear, right_before + model.spacing - model.speed * ChainModel.INSERT_SETTLE_TIME), "right/trailing section reflects insertion spacing and normal travel, not clear teleport")
 	_check(model.rollback_gaps.size() == 1, "middle clear creates one causal rollback gap")
 	_check(right_after_clear - left_after_clear > model.spacing * 3.0, "removed middle group leaves a visible spatial gap")
 	var left_display := _display_for_uid(model, left_uid)
@@ -78,6 +80,7 @@ func _test_same_color_delayed_cascade() -> void:
 	var identities: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.BLUE, TeamData.Identity.RED]
 	model.set_test_state(identities, 100.0)
 	model.try_insert_shot(TeamData.Identity.BLUE, float(model.balls[3].display_x) + 4.0)
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.event_log.size() == 1 and int(model.event_log[0].identity) == TeamData.Identity.BLUE, "player match emits before rollback cascade")
 	var gap_before := float(model.balls[2].x) - float(model.balls[1].x)
 	model.advance(0.1)
@@ -116,6 +119,7 @@ func _test_wide_and_end_clears() -> void:
 	var wide_left_uid := int(wide.balls[1].uid)
 	var wide_right_uid := int(wide.balls[-1].uid)
 	wide.try_insert_shot(TeamData.Identity.GREEN, float(wide.balls[5].display_x) + 4.0)
+	wide.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(wide.last_match_size == 8 and wide.rollback_gaps.size() == 1, "seven-plus-shot clear creates one wide rollback gap")
 	var initial_wide_gap := _position_for_uid(wide, wide_right_uid) - _position_for_uid(wide, wide_left_uid)
 	wide.advance(0.2)
@@ -129,8 +133,9 @@ func _test_wide_and_end_clears() -> void:
 	var surviving_uid := int(left_clear.balls[2].uid)
 	var surviving_before := _position_for_uid(left_clear, surviving_uid)
 	left_clear.try_insert_shot(TeamData.Identity.BLUE, float(left_clear.balls[1].display_x) + 4.0)
+	left_clear.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(left_clear.rollback_gaps.is_empty(), "left-edge clear manufactures no reverse actor")
-	_check(is_equal_approx(_position_for_uid(left_clear, surviving_uid), surviving_before + left_clear.spacing), "left-edge trailing section is not pulled into cleared space")
+	_check(is_equal_approx(_position_for_uid(left_clear, surviving_uid), surviving_before + left_clear.spacing - left_clear.speed * ChainModel.INSERT_SETTLE_TIME), "left-edge trailing section receives insertion spacing and normal travel only")
 
 	var tail_clear := ChainModel.new()
 	var tail_ids: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED, TeamData.Identity.BLUE, TeamData.Identity.BLUE]
@@ -138,6 +143,7 @@ func _test_wide_and_end_clears() -> void:
 	var tail_uid := int(tail_clear.balls[1].uid)
 	var tail_before := _position_for_uid(tail_clear, tail_uid)
 	tail_clear.try_insert_shot(TeamData.Identity.BLUE, float(tail_clear.balls[-1].display_x) + 4.0)
+	tail_clear.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(tail_clear.rollback_gaps.size() == 1 and int(tail_clear.rollback_gaps[0].right_uid) < 0, "right-tail clear creates bounded recoil state")
 	tail_clear.advance(1.0)
 	var tail_net_move := _position_for_uid(tail_clear, tail_uid) - tail_before
@@ -147,6 +153,7 @@ func _test_wide_and_end_clears() -> void:
 	var pair: Array[int] = [TeamData.Identity.YELLOW, TeamData.Identity.YELLOW]
 	all_clear.set_test_state(pair, 100.0)
 	all_clear.try_insert_shot(TeamData.Identity.YELLOW, float(all_clear.balls[-1].display_x) + 4.0)
+	all_clear.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(all_clear.total_match_events == 1 and all_clear.rollback_gaps.is_empty(), "full clear produces no rollback actor")
 	_check(all_clear.balls.size() == all_clear.initial_population, "full clear promptly resumes bounded supply")
 
@@ -161,6 +168,7 @@ func _test_multiple_gaps_and_restart() -> void:
 	model.set_test_state(identities, 100.0)
 	model.try_insert_shot(TeamData.Identity.BLUE, float(model.balls[3].display_x) + 4.0)
 	model.try_insert_shot(TeamData.Identity.YELLOW, float(model.balls[-1].display_x) + 4.0)
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.rollback_gaps.size() == 2, "two quick shots create two explicit rollback states")
 	var remained_sorted := true
 	for unused in range(180):
@@ -181,6 +189,7 @@ func _test_fifo_and_fresh_feed_isolation() -> void:
 	var cached: Array[int] = [TeamData.Identity.RED, TeamData.Identity.GREEN, TeamData.Identity.BLUE]
 	fifo.set_test_state(identities, 100.0, cached)
 	fifo.try_insert_shot(TeamData.Identity.BLUE, float(fifo.balls[3].display_x) + 4.0)
+	fifo.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(fifo.identities().slice(-3) == cached, "FIFO RED,GREEN,BLUE returns remain ordered during rollback")
 	_check(fifo.rollback_gaps.size() == 1, "FIFO return creates no extra causal rollback state")
 	fifo.advance(2.0)
@@ -193,6 +202,7 @@ func _test_fifo_and_fresh_feed_isolation() -> void:
 	for ball in feed.balls:
 		existing_uids[int(ball.uid)] = true
 	feed.try_insert_shot(TeamData.Identity.BLUE, float(feed.balls[3].display_x) + 4.0)
+	feed.advance(ChainModel.INSERT_SETTLE_TIME)
 	var gap_left_x := float(feed.balls[1].x)
 	var gap_right_x := float(feed.balls[2].x)
 	var new_ball_count := 0

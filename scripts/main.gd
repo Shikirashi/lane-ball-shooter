@@ -23,6 +23,8 @@ var _touch_started_in_playfield := false
 var _playfield_rect := Rect2()
 var _safe_rect := Rect2()
 var _game_over := false
+var _progression_chain_time := 0.0
+var _processing_chain := false
 
 func _ready() -> void:
 	_build_scene()
@@ -45,8 +47,11 @@ func _process(delta: float) -> void:
 	if _game_over:
 		return
 	_cooldown_remaining = maxf(0.0, _cooldown_remaining - delta)
+	_progression_chain_time = _chain_model.simulation_time
+	_processing_chain = true
 	_chain_model.advance(delta)
-	_progression.update(delta)
+	_sync_progression_to_chain_time()
+	_processing_chain = false
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _game_over:
@@ -124,8 +129,16 @@ func _on_shot_reached_lane(identity: int, screen_x: float) -> void:
 		_sfx.play_cue("insert")
 
 func _on_chain_match_completed(identity: int, group_size: int) -> void:
+	if _processing_chain:
+		_sync_progression_to_chain_time()
 	_sfx.play_cue("match")
 	_progression.register_match(identity, group_size)
+
+func _sync_progression_to_chain_time() -> void:
+	var elapsed := maxf(0.0, _chain_model.simulation_time - _progression_chain_time)
+	if elapsed > 0.0:
+		_progression.update(elapsed)
+	_progression_chain_time = _chain_model.simulation_time
 
 func _on_progression_state_changed(score: int, combo_count: int, tier: int, fever_active: bool, window_ratio: float) -> void:
 	_hud_view.set_progress(score, combo_count, tier, fever_active, window_ratio)
@@ -160,6 +173,8 @@ func _restart_run() -> void:
 	_shooter_view.reset_run()
 	_chain_view.reset_feedback()
 	_chain_model.reset_run()
+	_progression_chain_time = _chain_model.simulation_time
+	_processing_chain = false
 	_progression.reset_run()
 	_magazine.reset_run()
 	_battlefield.reset_run()

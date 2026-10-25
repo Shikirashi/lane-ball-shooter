@@ -62,6 +62,7 @@ func _test_score_and_same_tick_events() -> void:
 	]
 	chain.set_test_state(identities)
 	chain.try_insert_shot(TeamData.Identity.RED, 284.0)
+	chain.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(cascade_results.size() == 1, "inserted group resolves before physical cascade reconnection")
 	chain.advance(1.0)
 	_check(cascade_results.size() == 2, "delayed physical cascade produces a second result")
@@ -144,6 +145,7 @@ func _test_scene_integration() -> void:
 	main.set("_cooldown_remaining", 0.0)
 	main.call("_shoot")
 	shooter._process(1.0)
+	chain.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(progression.score == 100 and progression.combo_count == 1 and progression.tier == 1, "genuine chain clear updates central progression")
 	_check(hud.score == 100 and hud.combo_count == 1 and hud.tier == 1, "HUD receives live progression state")
 	_check(is_equal_approx(hud.window_ratio, 1.0), "valid match refills HUD meter")

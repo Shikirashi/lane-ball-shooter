@@ -55,8 +55,8 @@ func _draw() -> void:
 
 func _debug_text() -> String:
 	if model.last_match_identity < 0:
-		return "VISIBLE %d  CACHE %d  ROLLBACK %d  MATCHES 0" % [model.balls.size(), model.cache.size(), model.rollback_gaps.size()]
-	return "VISIBLE %d  CACHE %d  ROLLBACK %d  LAST %s x%d  EVENTS %d" % [model.balls.size(), model.cache.size(), model.rollback_gaps.size(), TeamData.display_name(model.last_match_identity), model.last_match_size, model.total_match_events]
+		return "VISIBLE %d  CACHE %d  SETTLE %d  ROLLBACK %d  MATCHES 0" % [model.balls.size(), model.cache.size(), model.pending_insertions.size(), model.rollback_gaps.size()]
+	return "VISIBLE %d  CACHE %d  SETTLE %d  ROLLBACK %d  LAST %s x%d  EVENTS %d" % [model.balls.size(), model.cache.size(), model.pending_insertions.size(), model.rollback_gaps.size(), TeamData.display_name(model.last_match_identity), model.last_match_size, model.total_match_events]
 
 func _on_match_completed(identity: int, group_size: int) -> void:
 	_feedback_identity = identity

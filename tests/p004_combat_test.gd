@@ -177,6 +177,7 @@ func _test_scene_routing_and_genuine_clear() -> void:
 	var cached: Array[int] = [TeamData.Identity.BLUE]
 	chain.set_test_state(pair, 400.0, cached)
 	chain.try_insert_shot(identity, 468.0)
+	chain.advance(ChainModel.INSERT_SETTLE_TIME)
 	var yellow_combat := battlefield.get_lane(identity).combat_model
 	_check(progression.combo_count == 1 and progression.last_result.identity == identity, "genuine clear reaches central progression")
 	_check(yellow_combat.attack_history.size() == 1, "genuine clear routes one attack to matching defender")

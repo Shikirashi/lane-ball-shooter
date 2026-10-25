@@ -52,6 +52,7 @@ func _test_three_ball_threshold() -> void:
 	_check(model.total_match_events == 0, "two adjacent balls emit no match")
 	model.advance(0.2)
 	model.try_insert_shot(TeamData.Identity.RED, float(model.balls[-1].display_x) + 10.0)
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.total_match_events == 1, "inserted third emits one match")
 	_check(model.last_match_identity == TeamData.Identity.RED and model.last_match_size == 3, "three-ball event reports identity and actual size")
 	_check(model.identities() == [TeamData.Identity.GREEN], "match returns cached ball without fabricating survivors")
@@ -62,6 +63,7 @@ func _test_large_group_single_event() -> void:
 	var cached: Array[int] = [TeamData.Identity.YELLOW]
 	model.set_test_state(identities, 100.0, cached)
 	model.try_insert_shot(TeamData.Identity.BLUE, 226.0)
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.total_match_events == 1, "four-ball group is one event")
 	_check(model.event_log.size() == 1 and int(model.event_log[0].size) == 4, "large group reports four removed")
 
@@ -79,6 +81,7 @@ func _test_boundary_cascade_order() -> void:
 	]
 	model.set_test_state(identities)
 	model.try_insert_shot(TeamData.Identity.RED, 284.0)
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.event_log.size() == 1 and model.rollback_gaps.size() == 1, "insertion clears first group and starts one physical rollback")
 	model.advance(1.0)
 	_check(model.event_log.size() == 2, "physical reconnection produces a distinct delayed cascade event")
@@ -165,6 +168,7 @@ func _test_recycled_gap_adjacency() -> void:
 	_check(is_equal_approx(connected_gap, model.spacing), "returned segment catches up without overlap or teleport")
 	var rightmost_red_index := 3
 	_check(model.try_insert_shot(TeamData.Identity.RED, float(model.balls[rightmost_red_index].display_x) + 8.0), "shot inserts after recycled segment reconnects")
+	model.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(model.total_match_events == 1 and model.last_match_size == 5, "reconnected physical run matches with true size")
 
 func _test_shot_pipeline() -> void:

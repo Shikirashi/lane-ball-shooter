@@ -214,6 +214,7 @@ func _test_player_triggered_matching() -> void:
 	var matching := ChainModel.new()
 	matching.set_test_state(seven, 200.0)
 	matching.try_insert_shot(TeamData.Identity.GREEN, float(matching.balls[3].display_x) + 4.0)
+	matching.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(matching.total_match_events == 1 and matching.last_match_size == 8, "matching insertion clears seven-plus-shot as one eight-ball event")
 
 	var unrelated_state := seven.duplicate()
@@ -222,6 +223,7 @@ func _test_player_triggered_matching() -> void:
 	var unrelated := ChainModel.new()
 	unrelated.set_test_state(unrelated_state, 100.0)
 	unrelated.try_insert_shot(TeamData.Identity.RED, float(unrelated.balls[-1].display_x) + 4.0)
+	unrelated.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(unrelated.total_match_events == 1 and unrelated.last_match_identity == TeamData.Identity.RED, "shot clears only its corresponding group")
 	_check(unrelated.identities().slice(0, 7) == seven, "unrelated passive seven group survives another group match")
 
@@ -283,6 +285,7 @@ func _test_semantic_sfx_routing() -> void:
 	var red_pair: Array[int] = [TeamData.Identity.RED, TeamData.Identity.RED]
 	chain.set_test_state(red_pair, 200.0)
 	main.call("_on_shot_reached_lane", TeamData.Identity.RED, float(main.get("_chain_view").position.x) + 204.0)
+	chain.advance(ChainModel.INSERT_SETTLE_TIME)
 	_check(int(sfx.play_counts.insert) == 2 and int(sfx.play_counts.match) == 1, "successful clear plays one insert and one match cue")
 	_check(int(sfx.play_counts.attack) == 1, "active defender match plays one attack cue")
 	main.call("_on_match_resolved", _result(TeamData.Identity.BLUE, 3))
