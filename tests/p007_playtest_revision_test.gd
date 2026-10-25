@@ -196,7 +196,7 @@ func _test_hop_translation_and_subdivision() -> void:
 	_set_hop_clock(cycle, 0, 0.0)
 	cycle.update(LaneCombatModel.HOP_CYCLE_DURATION * 10.0)
 	var average := (5.0 - float(cycle.enemies[0].x)) / (LaneCombatModel.HOP_CYCLE_DURATION * 10.0)
-	_check(is_equal_approx(average, LaneCombatModel.DEFAULT_ENEMY_SPEED), "complete hop cycles average 0.48 world units/s")
+	_check(is_equal_approx(average, LaneCombatModel.DEFAULT_ENEMY_SPEED), "complete hop cycles match configured average speed")
 
 	var one_step := LaneCombatModel.new(TeamData.Identity.GREEN)
 	var split_step := LaneCombatModel.new(TeamData.Identity.GREEN)

@@ -16,19 +16,21 @@ const GAP_CLOSE_SPEED := 420.0
 const DEFAULT_SHOT_RADIUS := 12.0
 const RETURN_CATCHUP_SPEED := 120.0
 const ADJACENCY_GAP_FACTOR := 1.25
+const DEFAULT_FRESH_SEED := 0x1B5C008
+const FRESH_RUN_LENGTH_WEIGHTS: Array[int] = [20, 30, 18, 13, 9, 6, 4]
 const SEED_PATTERN: Array[int] = [
 	TeamData.Identity.RED,
+	TeamData.Identity.RED,
+	TeamData.Identity.BLUE,
 	TeamData.Identity.BLUE,
 	TeamData.Identity.BLUE,
 	TeamData.Identity.YELLOW,
+	TeamData.Identity.YELLOW,
+	TeamData.Identity.GREEN,
+	TeamData.Identity.GREEN,
+	TeamData.Identity.GREEN,
 	TeamData.Identity.GREEN,
 	TeamData.Identity.RED,
-	TeamData.Identity.YELLOW,
-	TeamData.Identity.YELLOW,
-	TeamData.Identity.GREEN,
-	TeamData.Identity.BLUE,
-	TeamData.Identity.RED,
-	TeamData.Identity.GREEN,
 ]
 
 var speed := DEFAULT_SPEED
@@ -50,14 +52,22 @@ var event_log: Array[Dictionary] = []
 var pending_cache_returns := 0
 var total_fresh_generated := 0
 var total_cache_returned := 0
+var fresh_seed := DEFAULT_FRESH_SEED
+var fresh_identity_counts: Array[int] = [0, 0, 0, 0]
+var fresh_run_length_counts: Array[int] = [0, 0, 0, 0, 0, 0, 0]
+var fresh_runs_generated := 0
+var longest_fresh_run := 0
 
 var _next_ball_id := 1
-var _fresh_bag: Array[int] = []
+var _fresh_color_bag: Array[int] = []
 var _fresh_rng := RandomNumberGenerator.new()
+var _fresh_run_identity := -1
+var _fresh_run_remaining := 0
+var _previous_fresh_run_identity := -1
 var _returns_since_fresh := 0
 
 func _init() -> void:
-	_fresh_rng.seed = 0x1B5C007
+	_reset_fresh_generator()
 	seed_stream()
 
 func set_lane_width(value: float) -> void:
@@ -75,8 +85,7 @@ func reset_run() -> void:
 	total_fresh_generated = 0
 	total_cache_returned = 0
 	_next_ball_id = 1
-	_fresh_bag.clear()
-	_fresh_rng.seed = 0x1B5C007
+	_reset_fresh_generator()
 	_returns_since_fresh = 0
 	seed_stream()
 
@@ -325,15 +334,56 @@ func _feed_right_edge() -> void:
 			_returns_since_fresh = 0
 
 func _draw_fresh_identity() -> int:
-	if _fresh_bag.is_empty():
+	if _fresh_run_remaining <= 0:
+		_fresh_run_identity = _draw_fresh_run_color()
+		_fresh_run_remaining = _draw_fresh_run_length()
+		_previous_fresh_run_identity = _fresh_run_identity
+		fresh_runs_generated += 1
+		longest_fresh_run = maxi(longest_fresh_run, _fresh_run_remaining)
+		fresh_run_length_counts[_fresh_run_remaining - 1] += 1
+	_fresh_run_remaining -= 1
+	fresh_identity_counts[_fresh_run_identity] += 1
+	return _fresh_run_identity
+
+func set_fresh_seed(seed_value: int) -> void:
+	fresh_seed = seed_value if seed_value != 0 else 1
+	_reset_fresh_generator()
+
+func _reset_fresh_generator() -> void:
+	_fresh_rng.seed = fresh_seed
+	_fresh_color_bag.clear()
+	_fresh_run_identity = -1
+	_fresh_run_remaining = 0
+	_previous_fresh_run_identity = -1
+	fresh_identity_counts = [0, 0, 0, 0]
+	fresh_run_length_counts = [0, 0, 0, 0, 0, 0, 0]
+	fresh_runs_generated = 0
+	longest_fresh_run = 0
+
+func _draw_fresh_run_color() -> int:
+	if _fresh_color_bag.is_empty():
 		for identity in range(TeamData.COUNT):
-			_fresh_bag.append(identity)
-		for index in range(_fresh_bag.size() - 1, 0, -1):
+			_fresh_color_bag.append(identity)
+		for index in range(_fresh_color_bag.size() - 1, 0, -1):
 			var swap_index := _fresh_rng.randi_range(0, index)
-			var temporary := _fresh_bag[index]
-			_fresh_bag[index] = _fresh_bag[swap_index]
-			_fresh_bag[swap_index] = temporary
-	return _fresh_bag.pop_front()
+			var temporary := _fresh_color_bag[index]
+			_fresh_color_bag[index] = _fresh_color_bag[swap_index]
+			_fresh_color_bag[swap_index] = temporary
+	if _fresh_color_bag.size() > 1 and _fresh_color_bag[-1] == _previous_fresh_run_identity:
+		var swap_index := _fresh_rng.randi_range(0, _fresh_color_bag.size() - 2)
+		var temporary := _fresh_color_bag[-1]
+		_fresh_color_bag[-1] = _fresh_color_bag[swap_index]
+		_fresh_color_bag[swap_index] = temporary
+	return _fresh_color_bag.pop_back()
+
+func _draw_fresh_run_length() -> int:
+	var roll := _fresh_rng.randi_range(1, 100)
+	var cumulative := 0
+	for index in range(FRESH_RUN_LENGTH_WEIGHTS.size()):
+		cumulative += FRESH_RUN_LENGTH_WEIGHTS[index]
+		if roll <= cumulative:
+			return index + 1
+	return FRESH_RUN_LENGTH_WEIGHTS.size()
 
 func _make_ball(identity: int, logical_x: float, display_x := NAN) -> Dictionary:
 	var resolved_display := logical_x if is_nan(display_x) else display_x

@@ -2,6 +2,7 @@ extends Node
 
 const SHOOT_COOLDOWN := 0.4
 const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
+const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 
 var _background: ColorRect
 var _battlefield_container: SubViewportContainer
@@ -12,6 +13,7 @@ var _shooter_view: ShooterView
 var _magazine_view: MagazineView
 var _hud_view: HudView
 var _game_over_overlay: GameOverOverlay
+var _sfx: Node
 var _magazine := MagazineState.new()
 var _chain_model := ChainModel.new()
 var _progression := MatchProgression.new()
@@ -31,6 +33,8 @@ func _ready() -> void:
 	_progression.state_changed.connect(_on_progression_state_changed)
 	_progression.match_resolved.connect(_on_match_resolved)
 	_battlefield.game_over_requested.connect(_on_game_over_requested)
+	_battlefield.defender_knocked_down.connect(_on_defender_knocked_down)
+	_battlefield.defender_revived.connect(_on_defender_revived)
 	_game_over_overlay.restart_requested.connect(_restart_run)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
@@ -66,6 +70,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.keycode == KEY_F3:
 			_chain_view.toggle_debug()
 			get_viewport().set_input_as_handled()
+		elif event.keycode == KEY_M:
+			_sfx.toggle_mute()
+			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
 		_handle_touch(event)
 	elif event is InputEventScreenDrag and event.index == _active_touch_id:
@@ -99,21 +106,25 @@ func _shoot() -> void:
 		return
 	var fired_identity := _magazine.consume_loaded()
 	_shooter_view.launch(fired_identity)
+	_sfx.play_cue("shoot")
 	_cooldown_remaining = SHOOT_COOLDOWN
 
 func _swap() -> void:
 	if _game_over:
 		return
 	_magazine.swap()
+	_sfx.play_cue("swap")
 
 func _on_magazine_changed(loaded: int, next_value: int) -> void:
 	_shooter_view.set_loaded(loaded)
 	_magazine_view.set_identities(loaded, next_value)
 
 func _on_shot_reached_lane(identity: int, screen_x: float) -> void:
-	_chain_model.try_insert_shot(identity, screen_x - _chain_view.position.x)
+	if _chain_model.try_insert_shot(identity, screen_x - _chain_view.position.x):
+		_sfx.play_cue("insert")
 
 func _on_chain_match_completed(identity: int, group_size: int) -> void:
+	_sfx.play_cue("match")
 	_progression.register_match(identity, group_size)
 
 func _on_progression_state_changed(score: int, combo_count: int, tier: int, fever_active: bool, window_ratio: float) -> void:
@@ -121,18 +132,29 @@ func _on_progression_state_changed(score: int, combo_count: int, tier: int, feve
 
 func _on_match_resolved(result: Dictionary) -> void:
 	_chain_view.show_progression_feedback(result)
-	_battlefield.handle_match(result)
+	var outcome := _battlefield.handle_match(result)
+	if str(outcome.get("action", "")) == "attack":
+		var attack: Dictionary = outcome.get("attack", {})
+		_sfx.play_cue("attack", int(attack.get("tier", 1)))
+
+func _on_defender_knocked_down(_identity: int) -> void:
+	_sfx.play_cue("knockdown")
+
+func _on_defender_revived(_identity: int) -> void:
+	_sfx.play_cue("revive")
 
 func _on_game_over_requested(_identity: int) -> void:
 	if _game_over:
 		return
 	_game_over = true
+	_sfx.set_gameplay_enabled(false)
 	_clear_touch_ownership()
 	_shooter_view.set_simulation_paused(true)
 	_game_over_overlay.show_game_over(_progression.score)
 
 func _restart_run() -> void:
 	_game_over = false
+	_sfx.reset_run()
 	_cooldown_remaining = 0.0
 	_clear_touch_ownership()
 	_shooter_view.reset_run()
@@ -144,6 +166,9 @@ func _restart_run() -> void:
 	_game_over_overlay.hide_for_restart()
 
 func _build_scene() -> void:
+	_sfx = SfxManagerScript.new()
+	_sfx.name = "SFX"
+	add_child(_sfx)
 	_background = ColorRect.new()
 	_background.name = "Background"
 	_background.color = Color(0.025, 0.035, 0.065)

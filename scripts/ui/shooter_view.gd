@@ -3,6 +3,8 @@ extends Control
 
 signal shot_reached_lane(identity: int, impact_x: float)
 
+const SHOT_TRAVEL_TIME := 0.20
+
 var loaded_identity: int = TeamData.Identity.RED
 var shooter_x := 400.0
 var shooter_y := 650.0
@@ -44,7 +46,14 @@ func move_to(screen_x: float) -> void:
 	queue_redraw()
 
 func launch(identity: int) -> void:
-	_shots.append({"position": Vector2(shooter_x, shooter_y - 42.0), "identity": identity})
+	var start := Vector2(shooter_x, shooter_y - 42.0)
+	_shots.append({
+		"position": start,
+		"start": start,
+		"target_y": shot_ceiling,
+		"elapsed": 0.0,
+		"identity": identity,
+	})
 	_muzzle_flash = 0.12
 	queue_redraw()
 
@@ -54,10 +63,12 @@ func _process(delta: float) -> void:
 	var needs_redraw := false
 	for index in range(_shots.size() - 1, -1, -1):
 		var shot: Dictionary = _shots[index]
-		var previous_y := float(shot.position.y)
-		shot.position.y -= 610.0 * delta
+		shot.elapsed = minf(float(shot.elapsed) + maxf(delta, 0.0), SHOT_TRAVEL_TIME)
+		var ratio := clampf(float(shot.elapsed) / SHOT_TRAVEL_TIME, 0.0, 1.0)
+		var start: Vector2 = shot.start
+		shot.position = Vector2(start.x, lerpf(start.y, float(shot.target_y), ratio))
 		_shots[index] = shot
-		if previous_y >= shot_ceiling and float(shot.position.y) <= shot_ceiling:
+		if ratio >= 1.0:
 			shot_reached_lane.emit(int(shot.identity), float(shot.position.x))
 			_shots.remove_at(index)
 		needs_redraw = true

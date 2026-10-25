@@ -2,6 +2,8 @@ class_name Battlefield
 extends Node3D
 
 signal game_over_requested(identity: int)
+signal defender_knocked_down(identity: int)
+signal defender_revived(identity: int)
 
 var lanes: Array[LaneActor] = []
 var attack_history: Array[Dictionary] = []
@@ -24,6 +26,8 @@ func _ready() -> void:
 		add_child(lane)
 		lanes.append(lane)
 		lane.combat_model.breached.connect(_on_lane_breached)
+		lane.combat_model.defender_knocked_down.connect(_on_defender_knocked_down)
+		lane.combat_model.defender_revived.connect(_on_defender_revived)
 
 func fire_for_match(result: Dictionary) -> Dictionary:
 	var outcome := handle_match(result)
@@ -104,6 +108,12 @@ func _on_lane_breached(identity: int, _enemy_uid: int) -> void:
 	for lane in lanes:
 		lane.combat_model.set_game_over(true)
 	game_over_requested.emit(identity)
+
+func _on_defender_knocked_down(identity: int) -> void:
+	defender_knocked_down.emit(identity)
+
+func _on_defender_revived(identity: int, _repelled_count: int) -> void:
+	defender_revived.emit(identity)
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()

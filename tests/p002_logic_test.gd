@@ -39,7 +39,8 @@ func _test_bounded_seed() -> void:
 			longest_run = maxi(longest_run, current_run)
 		else:
 			current_run = 1
-	_check(longest_run < ChainModel.MATCH_SIZE, "seed contains no uncontrolled match-ready triple")
+	_check(longest_run >= 4, "seed intentionally demonstrates a passive same-color cluster")
+	_check(model.total_match_events == 0, "seeded match-ready clusters do not clear without player insertion")
 
 func _test_three_ball_threshold() -> void:
 	var model := ChainModel.new()
