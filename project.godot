@@ -6,7 +6,7 @@ config_version=5
 [application]
 
 config/name="Lane Ball Shooter"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/boot.tscn"
 
 [display]
 

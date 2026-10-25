@@ -1,38 +1,83 @@
-# Codex Handoff — LBS-P020 special enemy abilities
+# Codex Handoff — LBS-P021 Web menu and portable export
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** this scoped P020 commit.
+**Implementation commit:** this scoped P021 commit.
 
-**Mailbox:** remains on LBS-P020. `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
+**Mailbox:** remains on LBS-P021. P022 was not implemented or activated, and ChatGPT-owned mailbox files were not edited.
 
-## Sickle Snake
+## Web bootstrap and fullscreen lifecycle
 
-A nonfatal hit now moves the living Snake from `moving` to an authoritative `stunned` state for exactly 0.5 simulation seconds. Its horizontal speed and swept-collision motion are zero throughout that interval. It then chooses a valid adjacent lane: edge lanes always choose inward, while middle lanes use a dedicated seeded 50/50 RNG so spawn sampling remains reproducible. If the preferred lane is full, it tries the other adjacent lane; if both are full it waits without moving and retains the original choice until capacity becomes available.
+`project.godot` now starts at `scenes/boot.tscn`. Its lightweight `scripts/boot.gd` checks platform features before creating anything from `scenes/main.tscn`:
 
-Transfer is atomic between the two lane models and does not invoke spawning or neutralization. The enemy retains its global `spawn_id`, HP, X position, type, original lane quota charge, live-enemy accounting, one-Snake ownership, and eventual 15-second death cooldown. A destination-local UID is allocated to avoid collisions. The same visual nodes are reparented and cross lane depth smoothly over 0.3 seconds; combat ownership moves to the destination at transfer start, so the Snake remains targetable and projectile, tier-3, and emergency deaths are attributed exactly once. After the crossing, normal 0.48-unit/s movement resumes. Large simulation steps consume stun/transfer time deterministically and apply only their remaining fraction to movement.
+- Web creates only a responsive dark menu with `LANE BALL SHOOTER` and `START GAME`; no chain, enemies, score, timers, SFX, or gameplay scene exist underneath it.
+- START GAME reveals one blocking prompt with exact text `Play in fullscreen?`, plus finger-sized, keyboard-focusable `YES` and `NO` buttons.
+- YES calls `DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)` synchronously from the actual `pressed` handler, before any await/defer/timer or scene transition, then starts Main exactly once. An injected requester verifies call ordering headlessly.
+- NO starts Main exactly once without touching the fullscreen API. Choice locking, disabled buttons, and hiding the menu prevent duplicates and shooter click-through.
+- Desktop and native Android bypass the menu and change to Main on the next safe idle tick. This avoids mutating the SceneTree while the bootstrap itself is entering it while preserving immediate native startup. `scenes/main.tscn` remains directly loadable by every older fixture.
+- `--web-menu-preview` forces the menu on desktop for manual inspection. Normal browser fullscreen exit simply resizes the viewport; both menu and existing Main layouts remain safe-area responsive.
 
-## Healyzard
+## Repeatable Web build
 
-Every Healyzard now owns an independent 15-second gameplay timer. At each exact boundary it targets every other non-Healyzard currently in its lane and restores one HP, capped by each target's canonical maximum. It never heals itself, another Healyzard, or an enemy in another lane. Pulses still publish deterministic target/restoration details when all eligible targets are already full, and timers stop with the existing terminal combat freeze/reset with the encounter.
+Added executable `scripts/build_web.sh`. It clears only `exports/web/`, performs the release export, verifies HTML/WASM/PCK presence, and packages the runtime files with `index.html` at the ZIP root. `export_presets.cfg` keeps the Web preset single-threaded (`variant/thread_support=false`), non-PWA, and Compatibility-rendered; `exports/**` is now explicitly excluded to prevent a prior build from being scanned back into its own PCK.
 
-The LaneActor reuses one generated 64×64 radial-alpha texture across all healer visuals. Each healer owns a Sprite3D behind its body; a pulse shows the soft yellow center/transparent-edge glow, expands it, and fades it completely over 0.85 seconds. The aura is hidden on death, while the existing P018 body fall, sparks, fade, SFX, and three-second victory delay continue unchanged. No external asset or additional audio cue was introduced.
+The installed Godot binary is `4.7.2.stable.official.ed1daf0bf`. Initially only mismatched `4.7.2.stable.mono` Windows templates were present. I downloaded the official `Godot_v4.7.2-stable_export_templates.tpz` release asset, verified its SHA-256 `f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011` against GitHub release metadata, and installed only these matching files:
 
-## Regression coverage
+- `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/version.txt`
+- `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/web_nothreads_debug.zip`
+- `/home/shiki/.local/share/godot/export_templates/4.7.2.stable/web_nothreads_release.zip`
 
-Added `tests/p020_special_enemy_abilities_test.gd` — PASS (67 checks):
+Exact build command:
 
-- exact 0.5-second stun at 30/60/120 Hz and 0.08-second steps, followed by a 0.3-second visual transfer and fractional movement resumption;
-- preservation of global identity, HP, X, quota/live accounting, and collision-safe destination-local UID remapping;
-- deterministic edge/middle routing, balanced seeded middle choices, preferred-full fallback, and both-full waiting;
-- fatal damage during transfer plus destination projectile, tier-3, and emergency clears, with one death cue and normal cooldown;
-- independent healer timers, exact 15-second boundaries, maximum-HP caps, exclusions, zero-restoration events, transfer recipients, terminal freeze, and restart;
-- generated radial texture center/edge alpha, sharing, render order, pulse animation/reuse, and death cleanup;
-- retained P017 original-UID conveyor history and P010 staged insertion/cascade timing.
+```sh
+./scripts/build_web.sh
+```
 
-## Validation
+Local ignored output:
+
+| File | Bytes |
+|---|---:|
+| `exports/web/index.html` | 5,447 |
+| `exports/web/index.js` | 279,815 |
+| `exports/web/index.wasm` | 39,514,754 |
+| `exports/web/index.pck` | 337,612 |
+| `exports/web/index.audio.worklet.js` | 7,298 |
+| `exports/web/index.audio.position.worklet.js` | 2,973 |
+| `exports/web/index.png` | 21,443 |
+| `exports/web/index.icon.png` | 5,700 |
+| `exports/web/index.apple-touch-icon.png` | 11,944 |
+
+`exports/lane-ball-shooter-web.zip` contains exactly those nine files at archive root. Final ZIP SHA-256:
+
+`aea1571db05a3f82de2b741855a041d391ba2a92076b4349fef0b55773c75490`
+
+The entire `exports/` tree remains gitignored and uncommitted.
+
+## HTTP/browser verification
+
+Documented server command:
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1 --directory exports/web
+```
+
+Port 8765 was already occupied locally by an unrelated uvicorn process, so the actual bounded smoke used the same command on port 8766. Every one of the nine runtime resources returned HTTP 200. Relevant MIME results were `text/html`, `text/javascript`, `application/wasm`, `application/octet-stream` for PCK, and `image/png`.
+
+Headless Google Chrome requested and loaded the exported HTML, JS, PCK, WASM, splash, and icon without an HTML failure notice. Its noninteractive screenshot mode exited while the Godot loading splash remained visible, so I do not claim automated proof of rendered menu interaction or a successful browser fullscreen transition. Those user-gesture and visual paths remain in the manual checklist below.
+
+Godot's exporter also printed expected environment noise about absent Android build-tools, denied local editor-settings writes, and sandbox socket creation; the Web release export itself completed and all requested artifacts were verified.
+
+## Automated validation
+
+Added `tests/p021_web_menu_export_test.gd` — PASS (46 checks):
+
+- no gameplay creation before selection; exact title/button/prompt labels;
+- single modal, no click-through, direct fullscreen-before-game ordering, NO without fullscreen, and duplicate guards;
+- Web/native/Android platform gating and direct native Main handoff;
+- safe bounds and >=60px controls at 960×540, 1280×720, 1600×720, 2400×1080, and 640×360;
+- keyboard focus, relayout without restart, bootstrap/preset/Compatibility/threadless/PWA/export-helper configuration.
 
 Godot 4.7.2 headless, all passing:
 
@@ -46,7 +91,7 @@ Godot 4.7.2 headless, all passing:
 - P008 gamefeel/SFX — PASS (84 checks).
 - P009 Zuma rollback — PASS (46 checks).
 - P010 staged cascade — PASS (162 checks).
-- P011 segment stress — PASS (16,485 checks; seed `5011CAFE`, 2,400 operations, 1,836 insertions, 620 matches, 707 fresh, 57 hidden-left).
+- P011 segment stress — PASS (16,485 checks).
 - P012 forward insertion — PASS (366 checks).
 - P013 shooter preview/mask — PASS (50 checks).
 - P014 causal rollback/feed — PASS (289 checks).
@@ -56,20 +101,21 @@ Godot 4.7.2 headless, all passing:
 - P018 enemy death/victory delay — PASS (41 checks).
 - P019 typed roster/spawning — PASS (117 checks).
 - P020 special enemy abilities — PASS (67 checks).
+- P021 Web menu/export — PASS (46 checks).
 - `git diff --check` — PASS.
 
-Bounded main-scene startup reached the running game without project/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`; each was intentionally stopped after three seconds (exit 124). The sandbox still denies Godot's `user://logs/godot.log` rotation, producing the known harmless warning. Web/Android exports and physical-device QA were not exercised.
+Bounded native bootstrap/Main startup passed without project/runtime errors at 960×540, 1280×720, 1600×720, and 2400×1080; each was intentionally stopped after three seconds (exit 124). The recurring sandbox denial for `user://logs/godot.log` is harmless.
 
-## Manual playtest
+## Manual browser playtest
 
-1. Hit a full-health Snake once. Confirm it stops immediately for about half a second, crosses to an adjacent non-full lane without disappearing, and then resumes its fast slide with the same remaining HP.
-2. Fill its preferred neighboring lane and repeat; it should use the other adjacent lane. Fill both neighbors; it should wait motionless, then transfer after space opens.
-3. Shoot or clear a Snake while it is crossing. Confirm one death animation/SFX, no duplicate body, no replacement before the established 15-second cooldown, and unchanged encounter counts.
-4. Wound several non-Healyzards beside one or more Healyzards. Every healer should pulse independently at 15-second intervals, restoring one HP up to each target's maximum. Healyzards and other lanes must remain unchanged.
-5. Confirm each pulse shows a soft circular yellow glow behind the healer, with transparent edges, expanding and disappearing in under one second. Kill the healer during/after a pulse and confirm the aura leaves no ghost.
+1. Run the localhost server and open `http://127.0.0.1:8765/` in a current WebGL 2/WebAssembly browser. Confirm only the dark title and START GAME appear; enemies/chain/audio must not run behind it.
+2. Press START GAME. Confirm exact prompt and YES/NO labels, touch target sizes, keyboard focus/Enter/Space, and no shooter click-through.
+3. Choose NO: gameplay starts once in-page and never enters fullscreen. Reload, choose YES: the browser fullscreen request occurs from that click; if denied, gameplay still starts in-page.
+4. Exit fullscreen with Escape/browser controls and resize through target landscapes. Confirm shooter, ball chain, HUD, and hitboxes remain aligned. Restart must restart the current run rather than return to the menu.
+5. Recheck procedural SFX after the first gesture. Browser audio/fullscreen policy, touch behavior, and perceived visuals still require this real interactive pass.
 
-## Limitations / assumptions
+## Limitations
 
-- Logical lane ownership changes when the visible crossing begins. This keeps the transfer atomic and the Snake continuously targetable; attacks from its destination lane can therefore kill it before the visual reaches the destination centerline.
-- A waiting Snake preserves its initial random preference and only uses the alternate as a capacity fallback; it does not reroll every frame.
-- The aura is a procedural billboard and has headless property/pixel coverage, but perceived softness, depth, and readability still need desktop/Web/Android visual playtesting.
+- No deployment, Mintbase connection, firewall change, persistent server, or public exposure was performed; that is P022 and remains unauthorized.
+- Chrome's bounded noninteractive load verified resource fetching but not post-splash canvas rendering or a genuine transient-user-activation fullscreen grant.
+- Android export was not attempted; its SDK/build-tools are absent and unrelated to the completed Web build.
