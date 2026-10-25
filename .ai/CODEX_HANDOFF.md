@@ -1,52 +1,36 @@
-# Codex Handoff — LBS-P019 typed enemy roster and spawn director
+# Codex Handoff — LBS-P020 special enemy abilities
 
 **Status:** COMPLETE
 
 **Branch:** `master`
 
-**Implementation commit:** this scoped P019 commit.
+**Implementation commit:** this scoped P020 commit.
 
-**Mailbox:** remains on LBS-P019. P020 abilities were not implemented, and `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
+**Mailbox:** remains on LBS-P020. `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and `.ai/PROTOCOL.md` were not edited or advanced.
 
-## Authoritative roster
+## Sickle Snake
 
-Added `scripts/world/enemy_types.gd` as the single definition for type enum, display names, max HP, speed multipliers and base spawn weights:
+A nonfatal hit now moves the living Snake from `moving` to an authoritative `stunned` state for exactly 0.5 simulation seconds. Its horizontal speed and swept-collision motion are zero throughout that interval. It then chooses a valid adjacent lane: edge lanes always choose inward, while middle lanes use a dedicated seeded 50/50 RNG so spawn sampling remains reproducible. If the preferred lane is full, it tries the other adjacent lane; if both are full it waits without moving and retains the original choice until capacity becomes available.
 
-- HOPPER: 2 HP, existing 0.24-unit/s average grounded/air hop, gray original silhouette and exactly two permanent orange top horns.
-- HEAVY: 4 HP, continuous 0.168-unit/s slide, wider dark-orange body/helmet and pale contrasting eyes, no horns.
-- SICKLE_SNAKE: 2 HP, continuous 0.48-unit/s slide, taller strong-yellow body and dark eyes, no horns.
-- HEALYZARD: 2 HP, zero velocity, green 0.7-scale body in a rear support slot, no horns.
+Transfer is atomic between the two lane models and does not invoke spawning or neutralization. The enemy retains its global `spawn_id`, HP, X position, type, original lane quota charge, live-enemy accounting, one-Snake ownership, and eventual 15-second death cooldown. A destination-local UID is allocated to avoid collisions. The same visual nodes are reparented and cross lane depth smoothly over 0.3 seconds; combat ownership moves to the destination at transfer start, so the Snake remains targetable and projectile, tier-3, and emergency deaths are attributed exactly once. After the crossing, normal 0.48-unit/s movement resumes. Large simulation steps consume stun/transfer time deterministically and apply only their remaining fraction to movement.
 
-Enemy records now carry immutable `type`, `spawn_id`, canonical `max_hp` and per-instance `speed`. Historical `LaneCombatModel.spawn_enemy()` calls remain source-compatible and default to a 2-HP Hopper; tests may pass an explicit type and global ID. Only Hopper advances the existing hop clock/height/squash. Heavy and Snake use continuous swept linear movement; Healyzard remains stationary. Projectile collision now branches between the existing piecewise hop sweep and constant-speed/stationary sweep, avoiding tunneling at large frame steps.
+## Healyzard
 
-All HP pips/health-bar behavior was removed. The two old orange top blocks are now named permanent Hopper horns and are independent of HP. Other types have zero horns. Hit flash, tier damage, emergency/tier-3 removal, P018 death actor capture and fades apply to every type. Typed neutralization detail carries the full removed record before legacy kill/state signals, so death fallback visuals retain the correct archetype.
+Every Healyzard now owns an independent 15-second gameplay timer. At each exact boundary it targets every other non-Healyzard currently in its lane and restores one HP, capped by each target's canonical maximum. It never heals itself, another Healyzard, or an enemy in another lane. Pulses still publish deterministic target/restoration details when all eligible targets are already full, and timers stop with the existing terminal combat freeze/reset with the encounter.
 
-## Global spawn director
-
-Live-game automatic spawning now has one Battlefield-owned scheduler instead of four lane RNGs. Battlefield owns a spawn-only RNG (`0x19E019` default), injectible through `set_spawn_rng_seed()` and reseeded on restart independently of conveyor and tier-3 target RNGs. It samples configured base weights 50/20/20/10. When Snake is ineligible, only its weight is removed, producing a 50:20:10 eligible pool; capacity rejection does not draw or consume quota.
-
-Every directed spawn receives a unique encounter-wide `spawn_id`; lane-local UID remains unchanged for combat/visual compatibility. A successful Snake spawn registers occupancy before the next lane can spawn. Projectile, tier-3 and emergency neutralization release that exact spawn ID once and set `cooldown_until = simulation_time + 15.0`. The Battlefield gameplay clock stops at victory/defeat. Nonfatal damage does not release the gate, and eligibility becomes true at the exact 15-second boundary.
-
-Each lane remains capped at five living and eight successful encounter spawns. A full lane leaves its timer due and quota untouched. Initial enemies are also weighted, spawned sequentially only after all lane connections exist, and restart reproduces the same sequence from the configured seed. A weighted initial Healyzard goes directly to its rear slot. Multiple Healyzards receive descending 0.82-unit-separated support slots starting at x=6.7, leaving the ordinary x=7.6 entrance free.
-
-Standalone LaneActor/LaneCombatModel fixtures retain their prior local Hopper auto-spawn behavior. Runtime Battlefield lanes explicitly disable it and must use `spawn_directed_enemy`; direct model typed spawns are test fixtures and intentionally do not participate in global Snake ownership.
-
-## P020 boundary
-
-P019 does not implement post-hit Snake stun/lane switching, Healyzard healing, healing timers or yellow aura. Those remain queued in P020 exactly as required.
+The LaneActor reuses one generated 64×64 radial-alpha texture across all healer visuals. Each healer owns a Sprite3D behind its body; a pulse shows the soft yellow center/transparent-edge glow, expands it, and fades it completely over 0.85 seconds. The aura is hidden on death, while the existing P018 body fall, sparks, fade, SFX, and three-second victory delay continue unchanged. No external asset or additional audio cue was introduced.
 
 ## Regression coverage
 
-Added `tests/p019_enemy_roster_spawning_test.gd` — PASS (117 checks):
+Added `tests/p020_special_enemy_abilities_test.gd` — PASS (67 checks):
 
-- canonical 2/4/2/2 HP and 0.24/0.168/0.48/0 speeds; Hopper-only hop and historical default spawn;
-- colors/scales, exactly two persistent Hopper horns, zero other horns and no HP meshes;
-- sliding/stationary projectile sweeps at 30/60/120 Hz and 0.08-second steps, including Heavy multi-hit durability;
-- 20,000 fully eligible draws within 2% of 50/20/20/10, 16,000 ineligible draws within 2% of normalized 50:20:10, and exact seeded sequence replay (`0x50102010`, `99173`);
-- global one-Snake gate, nonfatal retention and projectile/tier-3/emergency death cooldown checks at 14.999 and 15.000 seconds;
-- deterministic weighted initialization/restart, unique global IDs, capacity deferral, eight-spawn quotas, distinct healer support slots and continued ordinary movement/spawning;
-- a complete directed 32-enemy encounter with same-frame Snake/cap audits and preserved victory;
-- preserved 102 px/s P017 original-UID history, 0.05-second insertion and invariant `I0`.
+- exact 0.5-second stun at 30/60/120 Hz and 0.08-second steps, followed by a 0.3-second visual transfer and fractional movement resumption;
+- preservation of global identity, HP, X, quota/live accounting, and collision-safe destination-local UID remapping;
+- deterministic edge/middle routing, balanced seeded middle choices, preferred-full fallback, and both-full waiting;
+- fatal damage during transfer plus destination projectile, tier-3, and emergency clears, with one death cue and normal cooldown;
+- independent healer timers, exact 15-second boundaries, maximum-HP caps, exclusions, zero-restoration events, transfer recipients, terminal freeze, and restart;
+- generated radial texture center/edge alpha, sharing, render order, pulse animation/reuse, and death cleanup;
+- retained P017 original-UID conveyor history and P010 staged insertion/cascade timing.
 
 ## Validation
 
@@ -71,20 +55,21 @@ Godot 4.7.2 headless, all passing:
 - P017 offscreen-left reentry — PASS (352 checks).
 - P018 enemy death/victory delay — PASS (41 checks).
 - P019 typed roster/spawning — PASS (117 checks).
+- P020 special enemy abilities — PASS (67 checks).
 - `git diff --check` — PASS.
 
-Bounded main-scene startup reached the running game without project/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`; each was intentionally terminated by `timeout` after three seconds (exit 124). The sandbox still denies Godot's `user://logs/godot.log` rotation, producing the known harmless warning. Web/Android exports and physical-device QA were not exercised.
+Bounded main-scene startup reached the running game without project/runtime errors at `960x540`, `1280x720`, `1600x720`, and `2400x1080`; each was intentionally stopped after three seconds (exit 124). The sandbox still denies Godot's `user://logs/godot.log` rotation, producing the known harmless warning. Web/Android exports and physical-device QA were not exercised.
 
 ## Manual playtest
 
-1. Identify gray hopping Hopper/two orange horns, broad orange Heavy, tall fast yellow Snake and small stationary green Healyzard. Damage a Hopper to 1 HP: both horns must remain. No health display or non-Hopper horn should exist.
-2. Watch motion over several seconds: Hopper alone pauses then hops; Heavy slides slowly, Snake slides twice baseline speed and Healyzard stays in a rear slot. Shoot each type and confirm hits register throughout motion.
-3. Let several lanes spawn simultaneously. Never observe two living Snakes. Kill one by projectile, tier-3 and emergency in separate runs and confirm no replacement for 15 gameplay seconds.
-4. Let Healyzards coexist with later entrances. They should not stack or block spawning. They intentionally do not heal or glow yet.
-5. Complete the 32-enemy encounter and verify typed deaths, three-second WAVE CLEARED delay, immediate defeat, restart reseeding and all accepted conveyor behavior.
+1. Hit a full-health Snake once. Confirm it stops immediately for about half a second, crosses to an adjacent non-full lane without disappearing, and then resumes its fast slide with the same remaining HP.
+2. Fill its preferred neighboring lane and repeat; it should use the other adjacent lane. Fill both neighbors; it should wait motionless, then transfer after space opens.
+3. Shoot or clear a Snake while it is crossing. Confirm one death animation/SFX, no duplicate body, no replacement before the established 15-second cooldown, and unchanged encounter counts.
+4. Wound several non-Healyzards beside one or more Healyzards. Every healer should pulse independently at 15-second intervals, restoring one HP up to each target's maximum. Healyzards and other lanes must remain unchanged.
+5. Confirm each pulse shows a soft circular yellow glow behind the healer, with transparent edges, expanding and disappearing in under one second. Kill the healer during/after a pulse and confirm the aura leaves no ghost.
 
 ## Limitations / assumptions
 
-- Headless checks validate model data and primitive/material properties; silhouette readability, grounding, color contrast and perceived relative speed still need desktop/Web/Android visual playtesting.
-- Base weights are probabilities, not a promised per-encounter composition, especially while the global Snake gate renormalizes the eligible pool.
-- Direct lane-model spawn calls remain intentionally local fixtures. Runtime callers requiring the global Snake invariant must use Battlefield's director API.
+- Logical lane ownership changes when the visible crossing begins. This keeps the transfer atomic and the Snake continuously targetable; attacks from its destination lane can therefore kill it before the visual reaches the destination centerline.
+- A waiting Snake preserves its initial random preference and only uses the alternate as a capacity fallback; it does not reroll every frame.
+- The aura is a procedural billboard and has headless property/pixel coverage, but perceived softness, depth, and readability still need desktop/Web/Android visual playtesting.

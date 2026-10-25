@@ -10,6 +10,10 @@ const DEATH_EFFECT_DURATION := 1.0
 const DEATH_FALL_DURATION := 0.5
 const EMERGENCY_WAVE_EXPANSION := 38.0
 const REVIVAL_FLASH_EXPANSION := 3.0
+const HEALING_AURA_DURATION := 0.85
+const HEALING_AURA_TEXTURE_SIZE := 64
+
+static var _shared_healing_aura_texture: ImageTexture
 
 var team_identity := 0
 var lane_index := 0
@@ -41,6 +45,7 @@ func _ready() -> void:
 	_build_lane()
 	_build_defender()
 	combat_model.enemy_neutralized_detail.connect(_on_enemy_neutralized_detail)
+	combat_model.healer_pulsed.connect(_on_healer_pulsed)
 	combat_model.defender_knocked_down.connect(_on_defender_knocked_down)
 	combat_model.emergency_discharged.connect(_on_emergency_discharged)
 	combat_model.defender_revived.connect(_on_defender_revived)
@@ -52,6 +57,7 @@ func _ready() -> void:
 	_update_status_visual()
 
 func _process(delta: float) -> void:
+	_update_healing_auras(delta)
 	combat_model.update(delta)
 	_update_defender_feedback(delta)
 	_update_death_effects(delta)
@@ -168,6 +174,8 @@ func _sync_visuals() -> void:
 	for enemy in combat_model.enemies:
 		var uid := int(enemy.uid)
 		live_enemy_ids[uid] = true
+		if _enemy_visuals.has(uid) and int(_enemy_visuals[uid].get("type", EnemyTypes.Type.HOPPER)) != int(enemy.get("type", EnemyTypes.Type.HOPPER)):
+			_free_enemy_visual(uid)
 		if not _enemy_visuals.has(uid):
 			_enemy_visuals[uid] = _create_enemy_visual(uid, int(enemy.get("type", EnemyTypes.Type.HOPPER)))
 		_update_enemy_visual(_enemy_visuals[uid], enemy)
@@ -201,6 +209,19 @@ func _create_enemy_visual(uid: int, enemy_type: int) -> Dictionary:
 	var root := Node3D.new()
 	root.name = "%s_%d" % [EnemyTypes.display_name(resolved_type).replace(" ", ""), uid]
 	add_child(root)
+	var aura: Sprite3D
+	if resolved_type == EnemyTypes.Type.HEALYZARD:
+		aura = Sprite3D.new()
+		aura.name = "HealingAura"
+		aura.texture = healing_aura_texture()
+		aura.pixel_size = 0.026
+		aura.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		aura.shaded = false
+		aura.no_depth_test = false
+		aura.position = Vector3(0.0, 0.55, -0.24)
+		aura.modulate = Color(1.0, 0.88, 0.18, 0.0)
+		aura.visible = false
+		root.add_child(aura)
 	var body_color := Color(0.23, 0.25, 0.31)
 	var helmet_color := Color(0.12, 0.14, 0.19)
 	var eye_color := Color(1.0, 0.44, 0.24)
@@ -261,7 +282,7 @@ func _create_enemy_visual(uid: int, enemy_type: int) -> Dictionary:
 			root.add_child(horn)
 			horns.append(horn)
 	root.scale = base_scale
-	return {"root": root, "shadow": shadow, "horns": horns, "type": resolved_type, "base_scale": base_scale}
+	return {"root": root, "shadow": shadow, "horns": horns, "type": resolved_type, "base_scale": base_scale, "aura": aura, "aura_age": -1.0}
 
 func _update_enemy_visual(visual: Dictionary, enemy: Dictionary) -> void:
 	var root: Node3D = visual.root
@@ -271,10 +292,11 @@ func _update_enemy_visual(visual: Dictionary, enemy: Dictionary) -> void:
 	var is_hopper := EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER)))
 	var landing_amount := (0.16 if not bool(enemy.get("hop_airborne", false)) else pow(absf(cos(hop_progress * PI)), 10.0)) if is_hopper else 0.0
 	var hit_amount := clampf(float(enemy.hit_flash) / 0.16, 0.0, 1.0)
-	root.position = Vector3(float(enemy.x), 0.29 + hop_height, 0.0)
+	root.position = Vector3(float(enemy.x), 0.29 + hop_height, float(enemy.get("transfer_visual_z", 0.0)))
 	var base_scale: Vector3 = visual.base_scale
 	root.scale = base_scale * Vector3(1.0 + landing_amount * 0.12 + hit_amount * 0.16, 1.0 - landing_amount * 0.16 - hit_amount * 0.08, 1.0 + landing_amount * 0.12 + hit_amount * 0.16)
 	shadow.position.x = float(enemy.x)
+	shadow.position.z = float(enemy.get("transfer_visual_z", 0.0))
 	shadow.scale = Vector3(1.0 - hop_height * 0.35, 1.0, 1.0 - hop_height * 0.35)
 
 func _free_enemy_visual(uid: int) -> void:
@@ -284,6 +306,67 @@ func _free_enemy_visual(uid: int) -> void:
 	root.queue_free()
 	shadow.queue_free()
 	_enemy_visuals.erase(uid)
+
+func take_enemy_visual(uid: int) -> Dictionary:
+	if not _enemy_visuals.has(uid):
+		return {}
+	var visual: Dictionary = _enemy_visuals[uid]
+	_enemy_visuals.erase(uid)
+	return visual
+
+func adopt_enemy_visual(uid: int, visual: Dictionary) -> void:
+	if visual.is_empty():
+		return
+	var root_node: Node3D = visual.root
+	var shadow_node: Node3D = visual.shadow
+	root_node.reparent(self, true)
+	shadow_node.reparent(self, true)
+	root_node.name = "%s_%d" % [EnemyTypes.display_name(int(visual.type)).replace(" ", ""), uid]
+	shadow_node.name = "EnemyShadow_%d" % uid
+	_enemy_visuals[uid] = visual
+
+static func healing_aura_texture() -> ImageTexture:
+	if _shared_healing_aura_texture != null:
+		return _shared_healing_aura_texture
+	var image := Image.create(HEALING_AURA_TEXTURE_SIZE, HEALING_AURA_TEXTURE_SIZE, false, Image.FORMAT_RGBA8)
+	var center := Vector2(HEALING_AURA_TEXTURE_SIZE - 1, HEALING_AURA_TEXTURE_SIZE - 1) * 0.5
+	var radius := float(HEALING_AURA_TEXTURE_SIZE - 1) * 0.5
+	for y in range(HEALING_AURA_TEXTURE_SIZE):
+		for x in range(HEALING_AURA_TEXTURE_SIZE):
+			var distance_ratio := Vector2(x, y).distance_to(center) / radius
+			var alpha := pow(clampf(1.0 - distance_ratio, 0.0, 1.0), 1.7) * 0.72
+			image.set_pixel(x, y, Color(1.0, 0.84, 0.12, alpha))
+	_shared_healing_aura_texture = ImageTexture.create_from_image(image)
+	return _shared_healing_aura_texture
+
+func _on_healer_pulsed(event: Dictionary) -> void:
+	var healer_uid := int(event.get("healer_uid", -1))
+	if not _enemy_visuals.has(healer_uid):
+		return
+	var visual: Dictionary = _enemy_visuals[healer_uid]
+	var aura := visual.get("aura") as Sprite3D
+	if aura == null:
+		return
+	visual.aura_age = 0.0
+	aura.visible = true
+	aura.scale = Vector3.ONE * 0.9
+	aura.modulate = Color(1.0, 0.88, 0.18, 0.8)
+	_enemy_visuals[healer_uid] = visual
+
+func _update_healing_auras(delta: float) -> void:
+	for uid in _enemy_visuals.keys():
+		var visual: Dictionary = _enemy_visuals[uid]
+		var aura := visual.get("aura") as Sprite3D
+		if aura == null or float(visual.get("aura_age", -1.0)) < 0.0:
+			continue
+		visual.aura_age = float(visual.aura_age) + delta
+		var ratio := clampf(float(visual.aura_age) / HEALING_AURA_DURATION, 0.0, 1.0)
+		aura.scale = Vector3.ONE * lerpf(0.9, 1.45, ratio)
+		aura.modulate = Color(1.0, 0.88, 0.18, (1.0 - ratio) * 0.8)
+		if ratio >= 1.0:
+			aura.visible = false
+			visual.aura_age = -1.0
+		_enemy_visuals[uid] = visual
 
 func _create_projectile_visual(uid: int) -> MeshInstance3D:
 	var color_value := TeamData.color(team_identity).lightened(0.2)
@@ -342,6 +425,10 @@ func _on_enemy_neutralized_detail(enemy: Dictionary, cause: StringName, impact_x
 	_prepare_fade_materials(visual.shadow)
 	var burst := _create_death_burst(enemy_uid, impact_x)
 	var root: Node3D = visual.root
+	var aura := visual.get("aura") as Sprite3D
+	if aura != null:
+		aura.visible = false
+	burst.position.z = root.position.z
 	_death_effects.append({
 		"uid": enemy_uid,
 		"root": root,

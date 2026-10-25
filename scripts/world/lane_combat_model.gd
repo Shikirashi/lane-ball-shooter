@@ -8,6 +8,7 @@ signal enemy_hit(enemy_uid: int, remaining_hp: int, impact_x: float)
 signal enemy_killed(enemy_uid: int, impact_x: float)
 signal enemy_neutralized(enemy_uid: int, impact_x: float, cause: StringName)
 signal enemy_neutralized_detail(enemy: Dictionary, cause: StringName, impact_x: float)
+signal healer_pulsed(event: Dictionary)
 signal projectile_spawned(projectile: Dictionary)
 signal defender_knocked_down(identity: int)
 signal emergency_discharged(identity: int, cleared_count: int)
@@ -41,6 +42,8 @@ const HISTORY_LIMIT := 128
 const HOP_GROUND_DURATION := 0.55
 const HOP_AIR_DURATION := 0.75
 const HOP_CYCLE_DURATION := HOP_GROUND_DURATION + HOP_AIR_DURATION
+const SNAKE_HIT_STUN_DURATION := 0.5
+const HEALYZARD_PULSE_INTERVAL := 15.0
 
 var team_identity := 0
 var enemy_speed := DEFAULT_ENEMY_SPEED
@@ -132,6 +135,8 @@ func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1, counts_toward_bud
 		"uid": _next_enemy_uid,
 		"spawn_id": spawn_id if spawn_id >= 0 else _next_enemy_uid,
 		"type": resolved_type,
+		"origin_lane": team_identity,
+		"lane_index": team_identity,
 		"x": x_position,
 		"hp": resolved_hp,
 		"max_hp": resolved_hp,
@@ -140,6 +145,12 @@ func spawn_enemy(x_position := RIGHT_BOUNDARY, hp_value := -1, counts_toward_bud
 		"hop_airborne": false,
 		"hop_progress": 0.0,
 		"hit_flash": 0.0,
+		"special_state": &"moving",
+		"special_timer": 0.0,
+		"preferred_lane": -1,
+		"transfer_visual_z": 0.0,
+		"frame_move_fraction": 1.0,
+		"heal_timer": HEALYZARD_PULSE_INTERVAL,
 	}
 	_sync_enemy_motion_state(enemy)
 	_next_enemy_uid += 1
@@ -266,6 +277,8 @@ func _first_swept_hit(projectile_x: float, active_start: float, active_delta: fl
 		var uid := int(enemy.uid)
 		if not EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER))):
 			var slide_speed := float(enemy.get("speed", enemy_speed))
+			if int(enemy.get("type", EnemyTypes.Type.HOPPER)) == EnemyTypes.Type.SICKLE_SNAKE:
+				slide_speed *= float(enemy.get("frame_move_fraction", 1.0)) if StringName(enemy.get("special_state", &"moving")) == &"moving" else 0.0
 			var slide_enemy_x := float(enemy_starts[uid]) - slide_speed * active_start
 			var relative_start := slide_enemy_x - projectile_x
 			var closing_speed := projectile_speed + slide_speed
@@ -322,6 +335,11 @@ func _damage_enemy(enemy_uid: int, damage: int, impact_x: float) -> void:
 			enemy_killed.emit(enemy_uid, impact_x)
 			encounter_state_changed.emit()
 		else:
+			if int(enemy.get("type", EnemyTypes.Type.HOPPER)) == EnemyTypes.Type.SICKLE_SNAKE and StringName(enemy.get("special_state", &"moving")) == &"moving":
+				enemy.special_state = &"stunned"
+				enemy.special_timer = SNAKE_HIT_STUN_DURATION
+				enemy.preferred_lane = -1
+				enemy.frame_move_fraction = 0.0
 			enemies[index] = enemy
 			enemy_hit.emit(enemy_uid, int(enemy.hp), impact_x)
 		return
@@ -330,13 +348,18 @@ func _update_enemies(delta: float) -> void:
 	var previous_positions := {}
 	for enemy in enemies:
 		previous_positions[int(enemy.uid)] = float(enemy.x)
+	_update_healyzards(delta)
 	for index in range(enemies.size()):
 		var enemy := enemies[index]
 		if EnemyTypes.uses_hop(int(enemy.get("type", EnemyTypes.Type.HOPPER))):
 			enemy.x = float(enemy.x) - _hop_displacement(float(enemy.hop_clock), delta, float(enemy.get("speed", enemy_speed)))
 			enemy.hop_clock = fmod(float(enemy.hop_clock) + delta, HOP_CYCLE_DURATION)
 		else:
-			enemy.x = float(enemy.x) - float(enemy.get("speed", 0.0)) * delta
+			var move_fraction := 1.0
+			if int(enemy.get("type", EnemyTypes.Type.HOPPER)) == EnemyTypes.Type.SICKLE_SNAKE:
+				move_fraction = float(enemy.get("frame_move_fraction", 1.0)) if StringName(enemy.get("special_state", &"moving")) == &"moving" else 0.0
+				enemy.frame_move_fraction = 1.0
+			enemy.x = float(enemy.x) - float(enemy.get("speed", 0.0)) * delta * move_fraction
 		_sync_enemy_motion_state(enemy)
 		enemy.hit_flash = maxf(0.0, float(enemy.hit_flash) - delta)
 		enemies[index] = enemy
@@ -352,6 +375,63 @@ func _update_enemies(delta: float) -> void:
 	var breached_uid := _first_new_breach(previous_positions)
 	if breached_uid >= 0:
 		_trigger_breach(breached_uid)
+
+func _update_healyzards(delta: float) -> void:
+	for healer_index in range(enemies.size()):
+		var healer := enemies[healer_index]
+		if int(healer.get("type", EnemyTypes.Type.HOPPER)) != EnemyTypes.Type.HEALYZARD:
+			continue
+		healer.heal_timer = float(healer.get("heal_timer", HEALYZARD_PULSE_INTERVAL)) - delta
+		while float(healer.heal_timer) <= 0.000001:
+			_emit_healer_pulse(healer)
+			healer.heal_timer = float(healer.heal_timer) + HEALYZARD_PULSE_INTERVAL
+		enemies[healer_index] = healer
+
+func _emit_healer_pulse(healer: Dictionary) -> void:
+	var targeted_uids: Array[int] = []
+	var targeted_spawn_ids: Array[int] = []
+	var restored_by_target := {}
+	var restored_total := 0
+	for target_index in range(enemies.size()):
+		var target := enemies[target_index]
+		if int(target.uid) == int(healer.uid) or int(target.get("type", EnemyTypes.Type.HOPPER)) == EnemyTypes.Type.HEALYZARD:
+			continue
+		targeted_uids.append(int(target.uid))
+		targeted_spawn_ids.append(int(target.get("spawn_id", target.uid)))
+		var before := int(target.hp)
+		target.hp = mini(int(target.max_hp), before + 1)
+		var restored := int(target.hp) - before
+		restored_by_target[int(target.get("spawn_id", target.uid))] = restored
+		restored_total += restored
+		enemies[target_index] = target
+	healer_pulsed.emit({
+		"healer_uid": int(healer.uid),
+		"healer_spawn_id": int(healer.get("spawn_id", healer.uid)),
+		"lane_index": team_identity,
+		"targeted_uids": targeted_uids,
+		"targeted_spawn_ids": targeted_spawn_ids,
+		"restored_by_target": restored_by_target,
+		"restored_hp": restored_total,
+	})
+
+func extract_enemy_for_transfer(enemy_uid: int) -> Dictionary:
+	for index in range(enemies.size()):
+		if int(enemies[index].uid) == enemy_uid:
+			var enemy := enemies[index]
+			enemies.remove_at(index)
+			return enemy
+	return {}
+
+func accept_transferred_enemy(enemy: Dictionary) -> int:
+	if enemy.is_empty() or enemies.size() >= max_enemies:
+		return -1
+	var accepted := enemy.duplicate(true)
+	accepted.uid = _next_enemy_uid
+	accepted.lane_index = team_identity
+	_next_enemy_uid += 1
+	enemies.append(accepted)
+	enemies.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.x) < float(b.x))
+	return int(accepted.uid)
 
 func _update_spawning(delta: float) -> void:
 	if not auto_spawn or game_over or encounter_spawn_complete():

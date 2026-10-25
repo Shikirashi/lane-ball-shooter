@@ -9,10 +9,12 @@ signal encounter_progress_changed(neutralized: int, total: int, remaining: int)
 signal defender_knocked_down(identity: int)
 signal defender_revived(identity: int)
 signal enemy_death_started(identity: int, enemy_uid: int, impact_x: float, cause: StringName)
+signal healer_pulsed(event: Dictionary)
 
 const SNAKE_DEATH_COOLDOWN := 15.0
 const HEALYZARD_REAR_X := LaneCombatModel.RIGHT_BOUNDARY - 0.9
 const HEALYZARD_SLOT_SPACING := 0.82
+const SNAKE_TRANSFER_DURATION := 0.3
 
 var lanes: Array[LaneActor] = []
 var attack_history: Array[Dictionary] = []
@@ -29,12 +31,15 @@ var _next_global_spawn_id := 1
 var _living_snake_spawn_id := -1
 var _snake_cooldown_until := 0.0
 var _neutralized_spawn_ids := {}
+var _snake_direction_rng := RandomNumberGenerator.new()
+var _snake_direction_rng_seed := 0x20A020
 
 func _ready() -> void:
 	if _attack_rng_seed == 0:
 		_attack_rng_seed = Time.get_ticks_usec()
 	_attack_rng.seed = _attack_rng_seed
 	_spawn_rng.seed = _spawn_rng_seed
+	_snake_direction_rng.seed = _snake_direction_rng_seed
 	_build_environment()
 	_build_camera()
 	for lane_index in range(TeamData.COUNT):
@@ -49,12 +54,14 @@ func _ready() -> void:
 		lane.combat_model.defender_revived.connect(_on_defender_revived)
 		lane.combat_model.encounter_state_changed.connect(_on_encounter_state_changed)
 		lane.combat_model.enemy_neutralized_detail.connect(_on_enemy_neutralized_detail.bind(lane_index))
+		lane.combat_model.healer_pulsed.connect(_on_healer_pulsed)
 		lane.enemy_death_started.connect(_on_enemy_death_started)
 	_reset_spawn_director(true)
 	_publish_encounter_progress()
 
 func _process(delta: float) -> void:
 	_update_spawn_director(maxf(delta, 0.0))
+	_update_snake_special(maxf(delta, 0.0))
 	_evaluate_terminal_state()
 
 func fire_for_match(result: Dictionary) -> Dictionary:
@@ -110,6 +117,22 @@ func set_spawn_rng_seed(seed_value: int) -> void:
 	_spawn_rng_seed = seed_value if seed_value != 0 else 1
 	_spawn_rng.seed = _spawn_rng_seed
 
+func set_snake_direction_rng_seed(seed_value: int) -> void:
+	_snake_direction_rng_seed = seed_value if seed_value != 0 else 1
+	_snake_direction_rng.seed = _snake_direction_rng_seed
+
+func choose_snake_preferred_lane(origin_lane: int) -> int:
+	match origin_lane:
+		0:
+			return 1
+		3:
+			return 2
+		1:
+			return 0 if _snake_direction_rng.randi_range(0, 1) == 0 else 2
+		2:
+			return 1 if _snake_direction_rng.randi_range(0, 1) == 0 else 3
+	return -1
+
 func sample_enemy_type(snake_eligible: bool) -> int:
 	var weighted_types: Array[int] = [EnemyTypes.Type.HOPPER, EnemyTypes.Type.HEAVY, EnemyTypes.Type.HEALYZARD]
 	if snake_eligible:
@@ -163,6 +186,7 @@ func _healyzard_spawn_x(model: LaneCombatModel) -> float:
 
 func _reset_spawn_director(spawn_initial: bool) -> void:
 	_spawn_rng.seed = _spawn_rng_seed
+	_snake_direction_rng.seed = _snake_direction_rng_seed
 	_spawn_simulation_time = 0.0
 	_next_global_spawn_id = 1
 	_living_snake_spawn_id = -1
@@ -192,6 +216,118 @@ func _update_spawn_director(delta: float) -> void:
 			if spawn_directed_enemy(lane_index) < 0:
 				break
 			_spawn_timers[lane_index] += maxf(model.spawn_interval, 0.1)
+
+func _update_snake_special(delta: float) -> void:
+	if game_over or victory or _living_snake_spawn_id < 0:
+		return
+	var location := _find_enemy_by_spawn_id(_living_snake_spawn_id)
+	if location.is_empty():
+		return
+	var enemy: Dictionary = location.enemy
+	var state := StringName(enemy.get("special_state", &"moving"))
+	if state == &"moving":
+		enemy.frame_move_fraction = 1.0
+		_set_enemy_at_location(location, enemy)
+		return
+	var remaining_delta := delta
+	if state == &"stunned":
+		var stun_remaining := float(enemy.get("special_timer", LaneCombatModel.SNAKE_HIT_STUN_DURATION))
+		if remaining_delta < stun_remaining - 0.000001:
+			enemy.special_timer = stun_remaining - remaining_delta
+			enemy.frame_move_fraction = 0.0
+			_set_enemy_at_location(location, enemy)
+			return
+		remaining_delta = maxf(0.0, remaining_delta - stun_remaining)
+		enemy.special_timer = 0.0
+		enemy.special_state = &"waiting"
+		if int(enemy.get("preferred_lane", -1)) < 0:
+			enemy.preferred_lane = choose_snake_preferred_lane(int(location.lane_index))
+		enemy.frame_move_fraction = 0.0
+		_set_enemy_at_location(location, enemy)
+		state = &"waiting"
+	if state == &"waiting":
+		location = _begin_snake_transfer(location)
+		if location.is_empty():
+			return
+		enemy = location.enemy
+		state = &"transferring"
+	if state == &"transferring":
+		var transfer_remaining := float(enemy.get("special_timer", SNAKE_TRANSFER_DURATION))
+		if remaining_delta < transfer_remaining - 0.000001:
+			enemy.special_timer = transfer_remaining - remaining_delta
+			enemy.transfer_visual_z = float(enemy.get("transfer_start_z", 0.0)) * (float(enemy.special_timer) / SNAKE_TRANSFER_DURATION)
+			enemy.frame_move_fraction = 0.0
+			_set_enemy_at_location(location, enemy)
+			return
+		var movement_time := maxf(0.0, remaining_delta - transfer_remaining)
+		enemy.special_timer = 0.0
+		enemy.special_state = &"moving"
+		enemy.transfer_visual_z = 0.0
+		enemy.frame_move_fraction = movement_time / delta if delta > 0.0 else 0.0
+		_set_enemy_at_location(location, enemy)
+
+func _find_enemy_by_spawn_id(spawn_id: int) -> Dictionary:
+	for lane_index in range(lanes.size()):
+		for enemy_index in range(lanes[lane_index].combat_model.enemies.size()):
+			var enemy: Dictionary = lanes[lane_index].combat_model.enemies[enemy_index]
+			if int(enemy.get("spawn_id", -1)) == spawn_id:
+				return {"lane_index": lane_index, "enemy_index": enemy_index, "enemy": enemy}
+	return {}
+
+func _set_enemy_at_location(location: Dictionary, enemy: Dictionary) -> void:
+	var model := lanes[int(location.lane_index)].combat_model
+	var index := int(location.enemy_index)
+	if index >= 0 and index < model.enemies.size() and int(model.enemies[index].get("spawn_id", -1)) == int(enemy.get("spawn_id", -2)):
+		model.enemies[index] = enemy
+		return
+	for fallback_index in range(model.enemies.size()):
+		if int(model.enemies[fallback_index].get("spawn_id", -1)) == int(enemy.get("spawn_id", -2)):
+			model.enemies[fallback_index] = enemy
+			return
+
+func _begin_snake_transfer(location: Dictionary) -> Dictionary:
+	var origin_index := int(location.lane_index)
+	var enemy: Dictionary = location.enemy
+	var preferred := int(enemy.get("preferred_lane", -1))
+	var candidates: Array[int] = [preferred]
+	if origin_index == 1:
+		candidates.append(2 if preferred == 0 else 0)
+	elif origin_index == 2:
+		candidates.append(3 if preferred == 1 else 1)
+	var destination_index := -1
+	for candidate in candidates:
+		if candidate >= 0 and candidate < lanes.size() and abs(candidate - origin_index) == 1 and lanes[candidate].combat_model.active_enemy_count() < lanes[candidate].combat_model.max_enemies:
+			destination_index = candidate
+			break
+	if destination_index < 0:
+		enemy.special_state = &"waiting"
+		enemy.frame_move_fraction = 0.0
+		_set_enemy_at_location(location, enemy)
+		return {}
+	var old_uid := int(enemy.uid)
+	var visual := lanes[origin_index].take_enemy_visual(old_uid)
+	var extracted := lanes[origin_index].combat_model.extract_enemy_for_transfer(old_uid)
+	if extracted.is_empty():
+		return {}
+	extracted.special_state = &"transferring"
+	extracted.special_timer = SNAKE_TRANSFER_DURATION
+	extracted.preferred_lane = destination_index
+	extracted.transfer_start_z = lanes[origin_index].position.z - lanes[destination_index].position.z
+	extracted.transfer_visual_z = float(extracted.transfer_start_z)
+	extracted.frame_move_fraction = 0.0
+	var new_uid := lanes[destination_index].combat_model.accept_transferred_enemy(extracted)
+	if new_uid < 0:
+		extracted.special_state = &"waiting"
+		extracted.special_timer = 0.0
+		extracted.transfer_visual_z = 0.0
+		var restored_uid := lanes[origin_index].combat_model.accept_transferred_enemy(extracted)
+		if not visual.is_empty():
+			lanes[origin_index].adopt_enemy_visual(restored_uid, visual)
+		return {}
+	if not visual.is_empty():
+		lanes[destination_index].adopt_enemy_visual(new_uid, visual)
+	var new_location := _find_enemy_by_spawn_id(int(extracted.spawn_id))
+	return new_location
 
 func encounter_total() -> int:
 	var total := 0
@@ -303,6 +439,9 @@ func _on_enemy_neutralized_detail(enemy: Dictionary, _cause: StringName, _impact
 	if int(enemy.get("type", EnemyTypes.Type.HOPPER)) == EnemyTypes.Type.SICKLE_SNAKE and spawn_id == _living_snake_spawn_id:
 		_living_snake_spawn_id = -1
 		_snake_cooldown_until = _spawn_simulation_time + SNAKE_DEATH_COOLDOWN
+
+func _on_healer_pulsed(event: Dictionary) -> void:
+	healer_pulsed.emit(event)
 
 func _build_environment() -> void:
 	var world_environment := WorldEnvironment.new()
