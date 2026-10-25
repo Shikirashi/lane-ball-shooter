@@ -56,6 +56,45 @@ function command(method, params = {}, sessionId = undefined) {
 }
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+function waitForExit(milliseconds) {
+  if (child.exitCode !== null || child.signalCode !== null) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      child.off("exit", onExit);
+      resolve(false);
+    }, milliseconds);
+    const onExit = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+    child.once("exit", onExit);
+  });
+}
+
+async function stopBrowser() {
+  if (await waitForExit(5000)) return;
+  child.kill("SIGTERM");
+  if (await waitForExit(5000)) return;
+  child.kill("SIGKILL");
+  await waitForExit(5000);
+}
+
+async function removeProfile() {
+  for (let attempt = 1; attempt <= 8; attempt += 1) {
+    try {
+      rmSync(profile, { recursive: true, force: true, maxRetries: 2, retryDelay: 100 });
+      return;
+    } catch (error) {
+      if (!["EBUSY", "ENOTEMPTY", "EPERM"].includes(error.code) || attempt === 8) {
+        console.warn(`Unable to remove temporary Chrome profile ${profile}: ${error.message}`);
+        return;
+      }
+      await delay(attempt * 100);
+    }
+  }
+}
+
 const timeout = setTimeout(() => {
   console.error("Browser startup verification timed out.");
   child.kill("SIGKILL");
@@ -93,6 +132,6 @@ try {
   process.exitCode = 1;
 } finally {
   clearTimeout(timeout);
-  if (!child.killed) child.kill("SIGTERM");
-  rmSync(profile, { recursive: true, force: true });
+  await stopBrowser();
+  await removeProfile();
 }
