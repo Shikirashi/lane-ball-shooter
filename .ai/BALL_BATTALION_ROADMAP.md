@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **P028A is now the sole ACTIVE task** (Godot balancing audit only, see `.ai/TASK.md`). P028B–P032 remain proposed; Android physical QA pending.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **P028A/P028AR completed and technically reviewed** (`6564001` / `78b535b`), no active Codex task (see `.ai/TASK.md`). P028B–P032 remain proposed; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
@@ -253,3 +253,9 @@ On handoff, inspect real data and jointly decide narrow **P028B** adjustments. D
 ## 18. P028A review correction P028AR (ACTIVE, 2026-10-27)
 
 The initial reproducible Godot lab/500-seed report was delivered in `6564001`. GREEN generation ~25.251% and seven-ball runs ~9.43% of generated balls look valid. **However the automated player incorrectly aimed at the target ball's latest x at arrival**, while real shots hold their launch X during flight; and the chain had not yet advanced through the impact step. This biases perfect aim, human-comparison and conveyor speed sensitivity outcomes. **Only P028AR corrective task now ACTIVE**: fixed X, correct time ordering, reproducible tests and regenerate reports. No production chain speed/weights/HP/visual changes; P028B cannot be approved until corrected analysis is reviewed.
+
+## 19. P028A / P028AR completed and reviewed (2026-10-27)
+
+P028AR `78b535b` fixed the analysis bot's unrealistic UID-homing and impact step order: shots have immutable launch X, real `ChainModel` physics advances to impact, and authentic misses/off-target hits are counted. Reviewed corrected lab, new 38-check test, and CSV/JSON/Markdown report; Codex reports all 29 Godot test suites passing, GitHub CI `40571348733` finishing as review concluded. No playable-game parameter was changed.
+
+**Actionable data:** GREEN 25.251% of baseline-generated balls across 500 seeds, so no intrinsic Green penalty; 7-ball clusters only 4% of runs but 9.43% of emitted balls; experimental shorter-run weights substantially reduce long clusters. Two paired test cases per speed: baseline fixed-X hit rates 88.5% (102), 87.0% (120), 82.8% (140), 84.5% (160). A quicker chain supplies opportunities but makes aimed shots less reliable; automated perfect-knowledge bot still wins and cannot establish human difficulty. **P028B remains PROPOSED/INACTIVE.** Discuss whether to prioritize a smaller run-length distribution before any speed or threat-aware assistance changes; phone playtesting preferred.
