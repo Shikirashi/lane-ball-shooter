@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**NO ACTIVE CODEX TASK (2026-10-27):** P033 controls/HP implemented in `294ddae`; user-selected P033R shader-free red silhouette overlays implemented in `f08ee3d` and code/images/tests technically reviewed PASS. Codex reports 28 regression suites PASS; GitHub CI `40561363700` build/test SUCCESS (publication pending status verification). Archive `.ai/TASKS/LBS-P033R.md`. Android QA pending. **P028A/P029–P032 NOT ACTIVE.**
+**NO ACTIVE CODEX TASK (2026-10-27):** P033 controls/HP implemented in `294ddae`; user-selected P033R shader-free red silhouette overlays implemented in `f08ee3d` and code/images/tests technically reviewed PASS. Codex reports 28 regression suites PASS; GitHub CI `40561363700` completed SUCCESS including publication and browser verification. Archive `.ai/TASKS/LBS-P033R.md`. Android QA pending. **P028A/P029–P032 NOT ACTIVE.**
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
