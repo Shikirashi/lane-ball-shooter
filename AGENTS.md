@@ -142,3 +142,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 - Experimental P028B-EXP `ca73b4b` was pushed, but ChatGPT review detected a threat-selection confound: when world urgency exists yet ALL remaining legal run-bag colors have zero urgency (threatened color exhausted), selector still draws bias RNG and arbitrarily reshuffles unrelated colors. Synthetic `urgent_exhausted` shows ~46% interventions with ~99% unavailable urgent choices. **SOLE ACTIVE correction P028B-EXPR** in `.ai/TASK.md`: reuse exact production baseline candidate with no bias RNG whenever *no eligible legal color* urgent; preserve legal fallback for other active threats, add counter/tests and rerun synthetic and real-model experiments. Initial recommendations provisional.
 - This is **analysis-only**. No production color generation changes, HP/speed/run-length/controls changes, new Web/Android releases, signing secrets or campaign tasks; preserve user-local modifications. Push verified results/handoff, STOP.
+
+## P028B-EXPR technically reviewed and complete — no active task (2026-10-27)
+
+- The earlier ACTIVE P028B-EXPR notice is historical; **NO ACTIVE CODEX TASK**. Correction `0f15616` and 574 focused regression checks passed; full Godot 30 suites and GitHub CI `40580387509` PASS. Archive `.ai/TASKS/LBS-P028B-EXPR.md`; latest `.ai/TASK.md` is intentionally idle.
+- The scientific result is mixed: mild adaptive next-run bias can help overall simulated starvation slightly but worsens particular colors, while moderate/strong have worse tradeoffs. **NO threat-aware production integration**, no run weights/speed change, no Android release or later campaign work until new explicitly approved task. Preserve local modifications and signing keys.
