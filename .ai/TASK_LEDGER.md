@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**ONE ACTIVE CODEX CORRECTION (2026-10-27): P033R — replace flawed enemy-hit shader with separate bright solid-red Sprite2D silhouette overlays matching each original enemy PNG alpha.** User explicitly prefers the shader-free overlay over correcting the shader. P033 controls, shooter and HP 3/6/3/3 already implemented in `294ddae`; `.ai/TASK.md` now authorizes **ONLY** reproducible red-mask textures, synchronized overlay hit/death fade, strict RGBA/render tests, regenerated screenshot and handoff. Keep undamaged original sprite unmodified. P034C completed; **P028A/P029–P032 NOT ACTIVE.**
+**NO ACTIVE CODEX TASK (2026-10-27):** P033 controls/HP implemented in `294ddae`; user-selected P033R shader-free red silhouette overlays implemented in `f08ee3d` and code/images/tests technically reviewed PASS. Codex reports 28 regression suites PASS; GitHub CI `40561363700` build/test SUCCESS (publication pending status verification). Archive `.ai/TASKS/LBS-P033R.md`. Android QA pending. **P028A/P029–P032 NOT ACTIVE.**
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
@@ -57,10 +57,12 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 
 | ID | Status | Scope |
 |---|---|---|
-| LBS-P033 | **IMPLEMENTED `294ddae`; P033R REVIEW CORRECTION ACTIVE in `.ai/TASK.md`** | Classic two-finger swap/drag-release, 1:2:1 Side relative trackpad and opposite-half swap/fire zones with handedness/settings, Android swap button hidden, raised shooter with horizontally arranged loaded/next balls, desktop/Web full-canvas mouse clicks; **halve canonical enemy HP to Hopper 3/Heavy 6/Snake 3/Healyzard 3 and vivid independent red sprite flash on real damage including lethal hits**; full regression and actual screenshots. |
+| LBS-P033 | **COMPLETE `294ddae`; P033R fixed in `f08ee3d` — Android QA pending** | Classic two-finger swap/drag-release, 1:2:1 Side relative trackpad and opposite-half swap/fire zones with handedness/settings, Android swap button hidden, raised shooter with horizontally arranged loaded/next balls, desktop/Web full-canvas mouse clicks; **halve canonical enemy HP to Hopper 3/Heavy 6/Snake 3/Healyzard 3 and vivid independent red sprite flash on real damage including lethal hits**; full regression and actual screenshots. |
 | LBS-P034A | **IMPLEMENTED — source/asset review PASS, user visual QA pending**; `5dbd708` | Eight real transparent PNGs, pivot metadata, contact sheet, CLI baker and isolated 2D preview; existing game not migrated. Archived task `.ai/TASKS/LBS-P034A.md`. |
 | LBS-P034B | **IMPLEMENTED — source/screenshots/CI review PASS; player QA pending**; `b802096` | Live 2D gameplay with genuine sprites, responsive lanes and 2D effects; 25 regression suites/CI passed. Real screenshots committed; archive `.ai/TASKS/LBS-P034B.md`. Android APK still old. |
 
 P028A's balance-simulation laboratory remains proposed and NOT active. **P033 is authorized to change only the explicit HP values (3/6/3/3), not spawn patterns, speed, color distribution or damage.**
 
 | LBS-P034C | **IMPLEMENTED — reviewed; visual/device QA pending**; `16347b3` | Rebaked 4 transparent defender PNGs without yellow orb; separate colored crystal shatters once when spent; 26 suites locally passed, real state/shatter screenshots, archive `.ai/TASKS/LBS-P034C.md`. |
+
+| LBS-P033R | **COMPLETE `f08ee3d`; technical review PASS** | User-approved shader-free exact-alpha red silhouette sprites for hit/death, tested for preservation of original colors/alpha, committed renderer screenshots; archive `.ai/TASKS/LBS-P033R.md`. |
