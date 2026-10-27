@@ -147,3 +147,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 - The earlier ACTIVE P028B-EXPR notice is historical; **NO ACTIVE CODEX TASK**. Correction `0f15616` and 574 focused regression checks passed; full Godot 30 suites and GitHub CI `40580387509` PASS. Archive `.ai/TASKS/LBS-P028B-EXPR.md`; latest `.ai/TASK.md` is intentionally idle.
 - The scientific result is mixed: mild adaptive next-run bias can help overall simulated starvation slightly but worsens particular colors, while moderate/strong have worse tradeoffs. **NO threat-aware production integration**, no run weights/speed change, no Android release or later campaign work until new explicitly approved task. Preserve local modifications and signing keys.
+
+## Current status — P028B-SHIP-MILD live Web playtest, Codex IDLE (2026-10-27)
+
+- User explicitly authorized mild bias for human playtest. Source `7f2d096` (main gameplay hook `f812608`) ENABLES the corrected `ThreatRunSelector("mild")` with current live `Battlefield` time-to-defender; CI `40598952476` SUCCESS including fresh public Web/browser validation. Previous no-shipping restrictions in older P028B experiment instructions superseded **for mild only**, not moderate/strong, threat-aware variants or other balancing changes.
+- **NO ACTIVE CODEX TASK** in `.ai/TASK.md`. Await user's Web playtest feedback. Default conveyor 102px/s, original run length weights, four-color bag legality, enemy HP 3/6/3/3, sprites, controls and old signed Android APK unchanged. Any further tuning, APK rebuild, levels/branding/rename needs explicit new user approval.
