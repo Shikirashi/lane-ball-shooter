@@ -8,6 +8,14 @@ A fully 2D lane-defense game prototype in **Godot 4 / GDScript**, targeting Web 
 - Balls remain physically simulated beyond the left edge and can roll back into view after a match; defenders have an emergency lane clear and require matching-color revival.
 - Defeated enemies burst, tumble sideways and fade before the delayed victory presentation.
 
+## Mild threat-aware color generation Web playtest (P028B-SHIP-MILD)
+
+**Current Web gameplay (source commit `7f2d096`):** the user-approved **mild (+50% maximum relative weight)** threat-aware next-run color ordering is ENABLED for live playtesting. `Main` installs the already-tested `ThreatRunSelector("mild")` and, once per frame, feeds it a current `Battlefield` time-to-defender snapshot from the same estimator used by the P028A/AR lab. The selector runs **only when at least one still-legal run-bag color has positive urgency**; otherwise the existing baseline draw is preserved, without additional bias RNG. Four-color bag, no immediate repeat, run-length distribution, conveyor speed 102 px/s, enemy HP 3/6/3/3, audio and control schemes are otherwise unchanged. Restart recreates the independent mild selector and reproducible run-length pairing state.
+
+This is an intentionally **single-arm public Web playtest**, not proof that adaptive generation is better. Existing old Android APK v0.1.0 has **not** been rebuilt. To verify the integration on a local Godot install run `godot --headless --path . --script res://tests/p028b_mild_live_playtest_test.gd` or the full `./scripts/ci/run_regression_tests.sh`. The Web deployment pipeline for source commit `7f2d096` passed full suite, fresh build, public nine-file verification and browser startup: https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40598952476.
+
+**Human feedback wanted:** do threatened defenders receive a usable color noticeably sooner; do other colors feel unfairly delayed; does the unchanged long-cluster distribution still feel frustrating? No in-game selector toggle was added; previous baseline source/experiment remains recorded at `0f15616`. Version selection should be done via a separate authorized A/B task, not a hidden production setting.
+
 ## Codex development mailbox
 This repository uses a shared mailbox: read [AGENTS.md](AGENTS.md) first, then `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, and the current `.ai/TASK.md`. Codex implements the active task and writes `.ai/CODEX_HANDOFF.md`.
 
