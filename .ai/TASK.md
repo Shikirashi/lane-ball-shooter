@@ -1,4 +1,4 @@
-# NO ACTIVE CODEX TASK — mild threat-aware generation PLAYTEST deployed
+# NO ACTIVE CODEX TASK — mild bias Web playtest deployed, end-screen stacking fixed
 
 **Status (2026-10-27):** User explicitly authorized **"just enable it on mild setting, deploy, and let me playtest."** ChatGPT implemented the narrow live-playtest integration directly in `scripts/main.gd` as `f812608`, added the Godot integration regression test `tests/p028b_mild_live_playtest_test.gd` and corrected its threat fixture in `7f2d0968de077c3a068056942dd42d91108db41b`. GitHub Actions workflow `40598952476` completed **SUCCESS**, including all regression suites, fresh Web build, public HTTPS bytes and actual browser-startup verification. **Public playable URL:** https://shikirashi.github.io/lane-ball-shooter/ .
 
@@ -9,3 +9,11 @@
 **Verification:** `tests/p028b_mild_live_playtest_test.gd` exercises actual `Main` construction, snapshot response to live nearby enemy, exhausted-run legal fallback, speed/weight invariants and selector reset. CI: https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40598952476 . Prior offline studies: `analysis/reports/p028b_exp/REPORT.md`, `.ai/TASKS/LBS-P028B-EXPR.md`. `README.md` documents the current live pilot.
 
 **Do not** modify shipping run weights, speed, threat strength or balance in response to automated bot figures alone; gather user feedback. P028B broader shipping decisions, levels/campaign, BattaLion mascot, Android new APK and renaming remain separate future decisions. Preserve local uncommitted project files/signing backups.
+
+## Playtest bug fix — terminal end-screen draw order (2026-10-27)
+
+The user played the mild-bias Web build, reported it "**looks good and feels more fair, sometimes hard, sometimes easy**", and supplied an actual screenshot revealing bright defenders/crystals and a projectile drawn **above** the dark `WAVE CLEARED` overlay and Restart button. They clarified the problem applies to enemies and projectiles too. Root cause: `GameOverOverlay` default CanvasItem z=0 versus positive-z actor/crystal/projectile visuals (up to 8) and settings z=100.
+
+ChatGPT fixed `scripts/ui/game_over_overlay.gd`: terminal overlay draws with **absolute `z_index=200`** (`z_as_relative=false`), which covers and dims the entire scene including all positive-z visual layers while leaving overlay title/Restart above its dimmer. Added assertions to `tests/p018_enemy_death_victory_delay_test.gd` for priority above real crystal/projectile nodes/settings, visible click-blocking Restart on both win/loss and unchanged existing flow. Fix commit `91d07120cdb24509daf9bd7cfdaaea1dea143037`; test commit `dc16d93ddeca39e4335688ce09bc270175f35159`. **GitHub CI `40601383350` SUCCESS** including full regressions, Web build, published HTTPS bytes and browser startup.
+
+**No active task.** Await user visual retest on https://shikirashi.github.io/lane-ball-shooter/ . Mild +50% color run priority remains enabled, original 102px/s speed/run lengths/HP unchanged. No updated native Android APK. Do not assume the human screenshot has been personally retested after this deployment until user confirms.
