@@ -1,9 +1,65 @@
-# NO ACTIVE CODEX TASK — P034A delivered; waiting for visual approval
+# ACTIVE CODEX TASK — LBS-P034B: Convert the playable battlefield to real 2D
 
-**Status (2026-10-27):** LBS-P034A was implemented by Codex in commit `5dbd70842a5df420c467f0113f057f742eb287b2` and technical code/asset review found no blocking issues. User approval of the baked sprite appearance and motion direction is **still pending**. GitHub Web build/publish CI run `40544273523` completed **SUCCESS**. Codex reported all 24 local Godot regression suites passing. The animated preview has not been independently viewed by ChatGPT, and native Android visual acceptance remains pending.
+**Status:** ACTIVE — user authorized continuing the 2D conversion after P034A review (2026-10-27). Only this task is active. Execute and commit a working implementation; do not stop at a proposal.
 
-**Review visuals:** `assets/sprites/baked/contact_sheet.png`; interactive standalone preview: `godot --path . res://scenes/previews/p034a_sprite_preview.tscn`. See `.ai/CODEX_HANDOFF.md` and archived task `.ai/TASKS/LBS-P034A.md` for details.
+## Objective
 
-**Next step:** Ask user to review P034A contact sheet and animation preview and approve/revise the look. Do **NOT** proceed to full 2D runtime migration (P034B) without distinct user approval. P033 mobile controls and P028 balancing tests also remain proposed and inactive. Keep the existing gameplay and shipping package/version/signing identity unchanged.
+Replace the LIVE four-lane 3D orthographic battlefield with a genuinely 2D-rendered battlefield that uses the eight authentic, transparent 512x512 character captures generated in completed **P034A**. The entire normal gameplay presentation (chain, four combat lanes, enemies, defenders, shooter, effects) should be 2D; use procedural 2D squash/stretch, hopping and goofy elastic motion. Preserve every established gameplay mechanic and input behavior until its separately authorized task. Responsive framing must fill the vertical gap between conveyor and shooter while leaving small horizontal margins.
 
-**Previously shipped:** P024 Web publishing and P027 signed Android v0.1.0 delivery complete. Physical Android device QA still pending. Do not regenerate signing secrets, make unapproved balance changes, edit public portfolio, overwrite uncommitted user files, or auto-advance tasks.
+The user works on Mintbase through SSH and **cannot inspect an interactive Godot window remotely**. Therefore also capture and commit actual rendered gameplay screenshots that ChatGPT can display in the follow-up review; screenshot output is a required acceptance deliverable, not just documentation.
+
+## Prerequisites / authority
+
+1. Verify this is `Shikirashi/lane-ball-shooter` on its tracked branch, inspect the working tree, preserve uncommitted user work, and `git pull --ff-only` if safe. Read `AGENTS.md`, `.ai/PROTOCOL.md`, `.ai/DECISIONS.md`, `.ai/TASK_LEDGER.md`, `.ai/BALL_BATTALION_ROADMAP.md`, and this task. P034A is archived in `.ai/TASKS/LBS-P034A.md`; Codex's last handoff describes the generated sprites.
+2. Study `scripts/main.gd`, `scripts/responsive_layout.gd`, `scripts/world/battlefield.gd`, `scripts/world/lane_actor.gd`, `scripts/world/lane_combat_model.gd`, `scripts/world/enemy_types.gd`, `scripts/previews/p034a_sprite_preview.gd`, `assets/sprites/baked/pivots.json`, existing P006/P013/P018–P023/P034A tests and established Combat/Conveyor decisions. The P034A preview is just a visual reference, not working gameplay.
+3. This task **supersedes historical directives demanding a live 3D battlefield**, but does not authorize changing game rules, control modes, enemy balance, app identity, or shipping APK. The 3D mesh factory/baker and archived legacy tests may remain for regeneration and regression; **they must NOT be instantiated or rendered during ordinary gameplay**.
+
+## Required implementation
+
+### A. 2D gameplay battlefield, without parallel rule engines
+
+- Implement a real 2D live battlefield under the established main game, using `Node2D` / `Control`, `Sprite2D` and lightweight 2D drawing/effects. In ordinary game startup eliminate the live `SubViewportContainer`, `SubViewport`, `Camera3D`, `WorldEnvironment`, and every live 3D character/projectile/mesh. Do not retain a hidden 3D renderer behind a 2D facade.
+- **Reuse the current authoritative `LaneCombatModel`** for HP, enemy motion and hop phase, charge and revival, projectile trajectories and swept hits, spawning quotas, healing, Snake nonlethal stun and cross-lane transfer, breaches and victory. Preserve one central implementation of global spawn selection/timing, snake uniqueness/cooldown, tier-3 target-lane and duplicate-hit handling, and finite encounter logic: extract shared gameplay orchestration from the old `Battlefield` where needed rather than independently reimplementing rules in two diverging directors.
+- Keep the gameplay-facing `Battlefield` signals/API that `main.gd` uses (match dispatch, progress, knockdown/revival, enemy deaths, breach, encounter-clear, reset, relevant test seed injection). Adapter/refactor is okay; no duplicated model updates or double projectile damage. Existing P019/P020 model-facing/3D factory tests should remain meaningful; update renderer-specific tests narrowly while retaining all combat assertions.
+- Maintain 4 correct team lanes RED / BLUE / YELLOW / GREEN; lanes own stable world-X-to-2D-X mappings for model coordinates (including spawn at RIGHT_BOUNDARY, projectile from defender, exit to LEFT_BOUNDARY), without changing collision/world numeric values. All actors and effects must follow authoritative state, including when the Snake changes lanes.
+
+### B. 2D actors, movement and feedback
+
+- Use the actual P034A enemy and defender sprite PNGs (`assets/sprites/baked/*.png`) and `pivots.json` to anchor feet on lane floors. Respect relative silhouettes: wider Heavy, taller Snake, smaller stationary Healyzard, orange-horned Hopper; defenders retain team colors and recognizable launchers.
+- Give moving enemies lively **2D squash and stretch**, with hopping/grounded timing derived from model phases (do not grant or remove invulnerability), Heavy's slower slide/weight, Snake's quick wiggle and readable cross-lane transfer, and gentle Healyzard idle motion; keep positional/damage timing authoritative even while visuals deform. Animated 2D shadows separate from sprite PNGs, behind feet, so hops/readability remain clear.
+- Preserve defenders' firing recoil, tier effects, knocked-down/reviving animation and visible state feedback. Preserve yellow Healyzard healing pulse behind the body, individual hit flashes, SFX hooks, death bursts/tumble/fade, emergency lane discharge, and the normal/tier-2/tier-3 projectiles (incl. piercing and wide two-lane appearance) as 2D effects. No essential indicator should silently vanish. Note baked defender PNGs contain the **yellow charge orb**: ensure the spent-charge state is visually distinguishable (e.g. separate charge overlay/alternate bake), not a perpetually lit yellow orb despite exhausted charge.
+- Death VFX must continue through the established three-second victory presentation delay, while gameplay actions are suppressed. Preserve existing queued-projectile timing and safe restart cleanup, including no stale sprites/events.
+
+### C. Responsive battlefield framing
+
+- Make the top boundary/top lane visually reach the **bottom of the upper conveyor** (tiny cosmetic gap/edge at most), and make the bottom lane visually end **just above the upper tip/muzzle region of the bottom shooter**, avoiding overlap. Use the actual available `ResponsiveLayout` rectangles; do not hardcode a single 1280x720 crop. P033 will later lift/reshape the shooter, so respond to layout changes.
+- Each of four lane rows should occupy a balanced portion of that vertical area; actual floors/stripes can fill their rows without huge dark voids. Maintain readable actors, row colors/symbols, charge/status indicators and enough combat room.
+- Keep **modest 4–7% side margins** within the safe area, with no clipping of defenders, enemy spawns or projectile cues. The contemplated 1:2:1 touch zones in proposed P033 are UI interaction regions, not justification for reserving empty 25% visual margins on each side.
+- Test reference 960x540, 1280x720, 1600x720, 2400x1080; include cutout-safe rectangles and resize. Scale sprites and UI consistently without distortion or large overlaps; preserve safe mouse input propagation (`MOUSE_FILTER_IGNORE` on noninteractive battlefield visuals).
+
+### D. Automated evidence for user on SSH (REQUIRED)
+
+- Implement a repeatable, bounded **CLI-only Godot screenshot** workflow for the REAL running 2D gameplay (not hand-drawn mockups, P034A contact sheet or fake composite). Use Godot's real renderer and saved viewport images, with `RenderingServer.frame_post_draw` as needed. Use the existing local GPU/display when available; never claim a dummy headless renderer gave a valid gameplay capture.
+- Commit at least **two review screenshots** under a sensible `assets/previews/` path (e.g. `p034b_gameplay_1280x720.png` and a wide 2400x1080 or 1600x720 capture). Show all four lanes and chain/shooter; stage meaningful real enemies and visible character animation/attack state if reproducible. The screenshots should make vertical framing, sprites and UI inspectable here on GitHub without an interactive display.
+- Include the exact repro commands in README and `.ai/CODEX_HANDOFF.md`. If feasible with already installed tools, an additional very short motion GIF/WebM is welcome, **optional**, not a dependency. Do not install packages/sudo or record mouse/desktop screens.
+- Capture after both the necessary imports and a genuinely rendered frame, and verify images are nonempty, correct dimensions and not a stale 3D presentation.
+
+### E. Tests and regressions
+
+- Add a focused P034B suite covering: live main has **no active 3D nodes/3D viewport**; all four 2D lanes/8 sprite types can appear; world-X mapping; responsive bounds, safe areas and no conveyor/shooter overlap; seeded spawn quotas/weighted mix, globally unique Snake + 15s after-death cooldown; Healyzard heal and pulse; Snake lane transfer without duplicate identities; projectile/tier-3 damage; revival, death effects and terminal-state precedence; restart cleanup; game-over and victory-delay continuity. Test 2D rendering transform independently from combat model state.
+- When an old test asserts specifically that live main has a 3D SubViewport, update ONLY that obsolete presentation expectation; do not discard nonvisual combat tests. Preserve all previous suites P001–P023 and P034A, run the full `./scripts/ci/run_regression_tests.sh`; run a bounded Godot Compatibility renderer smoke test and Web build validation where available.
+- Explicitly verify 2D path has not broken touch drag/release shooting, magazine swap, cursor shooting within the present playfield, SFX, chained match effects, logical victory/restart. Preserve Web `START GAME` fullscreen prompt and native Android direct start. Report any physical Android playtest not performed as pending.
+- Use deterministic seeds/timestamps for test fixtures. Do not change gameplay RNG seeds, timings, probabilities or balances as part of the shipped game.
+
+## Strict exclusions
+
+- NO P033 mobile controls (no horizontal ammo magazine, shooter lift, trackpad, split fire/swap or full-canvas mouse click change); these are saved for a separate task.
+- NO P028/P029+ color distribution, conveyor speed, enemy spawning/balance, campaign, levels or branding changes. Current public title has been chosen as Ball Battalion but package names, legacy UI title, public URLs, GitHub Pages portfolio, existing Android release/signing remain unchanged in this task.
+- NO destructive git operations or force push; do not overwrite uncommitted local user changes, secret signing files, existing APK, or portfolio homepage. Do not generate new art from prompts, use external assets/plugins, or require the user to open a GUI.
+- NO edits by Codex to ChatGPT-owned `AGENTS.md`, `.ai/TASK.md`, `.ai/TASK_LEDGER.md`, `.ai/DECISIONS.md` or `.ai/PROTOCOL.md`. Do not activate another task.
+
+## Delivery / completion gate
+
+Produce an actually playable **2D-rendered** Ball Battalion live game with unchanged simulation semantics, working 2D visual feedback and stable responsive framing. Include capture CLI + committed real screenshots, tests, README documentation, and accurate `.ai/CODEX_HANDOFF.md` stating changed code, verification, known gaps and user test steps. Preserve the P034A asset source/rebake pipeline and old shipping identity. Commit/push to the tracked branch and **STOP**; ChatGPT reviews the gameplay screenshots and diffs before any further task.
+
+If essential render/export tools are absent or a regression cannot be resolved safely, stop with a precise PARTIAL/BLOCKED report; do not falsely claim completion.
