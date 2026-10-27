@@ -126,3 +126,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 - **ONLY ACTIVE task:** `LBS-P028AR`, authoritative `.ai/TASK.md`; earlier P028A ACTIVE status historical. The P028A lab landed as `6564001`, but bots were allowed to home horizontally to a moving target's current x at impact, unlike real `ShooterView.launch` which freezes X at firing. Also impact was resolved before time-slice chain motion. Fix these **simulation-only** fidelity errors, add real shot-miss/accuracy regression tests, regenerate authentic seed/scenario report and rerun full test/build validation.
 - Never change shipping defaults: conveyor speed 102 px/s, run weights [20,30,18,13,9,6,4], four-color feeder/bag, enemy HP 3/6/3/3, spawn director, physics, Android controls/signing or Web publisher. P028B is proposed only and NOT ACTIVE; stop after verified correction/handoff push.
+
+## After P028AR technical review — no active task (2026-10-27)
+
+- **NO ACTIVE CODEX TASK.** Initial audit `6564001` corrected by `78b535b`, with fixed-X projectile/collision timing, reproducible generator/scenario analysis and reviewed tests/source PASS; archive `.ai/TASKS/LBS-P028AR.md`. The preceding P028AR ACTIVE section above is historical. CI `40571348733` final outcome still requires verification.
+- P028B is **not authorized**. No changes to 102px/s production feed, 1–7 run weights, color RNG, HP 3/6/3/3, spawn director, input, 2D VFX or Android release. Await an explicit user decision in `.ai/TASK.md` before more Codex work.
