@@ -1,4 +1,47 @@
-# Codex Handoff — LBS-P028B-EXPR eligible-threat correction
+# Codex Handoff — LBS-P035 Android 0.2.0 release
+
+**Status:** COMPLETE
+
+**Branch:** `master`
+
+## Published release
+
+- Release source/tag: `3d08d8e2e75dd1b4068ef87e46ca699134137528` / `android-v0.2.0`. The annotated tag dereferences to that exact tested commit. Release: https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.2.0
+- Public asset: https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.2.0/lane-ball-shooter-android.apk
+- APK: `com.shikirashi.laneballshooter`, versionName `0.2.0`, versionCode `2`, ARM64-v8a only, min SDK 24, target SDK 36, 27,472,312 bytes, SHA-256 `d207eda8e5d7a011c9acb7bbf4d81a37238bf9e4b301d4007e6ce6f551f569aa`.
+- `apksigner` verified one RSA-4096 release signer with v2/v3 signatures. Certificate SHA-256 `796f2c679d962a8195ebf1a38d959002829561dfd26d2dae86e52ccdec7224fc` exactly matches the downloaded v0.1.0 APK, preserving same-package update compatibility. The old `android-v0.1.0` tag/release/asset remains unchanged.
+- Built from a detached clean worktree with Godot 4.7.2, the existing Temurin JDK 17, Android SDK/build-tools 35.0.1 and original protected release identity. No signing material was regenerated, copied into Git, printed, or changed. The public asset was downloaded again and matched the local build byte-for-byte; the downloaded signer also matched.
+
+## Included current gameplay
+
+- The release source includes the live mild (+50% maximum) eligible-threat-aware run-color selector with exact baseline/no-RNG fallback when no legal color is urgent, unchanged four-color bag, 102 px/s conveyor and `[20,30,18,13,9,6,4]` run weights.
+- It includes the P034 all-2D battlefield/sprites and charge crystals, P033 Classic/Side Android controls and red hit silhouettes, HP 3/6/3/3, and P028B-UIFIX terminal overlay at absolute z-index 200. No additional balance, content, permission, package, ABI or branding changes were made.
+- Both Android Debug and Android Release presets now use version `0.2.0` / code `2`. The release verifier and fail-closed scaffolding tests require those values while retaining package, signature, ABI, debuggable, alignment and permission checks.
+
+## Portfolio and Web verification
+
+- Portfolio commit `f9519864037c5cdd93c82235c05c6b16d9c612c0` updates only the existing Lane Ball Shooter card URL and visible version label. No duplicate card, thumbnail, unrelated tile, CSS/JS, or `lane-ball-shooter/` Web file changed.
+- Portfolio Pages run `40605307320`: **SUCCESS**. Live root HTML has exactly one APK card and one v0.2.0 asset URL.
+- Game Web build/publish run `40604815821`: **SUCCESS** from release source `3d08d8e`; its portfolio Pages run `40605015305` also succeeded before the card update.
+- All nine public Web runtime URLs return HTTP 200. `verify_browser_startup.mjs` passed against https://shikirashi.github.io/lane-ball-shooter/ with secure context, title `Lane Ball Shooter`, one 1280×633 live canvas and no loader.
+
+## Verification
+
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 31 suites**, including P028B mild live/restart (19 checks), P018 terminal layer (44 checks), P011 stress (16,485 checks / 2,400 operations), current 2D/control/crystal suites and all earlier gameplay regressions.
+- `scripts/ci/test_android_release_scaffolding.sh`: **PASS**. `scripts/ci/test_android_toolchain_setup.sh`: **PASS**. Shell syntax checks: **PASS**.
+- Clean `./scripts/build_android.sh` and `scripts/verify_android_release.sh`: **PASS**. Verified package/version, non-debuggable status, ARM64-only ABI, min/target SDK, no unexpected sensitive permissions, v2/v3 signature and zip alignment.
+- Public APK direct-download hash and signer comparison: **PASS**. GitHub release is public, non-draft and non-prerelease with the required stable asset name.
+- Portfolio diff/card count, exact-nine preservation, public HTML, Pages workflow, all-nine HTTP and live browser startup checks: **PASS**.
+
+## Limits and preservation
+
+- No Android device was attached. `adb devices -l` returned an empty list, so physical install/update, touch ergonomics, audio, background/resume, heat and device performance remain manual QA. Recommended update command: `adb install -r lane-ball-shooter-android.apk`.
+- The first clean export attempt correctly failed until the existing Godot user setting for the JDK was restored to the already installed JDK 17; no SDK/JDK reinstall or license action was performed.
+- Existing user modifications to `project.godot`, `scenes/main.tscn`, and generated UID files remain uncommitted and untouched. APKs remain outside source and portfolio Git history.
+
+---
+
+# Previous handoff — LBS-P028B-EXPR eligible-threat correction
 
 **Status:** COMPLETE
 
