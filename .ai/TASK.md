@@ -1,36 +1,36 @@
-# ACTIVE CODEX CORRECTION — LBS-P033R: Fix unintended darkening from the damage-flash shader
+# ACTIVE CODEX CORRECTION — LBS-P033R: Solid-red silhouette overlay for enemy damage (NO hit shader)
 
-**Status:** FOLLOW-UP FIX REQUIRED after ChatGPT review of P033 implementation `294ddae627f46b7dce13f50dcd2006277776ae81` (2026-10-27). **Only this correction is authorized now.** Do NOT redo the already delivered P033 controls/HP/layout work and do NOT proceed to P028. Once corrected, retest and push.
+**Status:** ACTIVE — user-approved change of approach, 2026-10-27. This **supersedes the earlier P033R shader-repair instructions**. The main P033 controls/HP work is already implemented in commit `294ddae627f46b7dce13f50dcd2006277776ae81`. **Only the damage-flash visual correction and its tests/screenshots are active.** Do not start P028, P029+, new mobile functionality or APK release.
 
-## Confirmed defect
+## Latest user design decision (authoritative)
 
-`scripts/world/lane_actor.gd` defines `HIT_FLASH_SHADER`:
-```glsl
-void fragment() {
-  vec4 pixel = texture(TEXTURE, UV) * COLOR;
-  pixel.rgb = mix(pixel.rgb, vec3(1.0, 0.015, 0.015), flash_strength * pixel.a);
-  COLOR = pixel;
-}
-```
-In Godot 4.x `canvas_item` fragment shaders, incoming `COLOR` **already contains the default TEXTURE sampled and multiplied by the CanvasItem's color**. Multiplying `texture(TEXTURE, UV) * COLOR` double-applies both sampled RGB and sampled alpha, causing all **UNHIT enemies to be too dark** and shrinking soft alpha edges. This is visible when comparing P033's screenshot with the authentic unchanged enemy sprites in P034C. Verified with official Godot CanvasItem fragment shader documentation:
-https://docs.godotengine.org/en/stable/tutorials/shaders/shader_reference/canvas_item_shader.html
+> "Maybe instead of using a shader to change the colour into red, just overlay the same shape on top of the existing enemy sprite, but it's just completely all red."
 
-## Required narrowly scoped fix
+**Implement exactly that, not a corrected tint shader.** Keep each original P034A Godot-baked enemy PNG and its usual `Sprite2D` rendering completely unchanged. Create an additional 2D **solid bright-red silhouette sprite** that duplicates the enemy's exact shape/alpha and lies on top of the base sprite. Show the red silhouette at full strength immediately when that enemy takes a real damaging hit; fade/remove it over the established 0.16-second hit-feedback period. It must also work on *lethal* hits through the first 0.16 seconds of the current one-second death/tumble/fade presentation. The underlying undamaged enemy sprite remains completely unmodified and therefore keeps original colors/alpha and details.
 
-1. Update the shader to **use the already textured fragment `COLOR` only once**. For example:
-```glsl
-void fragment() {
-  vec4 pixel = COLOR;
-  pixel.rgb = mix(pixel.rgb, vec3(1.0, 0.015, 0.015), flash_strength);
-  COLOR = pixel;
-}
-```
-Do not multiply by sampled alpha as a flash coefficient; outgoing alpha already masks transparent/antialiased edges. It is okay to use a technically equivalent implementation preserving original color/alpha exactly at `flash_strength==0`, with a vivid red flash at `flash_strength==1`. Enemy shader materials must remain instance-independent. Preserve existing nonlethal hit timing, lethal corpse red flash/fall/fade, matching gameplay, and unchanged P033 HP 3/6/3/3.
-2. Add focused tests **beyond parameter-state assertions**: preferably verify actual 2D rendered RGBA output of an unhit enemy using the shader against the same sprite **without** any shader in the same Godot Compatibility renderer at the same transform (tolerance only for color-space/antialiasing differences). At `flash_strength=0`, RGB/alpha should match; at full strength, visible pixels should be strongly red while silhouette/alpha stays identical. A source-level assertion against `texture(TEXTURE, UV) * COLOR` can complement but not replace actual output verification. The earlier P033 test only checked shader parameter values and therefore missed this bug. If no actual GPU is available in headless CI, split strict logic/source coverage from standalone CLI screenshot run on GPU and document it; do not claim visual test when unrendered.
-3. Re-run `./scripts/ci/run_regression_tests.sh`, Web build/validation and the authentic `./scripts/capture_p033_gameplay.sh`. Update the affected P033 preview screenshots to reflect the corrected undamaged colors (prefer an additional proper Godot-rendered side-by-side damaged/undamaged enemy comparison if easily feasible), check bright red hit visually, verify original P034A/B/C sprite and crystal assets unchanged.
-4. Update `.ai/CODEX_HANDOFF.md` with P033R fix, actual tests, screenshot hash/paths, outcome; commit/push corrected code/tests/images and handoff to tracked branch. Preserve users' uncommitted local files and release signing keys. No unrelated UI, input, balance, packaging, Godot project version or publishing changes.
+## Reason for correction
 
-**Stop after P033R correction.** User/ChatGPT will check push and close P033 before authorizing the P028A balance laboratory.
+Existing P033 uses a `canvas_item` hit shader whose `texture(TEXTURE, UV) * COLOR` expression incorrectly re-applies texture/alpha, darkening **undamaged** enemies. The user chose to **eliminate that shader-based color-changing technique entirely**, not repair it. Do not add a different per-fragment shader to accomplish the red silhouette. A simple `modulate = Color.RED` of the original multicolored texture is **NOT** equivalent (multiplication cannot turn green/dark pixels bright red). We need a new red image made from the **source alpha mask**.
+
+## Exact narrowly scoped deliverables
+
+1. **Red silhouette textures derived from source alpha:** For each of the four `assets/sprites/baked/enemy_*.png`, generate a matching 512x512 transparent texture in which the RGB of every nontransparent pixel is solid vivid red and each pixel's alpha **exactly equals the original** (including antialiased edges). Use a documented, reproducible Godot CLI/asset-generation script that processes original `Image` alpha. Either commit four derived red-mask PNGs under a clear `assets/sprites/hit_masks/` path, or implement a genuinely shared, bounded one-time texture cache derived from the sources (not per-hit or per-enemy pixel processing). **Prefer committed derived PNGs** to avoid image-processing stalls on Android. No new 3D render, no changes to the source enemy art, no fake rectangular backgrounds, no image-gen, no third-party assets. If committing masks, include generation command in README; make rebuild deterministic.
+2. **Layering and positioning:** `LaneActor._create_enemy_visual` adds a separate `Sprite2D` red-overlay above the normal enemy sprite, initially fully transparent/hidden. It must reuse the exact pivot, offset, texture scale/filtering, and parent transforms of the existing actor so that hopping, Heavy movement, Snake cross-lane transfers, Healyzard idle squash/stretch and any flips/rotations never cause a doubled ghost outline. Keep the shadow, healing aura, and all other VFX ordered correctly. Do not tint or alter the base sprite. Prefer storing overlay reference in the existing per-enemy visual dictionary and transferring it with the same visual object on Snake lane changes.
+3. **Hit effect:** On real `LaneCombatModel._damage_enemy` updating `enemy.hit_flash`, reveal that enemy's silhouette at opaque bright red immediately; reduce its overlay opacity as the current 0.16s timer decreases. Repeat hits reset the effect without allocating new nodes/textures. Unhit enemies have no visible overlay at all. Match existing authoritative damage and HP numbers **3/6/3/3**. Healyzard healing must not trigger a damage flash.
+4. **Lethal hits/death:** Current neutralization code directly starts a death visual/corpse. Ensure its red silhouette is active at death start (for projectile kills), fades over roughly 0.16 sec, and then remains hidden while the authentic base sprite continues normal one-second tumble/fade. Death cleanup disposes overlay with base nodes. For emergency lane clear where no damage event occurred, do not misleadingly invent a red damage flash unless previously present; distinguish from actual damage. Keep all existing SFX, hit feedback, discharge crystals, tier-3 routing, victory delay and terminal priorities.
+5. **Delete old hit shader implementation** (`HIT_FLASH_SHADER`, per-enemy `ShaderMaterial`, `flash_strength` updates). Do not leave an invisible shader attached to original sprites. Change only specific P033 test assertions that expected shader parameters into overlay state/texture/alpha assertions; maintain HP, input and all other gameplay testing.
+6. **Strong verification:** Add a deterministic test that opens all **four** source PNGs and generated red masks and compares per-pixel alpha (sample ALL 512x512 pixels, or an equivalent exact byte comparison) with red RGB for visible pixels. This should fail if any green/yellow enemy remains too dark due to tint multiplication. Use a real Godot Compatibility-renderer capture comparing unhit enemy versus original source image and active red-overlay enemy; ensure undamaged RGB and silhouette match accurately and active overlay is unmistakably red at full strength with clean transparent edges. Test repeated hits, fade, lethal corpse, Healyzard heal and Snake transfer, no new masks on each hit, no stale overlays after reset. Rerun full `./scripts/ci/run_regression_tests.sh`, Web build/validation, `./scripts/capture_p033_gameplay.sh`, update its existing actual-Godot screenshots and, if practical, add a focused unhit/hit comparison screenshot under `assets/previews/`.
+7. **Handoff:** Update `README.md` with mask generation/repro commands and `.ai/CODEX_HANDOFF.md` with correction result, regenerated images and screenshot paths, test outcomes, SHA/branch and unresolved physical Android QA. Commit/push narrow tested changes to tracked branch, stop.
+
+## Strict exclusions
+
+- Do **NOT** redo P033's Android Classic/Side touch controls, shooter lift, horizontal loaded/next magazine, control-settings UI or full-canvas mouse clicks.
+- Do **NOT** change enemy HP **3/6/3/3**, projectile damage, Snake behavior, Healyzard healing, enemy spawn timing/weights, color generator, conveyor speed, win/loss, gameplay audio or emergency charge-crystal visuals.
+- Do **NOT** modify original `assets/sprites/baked/enemy_*.png` or defender sprites. Red masks are additive derived assets only.
+- No new Web publishing workflow changes, Android signed release/APK, signing secret access, app rename or portfolio edits; preserve uncommitted user-local files. No force push, sudo, unrelated toolchain installation or GUI automation.
+- Codex must not edit ChatGPT-owned `AGENTS.md`, `.ai/TASK.md`, `.ai/TASK_LEDGER.md`, `.ai/DECISIONS.md`, `.ai/PROTOCOL.md` or `.ai/BALL_BATTALION_ROADMAP.md`.
+
+**Stop after P033R.** We will inspect the refreshed real rendered screenshots and tests before closing P033. P028A's balancing laboratory remains proposed, NOT ACTIVE.
 
 ---
 
