@@ -1,13 +1,13 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A and P034B implemented (P034B commit `b802096`, CI `40548949659` SUCCESS); **P034C implemented** (`16347b3`; technical review pass) for rebaked orb-free defender sprites and one-use 2D charge crystals. **No active Codex task.** Player 2D visual acceptance and Android QA pending. P028–P033 remain proposed, not active.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 NOW ACTIVE** for mobile/desktop controls + halftime HP and red hit feedback (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
 > **User-confirmed decision:** The game's intended public name is **Ball Battalion**. The old *Lane Ball Shooter* repo/project name remains in place for now. **Do not automatically rename paths, packages, Godot identifiers, URLs, APK signing identity, deployed assets or existing releases.** Plan and test a deliberate branding migration when appropriate.
 >
-> Most of this document records **proposals, not permission to implement them**. P034B was authorized and implemented in `b802096`, with actual 2D live gameplay screenshots committed for SSH review; that narrow follow-up P034C has been **implemented and technically reviewed**; no current active task. User playtest feedback and Android QA remain pending. All other phases are NOT active.
+> Most of this document records **proposals, not permission to implement them**. P034B was authorized and implemented in `b802096`, with actual 2D live gameplay screenshots committed for SSH review; that narrow follow-up P034C has been **implemented and technically reviewed**; **P033 is now the single active Codex task**. User playtest feedback and Android QA remain pending. All other phases are NOT active.
 
 ## 1. Product concept
 
@@ -215,3 +215,17 @@ P034A was implemented in `5dbd708`, CI `40544273523` SUCCESS, and technically re
 User wants no strange yellow sphere in the defender art: **remove old 3D `ChargeOrb` from `ActorVisualFactory`; rebake genuine Godot transparent defender PNGs**, retaining all other source model details. Add **separate 2D faceted diamond crystals**, each matching its defender's lane color, positioned visibly behind and slightly rearward of the character. When `LaneCombatModel.emergency_discharged` occurs, crystal breaks into several spinning/fading shards, then disappears. Charge does **not** replenish on defender revival; only restart restores the intact crystal. Never dim entire defender to represent spent charge; keep status `CHARGE`/`SPENT`.
 
 P034C delivered genuine re-baked PNGs, state/shatter **real Godot-rendered gameplay screenshots** and passing full local regression and successful Web CI/publication (`40555144242`). Source/asset review pass, human visual QA pending. Archive: `.ai/TASKS/LBS-P034C.md`. P033/P028 not active; no Android release changes.
+
+## 13. P033 approved — thumb-friendly touch / full-canvas desktop + modest easing (ACTIVE, 2026-10-27)
+
+The user approves **P033** after liking the P034C crystal visual result but finding gameplay too difficult. They explicitly requested *both* the HP halving and strong Minecraft-style enemy red hit feedback **folded into P033**, rather than separate tasks. Authoritative scope: `.ai/TASK.md`.
+
+- **HP:** Hopper 6→**3**, Heavy 12→**6**, Sickle Snake 6→**3**, Healyzard 6→**3**. Old P022 HP values superseded, but all projectile and enemy abilities, damage, time and spawn rules unchanged. Healer +1/15s still capped to new max.
+- **Hit readability:** existing 0.16s `hit_flash` must produce bright obvious red tint on ALL four enemies, including the originally green Healyzard and yellow Sickle Snake. Lethal hits flash into death tumble/fade, no global shared sprite tint.
+- **Classic on Android:** primary touch anywhere on noninteractive canvas aims with absolute X; primary release shoots, second finger down swaps once without firing or stealing primary. Hide old dedicated swap button on Android.
+- **Side on Android:** 1:2:1 horizontal zones, one quarter as **relative movement trackpad**, opposite quarter vertically split upper swap/lower shoot, center 50% remains visuals. User can choose left/right handed mapping. Save settings; trackpad release must not fire.
+- **Shooter/magazine:** raise shooter ~80–100 reference logical px at 1280×720 for thumb clearance, preserve 2D row framing; main ammo stays larger and centered on shooter, next is smaller and alongside, flips edge-safe if needed.
+- **Desktop/Web:** left-click to shoot anywhere except genuinely interactive UI, including conveyor; right click anywhere noninteractive swaps. A minimal settings gear/panel must not forward clicks to gameplay.
+- **Testing:** full regression + proper HP/assertion updates, simulated touch IDs, actual gameplay screenshot capture for SSH review, CI Web build/auto-publish. Android release still historical v0.1.0; no signed APK update or signing-key operations in P033.
+
+**P028A automated balancing laboratory remains NOT ACTIVE.** No chain/run weights, feed speed, magazine, enemy spawn probability/frequency, level campaign, branding or APK release change is authorized by P033.
