@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**NO ACTIVE CODEX TASK (2026-10-27):** P028B-EXP `ca73b4b` and corrected P028B-EXPR `0f15616` technically reviewed PASS; CI `40580387509` SUCCESS including publication, all 30 local suites / 574 focused tests reportedly PASS. New no-eligible-urgency fallback prevents spurious RNG draws and arbitrary color reshuffles; new 500-seed + 144 real-scenario report replaces provisional conclusions. Mild is an unapproved future human A/B candidate only; moderate/strong not indicated. Archive `.ai/TASKS/LBS-P028B-EXPR.md`. **P028B-SHIP/P029–P032 NOT ACTIVE.**
+**NO ACTIVE CODEX TASK (2026-10-27). USER-APPROVED WEB PLAYTEST LIVE: P028B-SHIP-MILD** enabled only the tested `mild` +50% eligible-threat next-run selector in actual `Main` (`f812608`, tested `7f2d096`), with real `Battlefield` TTD and deterministic run restart. CI `40598952476` SUCCESS: full regressions, Web build and browser/public verification. Baseline speed 102 px/s, run weights, all 3/6/3/3 HP/other gameplay preserved. Older Android APK untouched. **Awaiting user playtest feedback; no further Codex task authorized.** P028B-EXP/EXPR studies complete, higher strengths not shipped, P029–P032 inactive.
 
 **NO ACTIVE CODEX TASK (2026-10-27).** P028A initial lab `6564001` corrected by **P028AR `78b535b`**, which now correctly holds fixed X during 0.20s projectile flight and resolves collision after chain movement. Technical source and regenerated-report review PASS; Codex reports 29 suites and 38 dedicated checks passing. GitHub CI `40571348733` completed SUCCESS, test/build and portfolio publication. Archive `.ai/TASKS/LBS-P028AR.md`. **P028B and P029–P032 remain PROPOSED / NOT ACTIVE.**
 
@@ -82,3 +82,5 @@ P028A's balance-simulation laboratory remains proposed and NOT active. **P033 is
 | LBS-P028B-SHIP | **PROPOSED — NOT ACTIVE** | Optional production adaptive generator to be considered only after experimental report and explicit player decision. |
 
 | LBS-P028B-EXPR | **COMPLETE `0f15616`; CI and technical review PASS** | When threatened lane's color is no longer in remaining bag and no other legal color has urgency, reuse exact original bag choice without bias RNG, track ineligible decisions, rerun synthetic/live comparison with new deterministic tests; no gameplay changes. |
+
+| LBS-P028B-SHIP-MILD | **DEPLOYED Web playtest** — source `7f2d096`, CI `40598952476` PASS | On user instruction, live mild only (+50% max when a still-legal run color is threatened), same deterministic four-color bag/TTD sampler as research, fresh selector on restart; integration suite; no speed/run length/HP/control/APK changes. Await player feedback. |
