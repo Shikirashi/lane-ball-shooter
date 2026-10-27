@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **no active Codex task** (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **P028A is now the sole ACTIVE task** (Godot balancing audit only, see `.ai/TASK.md`). P028B–P032 remain proposed; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
@@ -241,3 +241,11 @@ User chose **shader-free solid-red silhouette overlay** in place of the earlier 
 ## 16. P033R accepted and P028A next proposed (2026-10-27)
 
 P033R's four exact-alpha red silhouette sprites were implemented as `f08ee3d` with shader removal, 0.16s hit/death feedback, original colors, and Godot-rendered before/after previews. Review found no blocker; Codex reports 28 full suites PASS. **No active task.** P028A deterministic balancing laboratory remains proposed and awaits authorization, while native Android touch/visual QA is pending. Scope history archived in `.ai/TASKS/LBS-P033R.md`.
+
+## 17. P028A audit approved — instrument first, balance second (2026-10-27)
+
+After reviewing the corrected P033R visual results, the user said to continue. **P028A is the ONE ACTIVE CODEX TASK**: build/execute a repeatable Godot 4.7.2 headless balancing laboratory using actual production chain, magazine, match progression, spawn director/combat models where applicable. It must produce fresh/color/run/rolling-window droughts, *visible* chain availability (without mistaking offscreen retained balls for usable ones), matchable ammo and scripted action results, lane danger, per-seed statistics, JSON/CSV and a human-readable causal report. Use deterministic 500-ish generator seeds and a bounded practical subset of real gameplay scenarios, with performance and policy limitations reported honestly. P028A is **analysis only**.
+
+For experiments only (not production): current conveyor 102px/s vs 120/140/160; original run weights `[20,30,18,13,9,6,4]` vs hypothetical `[12,30,40,10,5,2,1]`. Threat-aware next-run color bias is a FUTURE hypothesis: log time-to-danger/defensive starvation but do NOT ship a dynamic assistance algorithm now. Current enemy HP 3/6/3/3, physics, shooter, red hit feedback, emergency crystals, and source art remain unchanged.
+
+On handoff, inspect real data and jointly decide narrow **P028B** adjustments. Do not auto-activate it, P029 levels/campaign, P032 mascot/branding, or an Android APK upgrade.
