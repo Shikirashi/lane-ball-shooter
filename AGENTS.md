@@ -16,10 +16,10 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 - Godot 4.x (target user's installed 4.7.2) **GDScript**; Web and Android must share one project.
 - Godot **Compatibility renderer** for Web, plus Android landscape export later.
 - Landscape 16:9 reference with responsive safe-area positioning for wider phones/browser resizing.
-- Game is hybrid: 2D ball chain, shooter and HUD; 3D orthographic four-lane battlefield with primitive-mesh defenders, enemies and projectiles.
+- **Latest authorized P034B override:** the formerly hybrid 2D/3D game is being migrated to an all-2D live presentation. Preserve the existing 2D ball chain, shooter and HUD, but replace runtime 3D battlefield/actors/projectiles with 2D sprites and effects sourced from P034A; retain 3D mesh source only for offline sprite rebaking and legacy tests. All gameplay logic stays unchanged. Historical references to a required runtime 3D battlefield are superseded.
 - No external assets, add-ons, complex models, shaders requiring advanced renderer, or external network dependencies in the prototype.
 - Centralize ball colors/symbols; visuals and game logic must share authoritative state.
-- Keep code modular and deterministic where possible. Favor lightweight logical positions and procedural 3D hopping over rigid-body physics/pathfinding.
+- Keep code modular and deterministic where possible. Preserve lightweight authoritative logical positions and hop timers; express character movement as purely cosmetic 2D squash/stretch/hops over that state. Never replace model movement with sprite-driven physics.
 - Do not silently invent game rules. Follow `.ai/DECISIONS.md`, document reversible assumptions in the handoff.
 
 ## Mailbox ownership
@@ -67,3 +67,10 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 - P024 automation COMPLETE: scoped portfolio token configured; Actions run `40246262499` fully SUCCESS; Web game published and verified over HTTPS; browser-profile cleanup bug fixed.
 - P027 release delivery COMPLETE: `android-v0.1.0` tag at `0e77dbd`, public release APK `lane-ball-shooter-android.apk`, SHA256 `cf390a1abbbbe3e8e937710e46a32aede297ddf43c0c41507d29549e8450ea26`; portfolio screenshot/mobile DOWNLOAD APK card deployed `94c5e77`, Pages `40246539248` SUCCESS. Android physical-device QA still untested because no device attached; next user action is sideload and test.
 - Do not regenerate signing identity, change Android version code/signature unless preparing a NEW release, overwrite user's uncommitted Godot files, or edit public cards without a newly authorized task. Release key backup already confirmed under root-protected `/var/backups/lane-ball-shooter/`.
+
+## Latest active scope — P034B, 2026-10-27
+
+- **ONE ACTIVE TASK: LBS-P034B** in `.ai/TASK.md`. User chose to continue with runtime 2D migration after P034A completed, despite being unable to run a GUI over SSH. The older NO ACTIVE TASK notices elsewhere in this file are historical.
+- Build a fully playable 2D-rendered battlefield using committed transparent P034A PNG actors, procedural 2D motion/effects and appropriately filled responsive lanes; keep existing combat, ball chain, enemy schedule/HP/abilities and platform input rules unchanged.
+- **Mandatory remote review evidence:** commit reproducible real Godot-rendered screenshots of the live 2D game in standard and wide landscape layouts. Do not require a GUI or user visual intervention. Preserve P034A's baker and reproducibility.
+- **P033 touch controls, P028 balancing, P029+ content/branding and Android packaging/release updates are NOT ACTIVE.** Only run P034B. When complete, update Codex handoff, commit/push verified work and stop. Do not self-advance.
