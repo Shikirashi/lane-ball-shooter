@@ -295,3 +295,9 @@ If necessary, implement conservative and configurable defaults and report decisi
 
 - User-approved solid-red `Sprite2D` overlays generated from existing enemy PNG alpha replaced the buggy shader. Original enemy textures/materials unchanged; 0.16s damage/death flashes, Snake transfer, healing and emergency behaviors inspected. Codex reports 28 regression suites passed; actual before/after screenshots visually reviewed. Commit `f08ee3d`; archive `.ai/TASKS/LBS-P033R.md`.
 - **NO ACTIVE TASK.** P028A automated balancing laboratory proposed only, not authorized. Android native UI/multi-touch QA and updated signed APK pending separate work.
+
+## 2026-10-27 P028A initial implementation review: P028AR correction ACTIVE
+
+- Initial P028A lab and generated report committed as `6564001`. Generator-only 500 seeds ×300 balls are credible (GREEN 25.251%, no intrinsic undersupply; length 7 about 4% of runs but 9.43% of generated balls). Headless Godot full regression reportedly 29 suites PASS, CI `40567396055` SUCCESS; shipped DEFAULT_SPEED/run weights and HP remain unchanged.
+- Critical review discovery: bot `pending_shot` saves a target UID and on impact looks up the *current target x*, then passes that moving x into `try_insert_shot`, effectively granting **homing shots** unlike `ShooterView`'s fixed `start.x` for the 0.20s flight. Simulation also resolved impact before last chain-advance dt. Thus speed-versus-bot-win/shot accuracy comparisons are not reliable enough for gameplay tuning. Do not activate P028B from those results.
+- **P028AR sole ACTIVE task** in `.ai/TASK.md`: commit immutable launch X, correct impact timing, tests that fail on tracking/homing, regenerate all experimental outputs and adjust conclusions honestly. P028B gameplay balance, campaign, APK and UI remain NOT ACTIVE.
