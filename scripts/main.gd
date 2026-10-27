@@ -6,6 +6,11 @@ const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
 const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 const TouchRouterScript = preload("res://scripts/input/touch_control_router.gd")
 const PreferencesScript = preload("res://scripts/input/control_preferences.gd")
+# Live Web playtest: use the same eligible-threat-only mild sampler tested by P028B-EXPR.
+const ThreatRunSelectorScript = preload("res://scripts/analysis/threat_run_selector.gd")
+const BalanceLabScript = preload("res://scripts/analysis/balance_lab.gd")
+const THREAT_BIAS_PLAYTEST_ARM := "mild"
+const THREAT_BIAS_SEED_XOR := 0x6B5EED
 
 var _background: ColorRect
 var _battlefield: Battlefield
@@ -18,6 +23,7 @@ var _settings_view: ControlSettingsView
 var _sfx: Node
 var _magazine := MagazineState.new()
 var _chain_model := ChainModel.new()
+var _threat_bias: ThreatRunSelector
 var _progression := MatchProgression.new()
 var _cooldown_remaining := 0.0
 var _active_touch_id := -1 # Compatibility mirror of the router's primary ID.
@@ -36,6 +42,7 @@ var _processing_chain := false
 
 func _ready() -> void:
 	_build_scene()
+	_configure_threat_bias_playtest()
 	_preferences.load_settings()
 	_touch_router.configure(_preferences.mode, _preferences.handedness, get_viewport().get_visible_rect())
 	_magazine.changed.connect(_on_magazine_changed)
@@ -70,6 +77,9 @@ func _process(delta: float) -> void:
 		return
 	_cooldown_remaining = maxf(0.0, _cooldown_remaining - delta)
 	_progression_chain_time = _chain_model.simulation_time
+	# Snapshot CURRENT live battlefield before the feeder advances; no future
+	# enemies, offscreen color lookahead or retroactive run selection.
+	_threat_bias.set_threat_snapshot(BalanceLabScript.lane_time_to_danger(_battlefield))
 	_processing_chain = true
 	_chain_model.advance(delta)
 	_sync_progression_to_chain_time()
@@ -246,6 +256,21 @@ func _finish_victory_presentation() -> void:
 func _on_encounter_progress_changed(neutralized: int, total: int, remaining: int) -> void:
 	_hud_view.set_enemy_progress(neutralized, total, remaining)
 
+func _configure_threat_bias_playtest() -> void:
+	# Independent deterministic RNG plus the baseline shadow-run sampler retain
+	# the exact experimental mild rule and original run-length sequence. Normal
+	# four-color bag legality/no-immediate-repeat remains ChainModel-owned.
+	var chain_seed := _chain_model.fresh_seed
+	_threat_bias = ThreatRunSelectorScript.new(
+		THREAT_BIAS_PLAYTEST_ARM, chain_seed ^ THREAT_BIAS_SEED_XOR, chain_seed
+	)
+	_threat_bias.chain_model = _chain_model
+	_chain_model.set_analysis_fresh_run_callbacks(
+		Callable(_threat_bias, "choose"),
+		Callable(_threat_bias, "observe"),
+		Callable(_threat_bias, "choose_paired_run_length")
+	)
+
 func _restart_run() -> void:
 	_game_over = false
 	_victory = false
@@ -256,6 +281,7 @@ func _restart_run() -> void:
 	_clear_touch_ownership()
 	_shooter_view.reset_run()
 	_chain_view.reset_feedback()
+	_configure_threat_bias_playtest()
 	_chain_model.reset_run()
 	_progression_chain_time = _chain_model.simulation_time
 	_processing_chain = false
