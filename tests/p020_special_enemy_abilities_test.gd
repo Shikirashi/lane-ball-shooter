@@ -74,7 +74,7 @@ func _test_snake_stun_transfer_frame_rates() -> void:
 		_check(int(transferring.enemy.spawn_id) == spawn_id and int(transferring.enemy.hp) == 5 and is_equal_approx(float(transferring.enemy.x), hit_x), "transfer preserves global identity, HP and logical X")
 		var transition_uid := int(transferring.enemy.uid)
 		var visual: Dictionary = battlefield.lanes[1].get("_enemy_visuals")[transition_uid]
-		_check(absf((visual.root as Node3D).position.z) > 0.1, "transferred body starts visibly between lane Z positions")
+		_check(absf((visual.root as Node2D).position.y - float(battlefield.lanes[1].get("_baseline_y"))) > 0.1, "transferred sprite starts visibly between lane rows")
 		_advance_exact(battlefield, Battlefield.SNAKE_TRANSFER_DURATION, step)
 		var arrived := _location(battlefield, spawn_id)
 		_check(int(arrived.lane_index) == 1 and StringName(arrived.enemy.special_state) == &"moving" and absf(float(arrived.enemy.transfer_visual_z)) < 0.001, "Snake completes smooth transfer in %.2fs" % Battlefield.SNAKE_TRANSFER_DURATION)
@@ -231,8 +231,8 @@ func _test_healing_aura_texture_and_lifecycle() -> void:
 	lane.call("_sync_visuals")
 	var healer_visual: Dictionary = lane.get("_enemy_visuals")[healer_uid]
 	var hopper_visual: Dictionary = lane.get("_enemy_visuals")[hopper_uid]
-	var aura: Sprite3D = healer_visual.aura
-	_check(aura != null and float(aura.position.z) < 0.0 and hopper_visual.aura == null, "only Healyzard owns a reusable aura positioned behind its body")
+	var aura: Sprite2D = healer_visual.aura
+	_check(aura != null and aura.z_index < (healer_visual.sprite as Sprite2D).z_index and hopper_visual.aura == null, "only Healyzard owns a reusable aura positioned behind its body")
 	var texture := LaneActor.healing_aura_texture()
 	var same_texture := LaneActor.healing_aura_texture()
 	var image := texture.get_image()

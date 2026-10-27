@@ -1,4 +1,4 @@
-# Codex Handoff — LBS-P034A 3D-to-2D sprite baking
+# Codex Handoff — LBS-P034B live 2D gameplay conversion
 
 **Status:** COMPLETE
 
@@ -6,39 +6,41 @@
 
 ## Implementation
 
-- Added `ActorVisualFactory`, now shared by the live `LaneActor` and the capture tool. Enemy and defender primitive meshes, dimensions, materials, names, Hopper horns, Healyzard scale/aura setup, launcher and charge orb remain sourced from one implementation; gameplay behavior is unchanged.
-- Added the CLI baker `tools/bake_actor_sprites.gd` plus `scripts/bake_actor_sprites.sh`. It uses a transparent 512×512 `SubViewport`, the live battlefield's orthographic viewing direction, ambient/directional lighting, Compatibility OpenGL, 4× MSAA, and waits for `RenderingServer.frame_post_draw`. No screenshot scraping, chroma key, external art or dummy headless capture is used.
-- Baked eight normal/resting RGBA masters under `assets/sprites/baked/`: `enemy_hopper.png`, `enemy_heavy.png`, `enemy_sickle_snake.png`, `enemy_healyzard.png`, and `defender_red/blue/yellow/green.png`.
-- Added `pivots.json` with each silhouette's alpha bounds and grounded pivot. Floors and shadows are deliberately excluded from the individual actors.
-- Added `contact_sheet.png` (1088×544 checkerboard; enemies top row, defenders bottom row).
-- Added isolated `scenes/previews/p034a_sprite_preview.tscn`. It uses only 2D drawing, labels and eight `Sprite2D` nodes, with Hopper hop/spring, Heavy squash, Snake wiggle, Healyzard pulse and defender recoil/knockdown-style loops. It is not referenced by normal boot/main gameplay or exports.
-- Added `tests/p034a_sprite_baking_test.gd` with 107 deterministic asset/alpha/pivot/source-factory/preview-wiring checks and documented commands in README.
+- Replaced the ordinary gameplay `SubViewportContainer`/`SubViewport`/`Camera3D` battlefield with a direct 2D `Battlefield` `Control` containing four `LaneActor` row controls. Normal main-scene startup now instantiates no `Node3D`, `Camera3D`, `WorldEnvironment`, 3D mesh or hidden render viewport.
+- Preserved `LaneCombatModel` and the existing global `Battlefield` director as the only gameplay authorities. Enemy HP/motion, Hopper phases, quotas and weighted spawning, Snake uniqueness/cooldown/transfer, Healyzard healing, projectile swept hits, breach/victory, attack targeting and seeded test hooks are unchanged.
+- Live defenders and all four enemy types now use the authentic P034A transparent PNGs and `pivots.json`. Responsive `Sprite2D` deformation supplies Hopper hop/squash, Heavy weight, Snake wiggle and cross-row transfer, Healyzard idle, defender recoil/knockdown/revival and per-hit feedback without altering collision positions or timing.
+- Rebuilt presentation effects in 2D: animated shadows, normal/piercing/two-lane wide projectile shapes, healer aura, hit tint, muzzle flash, emergency/revival/tier waves, and enemy burst/sparks/tumble/fade. Death animation updates remain independent of frozen combat during the three-second victory delay. Existing SFX event hooks are intact.
+- The spent emergency state dims the entire baked defender plus its charge orb and displays `SPENT`, so the embedded yellow orb cannot be mistaken for a live charge after knockdown or rotation.
+- Responsive framing now places the battlefield two pixels below the conveyor and ends it 54 pixels above the shooter center. Four equal rows fill that rectangle; authoritative combat X maps into 5.5% internal side margins. Visual controls ignore mouse input, preserving drag/release fire, cursor fire and HUD swap routing.
+- P034A's factory, baker, transparent masters, contact sheet and isolated preview remain intact for regeneration/review, but are not instantiated as a live 3D fallback.
 
-## Rendering and verification
+## Required renderer evidence
 
-- Engine: Godot `4.7.2.stable.official.ed1daf0bf`.
-- Capture renderer: OpenGL 4.6 Compatibility on AMD Radeon RX 6700 XT (Mesa 26.2.5), using existing X display `:0` noninteractively.
-- `./scripts/bake_actor_sprites.sh`: **PASS**, eight RGBA PNGs plus metadata/contact sheet.
-- Immediate second bake on the same engine/GPU: **byte-identical PASS** for every PNG and `pivots.json`. This determinism is scoped to this renderer/toolchain; other GPUs/drivers can legitimately rasterize edge samples differently.
-- `godot --path . --audio-driver Dummy --rendering-method gl_compatibility res://scenes/previews/p034a_sprite_preview.tscn -- --p034a-smoke`: **PASS**, real renderer, clean one-second startup/animation exit.
-- `./scripts/ci/run_regression_tests.sh`: **all 24 suites passed** (P001–P023 plus P034A), including P011's 16,485-check stress suite.
-- P034A checks confirm every master is 512×512 RGBA, has transparent corners and over 150,000 fully transparent pixels, nonempty colored/opaque actor pixels, multisampled partial-alpha edges, no meaningful RGB fringe in zero-alpha pixels, valid grounded metadata, and loads into `Sprite2D`.
-- P019/P020 source-model and ability suites pass after the visual-factory extraction. The playable game's start scene, cameras, input, combat, balance, Web/Android identity and runtime 3D battlefield remain unchanged.
+- Added `tools/capture_p034b_gameplay.gd` and executable `scripts/capture_p034b_gameplay.sh`. The wrapper rejects a display-less environment and invokes the actual Compatibility renderer; a capture-only `SubViewport` renders the real `main.tscn`, deterministic live models and real 2D effects after completed frames. This viewport exists only in the evidence tool.
+- Committed real gameplay captures:
+  - `assets/previews/p034b_gameplay_1280x720.png` — 1280×720, SHA-256 `0629e38b135af41e43b8215c24b717fd4ed8b4c7c7c827dfc6e1983f26a20b5f`
+  - `assets/previews/p034b_gameplay_1600x720.png` — 1600×720, SHA-256 `9b39eeea715b5da5a9df00fe05b54fd1f90202d5d7589ca768962ac25cf86be5`
+- Reproduce with `./scripts/capture_p034b_gameplay.sh`. Capture passed with Godot `4.7.2.stable.official.ed1daf0bf`, OpenGL 4.6 Compatibility, AMD Radeon RX 6700 XT and Mesa 26.2.5. Both images were inspected at original resolution after the final spent-state correction.
 
-## Review
+## Tests and builds
 
-```sh
-./scripts/bake_actor_sprites.sh
-godot --path . res://scenes/previews/p034a_sprite_preview.tscn
-```
+- `./scripts/ci/run_regression_tests.sh`: **PASS — all 25 suites** (P001–P023, P034A and P034B). This includes P011's 16,485-check/2,400-operation chain stress suite and P034A's 107 transparency/source-fidelity checks.
+- New `tests/p034b_live_2d_battlefield_test.gd`: **PASS — 94 checks**. It verifies no live 3D/viewport nodes, four responsive rows at 960×540 through 2400×1080 plus cutout-safe layout, 5.5% world-X mapping, mouse pass-through, all eight baked actor sprites and transparency, hop transform, healer aura, two-lane projectile shape, death fall/fade and the committed renderer captures.
+- Narrowly updated old renderer-specific assertions in P001/P006/P011/P018/P019/P020 from meshes/camera/Z to equivalent 2D nodes/textures/Y while preserving their model/combat assertions.
+- `./scripts/capture_p034b_gameplay.sh`: **PASS**, two real Compatibility-renderer screenshots.
+- `./scripts/build_web.sh`: **PASS**, new nine-file single-threaded Compatibility Web export and ZIP generated locally under ignored `exports/`.
+- `./scripts/ci/validate_web_release.sh exports/web`: **PASS**, exact nine-file set, nonempty files, WASM/PCK/PNG magic and relative runtime references. New PCK SHA-256: `a3409bf4a52dc5516a2c93a0b8a44628a2f17e184792ca3a012a60328a57fb72`.
+- Editor/import runs emit expected sandbox-only warnings for blocked TCP/ADB and inability to save `/home/shiki/.config/godot/editor_settings-4.7.tres`; all commands exit successfully and those warnings do not affect project files or results.
 
-Review `assets/sprites/baked/contact_sheet.png` directly for silhouettes/materials and run the preview for relative scale, grounded pivots and illustrative 2D motion.
+## Documentation and preservation
 
-## Limitations / future scope
+- README now describes the all-2D live runtime, responsive framing, sprite provenance, screenshot command/assets and P034B regression command.
+- Pre-existing user edits to `project.godot`, `scenes/main.tscn`, and unrelated generated `.uid` files were preserved and excluded from the task commit. Generated Web binaries remain ignored and were not committed.
 
-- P034A bakes only the requested standing/resting masters. Ground shadows, Healyzard glow, hit flashes, projectile/attack frames, muzzle flash, death explosion/fall/fade, full defender knockdown/revival states and additional animation frames remain live 3D effects; they require explicit treatment if P034B is later approved.
-- The preview's squash/stretch is an isolated motion study, not a gameplay renderer or final animation timing decision.
-- A real display/GPU or safe offscreen OpenGL display is required to rebake; the wrapper intentionally rejects a display-less dummy-headless environment.
-- Pre-existing user edits to `project.godot`, `scenes/main.tscn`, and unrelated generated `.uid` files were preserved and excluded from this task's commit.
+## Limitations / follow-up QA
 
-Stop after P034A. P034B, P033, P028 and other roadmap tasks were not implemented or activated.
+- No physical Android device was attached, so touch feel, GPU performance, audio and cutout behavior still need a real-device playtest. No Android release/APK was rebuilt or published by P034B.
+- The Web artifact was built and statically validated locally; P034B does not publish it or alter the existing deployment workflow/public portfolio release.
+- Gameplay screenshots are deterministic staged review fixtures rather than recordings of a full human playthrough. Automated suites cover control routing and combat semantics; final motion feel and sprite legibility remain appropriate visual playtest items.
+
+Stop after P034B. P033, P028 and all other proposed tasks were not implemented or activated.

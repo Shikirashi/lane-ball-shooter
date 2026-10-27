@@ -58,12 +58,6 @@ func _test_typed_stats_and_motion() -> void:
 		else:
 			_check(is_equal_approx(moved, expected_speed[int(enemy.type)]), "%s uses continuous non-hop displacement" % EnemyTypesScript.display_name(int(enemy.type)))
 
-func _mesh_color(root_node: Node, child_name: String) -> Color:
-	var node := root_node.find_child(child_name, true, false) as MeshInstance3D
-	if node == null:
-		return Color.BLACK
-	return (node.material_override as StandardMaterial3D).albedo_color
-
 func _test_visual_roster_and_hidden_hp() -> void:
 	var lane := LaneActor.new()
 	lane.setup(TeamData.Identity.RED, 0)
@@ -76,23 +70,24 @@ func _test_visual_roster_and_hidden_hp() -> void:
 	for enemy_type in range(EnemyTypesScript.Type.HEALYZARD + 1):
 		uids.append(lane.combat_model.spawn_enemy(1.0 + enemy_type, -1, false, enemy_type, 200 + enemy_type))
 	lane.call("_sync_visuals")
+	var expected_assets := ["enemy_hopper", "enemy_heavy", "enemy_sickle_snake", "enemy_healyzard"]
 	for enemy_type in range(uids.size()):
 		var visual: Dictionary = lane.get("_enemy_visuals")[uids[enemy_type]]
-		var horns: Array = visual.horns
-		_check(horns.size() == (2 if enemy_type == EnemyTypesScript.Type.HOPPER else 0), "%s has the correct permanent horn count" % EnemyTypesScript.display_name(enemy_type))
-		_check((visual.root as Node).find_children("*Pip*", "MeshInstance3D", true, false).is_empty(), "%s has no health-bar/pip meshes" % EnemyTypesScript.display_name(enemy_type))
+		var sprite: Sprite2D = visual.sprite
+		var expected_texture := load("res://assets/sprites/baked/%s.png" % expected_assets[enemy_type])
+		_check(sprite.texture == expected_texture, "%s uses the corresponding P034A baked model sprite" % EnemyTypesScript.display_name(enemy_type))
+		_check((visual.root as Node).find_children("*Pip*", "CanvasItem", true, false).is_empty(), "%s has no health-bar/pip visuals" % EnemyTypesScript.display_name(enemy_type))
 	var hopper_visual: Dictionary = lane.get("_enemy_visuals")[uids[0]]
 	lane.combat_model.call("_damage_enemy", uids[0], 1, 1.0)
 	lane.call("_sync_visuals")
-	_check(hopper_visual.horns.size() == 2 and hopper_visual.horns[0].visible and hopper_visual.horns[1].visible, "Hopper's two orange horns remain visible after damage")
-	_check(_mesh_color(hopper_visual.root, "HopperHorn").r > 0.9, "Hopper horns use permanent orange decoration")
+	_check((hopper_visual.sprite as Sprite2D).texture == load("res://assets/sprites/baked/enemy_hopper.png"), "damaged Hopper retains the baked sprite with permanent orange horns")
 	var heavy_visual: Dictionary = lane.get("_enemy_visuals")[uids[1]]
 	var snake_visual: Dictionary = lane.get("_enemy_visuals")[uids[2]]
 	var healer_visual: Dictionary = lane.get("_enemy_visuals")[uids[3]]
-	_check(_mesh_color(heavy_visual.root, "Body").r > _mesh_color(heavy_visual.root, "Body").g * 2.0, "Heavy is visually broad orange")
-	_check(_mesh_color(snake_visual.root, "Body").r > 0.75 and _mesh_color(snake_visual.root, "Body").g > 0.55, "Sickle Snake is strongly yellow")
-	_check(_mesh_color(healer_visual.root, "Body").g > _mesh_color(healer_visual.root, "Body").r * 3.0 and is_equal_approx((healer_visual.root as Node3D).scale.x, 0.7), "Healyzard is green and 0.7 scale")
-	_check((heavy_visual.root as Node3D).scale.x > (hopper_visual.root as Node3D).scale.x or (_mesh_color(heavy_visual.root, "Body").r > 0.0), "Heavy has a distinct wide construction")
+	_check((heavy_visual.sprite as Sprite2D).texture != (hopper_visual.sprite as Sprite2D).texture, "Heavy retains its distinct wide orange baked construction")
+	_check((snake_visual.sprite as Sprite2D).texture != (heavy_visual.sprite as Sprite2D).texture, "Sickle Snake retains its distinct tall yellow baked construction")
+	_check((healer_visual.sprite as Sprite2D).texture != (snake_visual.sprite as Sprite2D).texture and healer_visual.aura != null, "Healyzard retains its small green bake and healing aura")
+	_check((heavy_visual.root as Node2D).scale.x > 0.0 and (healer_visual.root as Node2D).scale.x > 0.0, "baked roster owns valid responsive 2D scale")
 	lane.queue_free()
 	await process_frame
 

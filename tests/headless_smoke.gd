@@ -24,9 +24,9 @@ func _run() -> void:
 	var lanes := main.find_children("*", "LaneActor", true, false)
 	var cameras := main.find_children("*", "Camera3D", true, false)
 	_check(lanes.size() == 4, "battlefield contains four LaneActor nodes")
-	_check(cameras.size() == 1, "battlefield contains one camera")
-	if cameras.size() == 1:
-		_check(cameras[0].projection == Camera3D.PROJECTION_ORTHOGONAL, "camera is orthographic")
+	_check(cameras.is_empty(), "live battlefield contains no 3D camera")
+	_check(main.find_children("*", "Node3D", true, false).is_empty(), "live main contains no active 3D nodes")
+	_check(main.find_children("*", "SubViewport", true, false).is_empty(), "live main contains no hidden render viewport")
 
 	var shooter: ShooterView = main.get("_shooter_view")
 	var magazine_view: MagazineView = main.get("_magazine_view")
@@ -47,9 +47,9 @@ func _run() -> void:
 	main.call("_shoot")
 	_check(shooter.get("_shots").size() == 1, "cooldown rejects an immediate second shot")
 
-	var battlefield_region: SubViewportContainer = main.get("_battlefield_container")
+	var battlefield_region: Battlefield = main.get("_battlefield")
 	var chain: BallChainView = main.get("_chain_view")
-	_check(battlefield_region.position.y >= chain.position.y + chain.size.y, "3D region starts below the top chain")
+	_check(battlefield_region.position.y >= chain.position.y + chain.size.y, "2D battlefield starts below the top chain")
 	_check(magazine_view.position.y + magazine_view.size.y <= chain.position.y, "compact magazine stays in HUD above the chain")
 	_check(shooter.track_right >= chain.position.x + chain.size.x - 25.0, "shooter reaches the rightmost chain target")
 	_finish()

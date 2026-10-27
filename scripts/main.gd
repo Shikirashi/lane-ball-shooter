@@ -6,8 +6,6 @@ const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
 const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 
 var _background: ColorRect
-var _battlefield_container: SubViewportContainer
-var _battlefield_viewport: SubViewport
 var _battlefield: Battlefield
 var _chain_view: BallChainView
 var _shooter_view: ShooterView
@@ -240,20 +238,10 @@ func _build_scene() -> void:
 	_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_background)
 
-	_battlefield_container = SubViewportContainer.new()
-	_battlefield_container.name = "BattlefieldRegion"
-	_battlefield_container.stretch = true
-	_battlefield_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_battlefield_container)
-	_battlefield_viewport = SubViewport.new()
-	_battlefield_viewport.name = "BattlefieldViewport"
-	_battlefield_viewport.handle_input_locally = false
-	_battlefield_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
-	_battlefield_viewport.msaa_3d = Viewport.MSAA_2X
-	_battlefield_container.add_child(_battlefield_viewport)
 	_battlefield = Battlefield.new()
 	_battlefield.name = "Battlefield"
-	_battlefield_viewport.add_child(_battlefield)
+	_battlefield.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_battlefield)
 
 	_chain_view = BallChainView.new()
 	_chain_view.name = "BallChain"
@@ -292,13 +280,9 @@ func _apply_layout(viewport_size: Vector2, safe_rect: Rect2) -> void:
 	_chain_view.position = layout.chain_rect.position
 	_chain_view.size = layout.chain_rect.size
 	_chain_model.set_lane_width(_chain_view.size.x)
-	_battlefield_container.position = layout.battlefield_rect.position
-	_battlefield_container.size = layout.battlefield_rect.size
-	_battlefield_container.stretch_shrink = maxi(1, ceili(maxf(
-		_battlefield_container.size.x / LayoutCalculator.MAX_3D_WIDTH,
-		_battlefield_container.size.y / LayoutCalculator.MAX_3D_HEIGHT
-	)))
-	_battlefield.configure_viewport_aspect(_battlefield_container.size.x / maxf(_battlefield_container.size.y, 1.0))
+	_battlefield.position = layout.battlefield_rect.position
+	_battlefield.size = layout.battlefield_rect.size
+	_battlefield.configure_layout(layout.battlefield_rect.size)
 
 	_magazine_view.position = layout.magazine_rect.position
 	_magazine_view.size = layout.magazine_rect.size

@@ -5,6 +5,7 @@ const EDGE_PADDING_MIN := 10.0
 const EDGE_PADDING_MAX := 18.0
 const MAX_3D_WIDTH := 1600.0
 const MAX_3D_HEIGHT := 720.0
+const BATTLEFIELD_SIDE_MARGIN_RATIO := 0.055
 
 static func calculate(viewport_size: Vector2, requested_safe_rect := Rect2()) -> Dictionary:
 	var viewport_rect := Rect2(Vector2.ZERO, viewport_size.max(Vector2.ONE))
@@ -19,8 +20,9 @@ static func calculate(viewport_size: Vector2, requested_safe_rect := Rect2()) ->
 	var content_left := safe_rect.position.x + edge_padding
 	var content_right := safe_rect.end.x - edge_padding
 	var content_width := maxf(1.0, content_right - content_left)
-	var center_top := safe_rect.position.y + hud_height + chain_height + 8.0
-	var center_bottom := safe_rect.end.y - bottom_height
+	var shooter_y := safe_rect.end.y - maxf(48.0, edge_padding + 30.0)
+	var center_top := safe_rect.position.y + hud_height + chain_height + 2.0
+	var center_bottom := shooter_y - 54.0
 	var center_height := maxf(1.0, center_bottom - center_top)
 
 	var magazine_size := Vector2(56.0, 56.0)
@@ -40,7 +42,7 @@ static func calculate(viewport_size: Vector2, requested_safe_rect := Rect2()) ->
 		"battlefield_rect": Rect2(Vector2(content_left, center_top), Vector2(content_width, center_height)),
 		"magazine_rect": magazine_rect,
 		"playfield_rect": Rect2(Vector2(content_left, center_top), Vector2(content_width, safe_rect.end.y - center_top)),
-		"shooter_y": safe_rect.end.y - maxf(48.0, edge_padding + 30.0),
+		"shooter_y": shooter_y,
 		"track_left": track_left,
 		"track_right": track_right,
 		"shot_ceiling": chain_lane_center,

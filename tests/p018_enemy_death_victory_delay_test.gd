@@ -18,14 +18,11 @@ func _run() -> void:
 	_test_preserved_balance_and_chain_invariants()
 	_finish()
 
-func _first_mesh_alpha(node: Node) -> float:
-	var mesh := node as MeshInstance3D
-	if mesh == null:
-		mesh = node.find_child("*", true, false) as MeshInstance3D
-	if mesh == null:
-		return -1.0
-	var material := mesh.material_override as StandardMaterial3D
-	return -1.0 if material == null else material.albedo_color.a
+func _first_sprite_alpha(node: Node) -> float:
+	var sprite := node as Sprite2D
+	if sprite == null:
+		sprite = node.find_child("*", true, false) as Sprite2D
+	return -1.0 if sprite == null else sprite.modulate.a
 
 func _test_single_death_actor_after_logical_freeze() -> void:
 	var lane := LaneActor.new()
@@ -37,18 +34,17 @@ func _test_single_death_actor_after_logical_freeze() -> void:
 	model.clear_for_test()
 	var uid := model.spawn_enemy(1.75, 2)
 	lane.call("_sync_visuals")
-	var old_root: Node3D = lane.get("_enemy_visuals")[uid].root
+	var old_root: Node2D = lane.get("_enemy_visuals")[uid].root
 	model.call("_damage_enemy", uid, 2, 1.75)
 	_check(model.active_enemy_count() == 0 and model.total_killed == 1, "ordinary projectile kill removes logical enemy immediately")
 	_check(not lane.get("_enemy_visuals").has(uid) and lane.get("_death_effects").size() == 1, "ordinary kill transfers the existing live visual into one death actor")
 	var death: Dictionary = lane.get("_death_effects")[0]
-	_check(death.root == old_root and is_instance_valid(death.burst), "death actor owns the actual enemy body plus explosion")
-	_check((death.burst as Node).get_child_count() == 9, "small explosion contains one core and eight lightweight sparks")
+	_check(death.root == old_root and bool(death.burst), "death actor owns the actual enemy sprite plus procedural explosion")
 	model.set_game_over(true)
 	lane.call("_process", 0.7)
 	death = lane.get("_death_effects")[0]
-	_check(absf(absf((death.root as Node3D).rotation.z) - PI * 0.47) < 0.08, "frozen combat still lets enemy body fall approximately horizontal")
-	_check(_first_mesh_alpha(death.root) > 0.0 and _first_mesh_alpha(death.root) < 1.0, "fallen body fades with per-instance transparent materials")
+	_check(absf(absf((death.root as Node2D).rotation) - PI * 0.47) < 0.08, "frozen combat still lets enemy sprite fall approximately horizontal")
+	_check(_first_sprite_alpha(death.root) > 0.0 and _first_sprite_alpha(death.root) < 1.0, "fallen sprite fades independently")
 	lane.call("_process", 0.31)
 	_check(lane.get("_death_effects").is_empty(), "body, shadow and sparks fully clean within one second")
 	lane.queue_free()

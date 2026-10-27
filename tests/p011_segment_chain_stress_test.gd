@@ -198,12 +198,10 @@ func _test_layout_palette_and_live_routing() -> void:
 	var battlefield: Battlefield = main.get("_battlefield")
 	for identity in range(TeamData.COUNT):
 		var lane: LaneActor = battlefield.get_lane(identity)
-		var stripe: MeshInstance3D = lane.get_node("TeamStripe_%s" % TeamData.display_name(identity))
-		var body: MeshInstance3D = lane.get_node("Defender_%s/DefenderBody_%s" % [TeamData.display_name(identity), TeamData.display_name(identity)])
-		var stripe_material := stripe.material_override as StandardMaterial3D
-		var body_material := body.material_override as StandardMaterial3D
-		_check(body_material.albedo_color == TeamData.color(identity), "lane %d defender body derives from canonical team color" % identity)
-		_check(stripe_material.albedo_color == TeamData.color(identity).darkened(0.08), "lane %d stripe derives from canonical team color" % identity)
+		var sprite := lane.get_node("Defender_%s/DefenderSprite_%s" % [TeamData.display_name(identity), TeamData.display_name(identity)]) as Sprite2D
+		var expected_path := "res://assets/sprites/baked/defender_%s.png" % TeamData.display_name(identity).to_lower()
+		_check(sprite != null and sprite.texture == load(expected_path), "lane %d defender uses its canonical baked team sprite" % identity)
+		_check(lane.get("team_identity") == identity and lane.find_children("*", "Node3D", true, false).is_empty(), "lane %d keeps canonical team identity in a pure 2D renderer" % identity)
 	main.queue_free()
 	await process_frame
 

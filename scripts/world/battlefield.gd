@@ -1,5 +1,5 @@
 class_name Battlefield
-extends Node3D
+extends Control
 
 const EnemyTypes = preload("res://scripts/world/enemy_types.gd")
 
@@ -20,7 +20,6 @@ var lanes: Array[LaneActor] = []
 var attack_history: Array[Dictionary] = []
 var game_over := false
 var victory := false
-var _camera: Camera3D
 var _attack_rng := RandomNumberGenerator.new()
 var _attack_rng_seed := 0
 var _spawn_rng := RandomNumberGenerator.new()
@@ -35,18 +34,17 @@ var _snake_direction_rng := RandomNumberGenerator.new()
 var _snake_direction_rng_seed := 0x20A020
 
 func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	clip_contents = false
 	if _attack_rng_seed == 0:
 		_attack_rng_seed = Time.get_ticks_usec()
 	_attack_rng.seed = _attack_rng_seed
 	_spawn_rng.seed = _spawn_rng_seed
 	_snake_direction_rng.seed = _snake_direction_rng_seed
-	_build_environment()
-	_build_camera()
 	for lane_index in range(TeamData.COUNT):
 		var lane := LaneActor.new()
 		lane.name = "Lane%d" % (lane_index + 1)
 		lane.setup(lane_index, lane_index, true)
-		lane.position.z = -3.0 + lane_index * 2.0
 		add_child(lane)
 		lanes.append(lane)
 		lane.combat_model.breached.connect(_on_lane_breached)
@@ -57,6 +55,7 @@ func _ready() -> void:
 		lane.combat_model.healer_pulsed.connect(_on_healer_pulsed)
 		lane.enemy_death_started.connect(_on_enemy_death_started)
 	_reset_spawn_director(true)
+	configure_layout(size)
 	_publish_encounter_progress()
 
 func _process(delta: float) -> void:
@@ -317,7 +316,9 @@ func _begin_snake_transfer(location: Dictionary) -> Dictionary:
 	extracted.special_state = &"transferring"
 	extracted.special_timer = SNAKE_TRANSFER_DURATION
 	extracted.preferred_lane = destination_index
-	extracted.transfer_start_z = lanes[origin_index].position.z - lanes[destination_index].position.z
+	# Keep the old signed two-unit lane offset in model metadata. LaneActor maps
+	# that authoritative transfer phase to one 2D row without changing timing.
+	extracted.transfer_start_z = float(origin_index - destination_index) * 2.0
 	extracted.transfer_visual_z = float(extracted.transfer_start_z)
 	extracted.frame_move_fraction = 0.0
 	var new_uid := lanes[destination_index].combat_model.accept_transferred_enemy(extracted)
@@ -423,12 +424,23 @@ func _choose_adjacent_lane(origin_lane: int) -> int:
 		return origin_lane
 	return neighbors[_attack_rng.randi_range(0, neighbors.size() - 1)]
 
-func configure_viewport_aspect(aspect: float) -> void:
-	if _camera == null:
-		return
-	# Keep all four lanes vertically visible and prevent very wide mobile windows
-	# from shrinking the battlefield into the middle of excessive empty space.
-	_camera.size = clampf(31.0 / maxf(aspect, 1.0), 10.0, 11.5)
+func configure_layout(layout_size: Vector2) -> void:
+	size = layout_size.max(Vector2.ONE)
+	var row_height := size.y / float(TeamData.COUNT)
+	for lane_index in range(lanes.size()):
+		var lane := lanes[lane_index]
+		lane.position = Vector2(0.0, row_height * lane_index)
+		lane.configure_layout(Vector2(size.x, row_height), ResponsiveLayout.BATTLEFIELD_SIDE_MARGIN_RATIO)
+
+func configure_viewport_aspect(_aspect: float) -> void:
+	# Backward-compatible API retained for older callers; 2D layout follows the
+	# actual Control rectangle rather than an orthographic camera aspect.
+	configure_layout(size)
+
+func world_x_to_local(x_value: float) -> float:
+	if lanes.is_empty():
+		return 0.0
+	return lanes[0].world_x_to_local(x_value)
 
 func _on_lane_breached(identity: int, _enemy_uid: int) -> void:
 	if game_over or victory:
@@ -458,33 +470,3 @@ func _on_enemy_neutralized_detail(enemy: Dictionary, _cause: StringName, _impact
 
 func _on_healer_pulsed(event: Dictionary) -> void:
 	healer_pulsed.emit(event)
-
-func _build_environment() -> void:
-	var world_environment := WorldEnvironment.new()
-	var environment := Environment.new()
-	environment.background_mode = Environment.BG_COLOR
-	environment.background_color = Color(0.045, 0.06, 0.09)
-	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	environment.ambient_light_color = Color(0.74, 0.74, 0.76)
-	environment.ambient_light_energy = 0.72
-	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	world_environment.environment = environment
-	add_child(world_environment)
-
-	var light := DirectionalLight3D.new()
-	light.rotation_degrees = Vector3(-54.0, -28.0, 0.0)
-	light.light_energy = 1.15
-	light.shadow_enabled = true
-	add_child(light)
-
-func _build_camera() -> void:
-	_camera = Camera3D.new()
-	_camera.name = "OrthographicCamera"
-	_camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	_camera.keep_aspect = Camera3D.KEEP_HEIGHT
-	_camera.size = 11.5
-	_camera.position = Vector3(0.0, 9.6, 10.8)
-	_camera.look_at_from_position(_camera.position, Vector3(0.0, 0.0, 0.0))
-	_camera.current = true
-	add_child(_camera)
-

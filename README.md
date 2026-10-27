@@ -1,9 +1,9 @@
 # Lane Ball Shooter
 
-A hybrid 2D/3D lane-defense game prototype in **Godot 4 / GDScript**, targeting Web and Android (landscape).
+A fully 2D lane-defense game prototype in **Godot 4 / GDScript**, targeting Web and Android (landscape).
 
 - 2D Zuma-like moving ball chain, shooter-mounted two-ball ammunition preview and compact swap control.
-- Four 3D horizontal combat lanes with primitive defenders and hopping enemies.
+- Four responsive 2D combat lanes with baked defenders, animated enemies and procedural effects.
 - Matches activate same-color defender attacks; successive matches build combo/fever.
 - Balls remain physically simulated beyond the left edge and can roll back into view after a match; defenders have an emergency lane clear and require matching-color revival.
 - Defeated enemies burst, tumble sideways and fade before the delayed victory presentation.
@@ -19,11 +19,11 @@ Open the folder in Godot 4.x and run the project, or launch it from a terminal:
 godot --path .
 ```
 
-The project uses GDScript and the Compatibility renderer. All visuals are created with Godot drawing APIs and primitive 3D meshes; there are no external assets or add-ons.
+The project uses GDScript and the Compatibility renderer. Live gameplay uses Godot 2D drawing plus transparent sprites baked from the project's original procedural character models; there are no external assets or add-ons.
 
-## P034A sprite-baking visual proof
+## P034A sprite bake and P034B live 2D battlefield
 
-The current playable game still uses its original 3D battlefield. A separate review-only pipeline now renders those same procedural actor meshes and materials into eight transparent 512×512 RGBA masters: four enemy types and the red, blue, yellow and green defenders. `scripts/world/actor_visual_factory.gd` is shared by the live `LaneActor` and the baker, so the captures do not maintain a second approximation of the character geometry.
+The live battlefield is entirely `Control`/`Node2D`/`Sprite2D`; ordinary startup creates no `SubViewport`, `Camera3D`, `WorldEnvironment` or 3D character/projectile node. It uses the eight authentic transparent 512×512 RGBA masters baked in P034A from the original procedural meshes and materials: four enemy types and the red, blue, yellow and green defenders. The original factory and baker remain available only to regenerate those source-faithful assets.
 
 Run the baker from a real graphical rendering environment with Godot 4.7.2 Compatibility rendering:
 
@@ -39,7 +39,15 @@ Launch the isolated, pure-2D squash/stretch study with:
 godot --path . res://scenes/previews/p034a_sprite_preview.tscn
 ```
 
-The preview uses only `Node2D`, `Sprite2D`, labels and 2D drawing at runtime. It is not referenced by `boot.tscn` or `main.tscn`, and no live gameplay, input, balance, export identity or camera behavior is changed by P034A.
+The isolated P034A preview remains available for studying the masters, but gameplay now uses the same PNGs and grounded pivots directly. `LaneCombatModel` and the existing `Battlefield` director remain authoritative: the 2D renderer follows their world-X positions, hop phases, Snake transfers, hit/death state, projectiles, quotas and victory timing without a parallel rules engine. Hopper squash/hop, Heavy weight, Snake wiggle/row transfer and Healyzard idle/glow are lightweight visual deformation only.
+
+Generate the required real-renderer gameplay review captures with:
+
+```sh
+./scripts/capture_p034b_gameplay.sh
+```
+
+This CLI-only command requires an existing `DISPLAY` or `WAYLAND_DISPLAY`, runs Godot 4.7.2 with the Compatibility renderer, waits for completed rendered frames, and writes `assets/previews/p034b_gameplay_1280x720.png` plus `assets/previews/p034b_gameplay_1600x720.png`. Both committed captures show the real `main.tscn` runtime with deterministic enemies/effects—not a mockup. The normal game itself contains no capture viewport.
 
 Native desktop and Android builds enter gameplay immediately. The Web export instead boots to a dark `LANE BALL SHOOTER` menu without constructing the gameplay scene or advancing its simulation. `START GAME` opens the exact prompt `Play in fullscreen?`: `YES` requests browser fullscreen directly from that button press and then starts the game, while `NO` starts in the page canvas without requesting fullscreen. A browser may deny fullscreen; gameplay still starts normally. Escape/browser fullscreen exit uses the normal responsive resize path. For desktop-only menu preview, run `godot --path . -- --web-menu-preview`.
 
@@ -52,7 +60,7 @@ Controls:
 - Press M to mute or unmute procedural sound effects.
 - After a lane breach or cleared wave, press R or use the on-screen RESTART button to begin a fresh run.
 
-The layout targets landscape screens and has automated coverage at 960×540, 1280×720, 1600×720 and 2400×1080. Native safe-area information is used when the platform supplies it; Web falls back to the browser canvas with an additional logical edge margin. The shooter track spans the chain's full safe width with symmetric 24-pixel edge margins, so both edge balls are targetable. The large loaded ball and a smaller symbol-bearing NEXT ball now travel together on the shooter. The old magazine panel is replaced by one circular 56×56 two-arrow swap control in the upper-right safe HUD, completely outside the firing playfield. The 3D SubViewport resolution is capped through integer downscaling on very wide/high-density windows to limit mobile fill cost.
+The layout targets landscape screens and has automated coverage at 960×540, 1280×720, 1600×720 and 2400×1080. Native safe-area information is used when the platform supplies it; Web falls back to the browser canvas with an additional logical edge margin. The four balanced lane rows fill the area from two pixels below the conveyor to just above the shooter muzzle, and their authoritative world-X span uses 5.5% internal side margins. The shooter track spans the chain's full safe width with symmetric 24-pixel edge margins, so both edge balls are targetable. The large loaded ball and a smaller symbol-bearing NEXT ball travel together on the shooter. The old magazine panel is replaced by one circular 56×56 two-arrow swap control in the upper-right safe HUD, completely outside the firing playfield.
 
 Player-fired balls cross from their launch position to the upper lane in 0.20 seconds at every supported landscape height. Each shot locks its launch X and identity, while the 0.4-second firing cooldown remains unchanged.
 
@@ -72,11 +80,11 @@ The canonical palette is shared by balls, magazine/shooter, lane stripes, defend
 
 Matches award score and advance the three-second combo window through tiers 1–3; the fourth consecutive timely match activates FEVER. The HUD meter drains in real time, while score persists through timeout. Magazine colors come from a fair four-color shuffle bag.
 
-Each match also activates its matching 3D defender using the tier locked at match time. Tier 1 fires one ordinary projectile for exactly 1 damage and stops at the first enemy it touches. Tier 2 fires one penetrating projectile that deals 1 damage once to every enemy it physically passes in the matched lane. Tier 3 and FEVER fire one wide penetrating wave across the matched lane plus one adjacent lane selected once at launch; each encountered enemy takes 1 damage once. Middle lanes choose either neighbor with a separately seeded 50/50 attack RNG, while edge lanes have only one valid neighbor. Every penetrating projectile keeps a set of immutable global spawn IDs, so overlap across frames—and a Sickle Snake transferring between both targeted lanes—cannot cause a second hit from the same attack. Enemies which spawn behind a wave after it has passed are unaffected. A down origin defender still receives revival progress instead of attacking.
+Each match also activates its matching 2D defender using the tier locked at match time. Tier 1 fires one ordinary projectile for exactly 1 damage and stops at the first enemy it touches. Tier 2 fires one penetrating projectile that deals 1 damage once to every enemy it physically passes in the matched lane. Tier 3 and FEVER fire one wide penetrating wave across the matched lane plus one adjacent lane selected once at launch; each encountered enemy takes 1 damage once. Middle lanes choose either neighbor with a separately seeded 50/50 attack RNG, while edge lanes have only one valid neighbor. Every penetrating projectile keeps a set of immutable global spawn IDs, so overlap across frames—and a Sickle Snake transferring between both targeted lanes—cannot cause a second hit from the same attack. Enemies which spawn behind a wave after it has passed are unaffected. A down origin defender still receives revival progress instead of attacking.
 
-Enemy HP is logical and intentionally has no bar, pip, number or health-driven mesh. The procedural 3D roster shares one authoritative `EnemyTypes` definition:
+Enemy HP is logical and intentionally has no bar, pip, number or health-driven sprite. The baked 2D roster shares one authoritative `EnemyTypes` definition:
 
-| Enemy | HP | Movement | Primitive appearance |
+| Enemy | HP | Movement | Baked 2D appearance |
 |---|---:|---|---|
 | Hopper | 6 | Original grounded pause/airborne hop averaging 0.312 units/s | Original gray silhouette with exactly two permanent orange top horns |
 | Heavy | 12 | Continuous ground slide at 0.2184 units/s (0.7×) | Wider dark-orange Hopper construction, no horns |
@@ -89,11 +97,11 @@ P023 raises the single authoritative moving-enemy baseline by 30%, from 0.24 to 
 
 Live-game spawning is directed once at Battlefield level with a separately seeded/reseeded RNG. Base type weights are Hopper 50%, Heavy 20%, Sickle Snake 20% and Healyzard 10%, including the four initial enemies. At most one Sickle Snake may live across all four lanes. After it is neutralized by projectile, tier-3 or emergency clear, another becomes eligible exactly 15 gameplay seconds later. While Snake is ineligible it is removed from the draw and the remaining original weights renormalize to 50:20:10; therefore a finite 32-enemy encounter is not guaranteed to exhibit the raw base percentages. Spawn IDs are globally unique while combat/visual UIDs remain stable within their lane.
 
-After a nonfatal hit, Sickle Snake stops immediately for exactly 0.5 simulation seconds, then transfers to a randomly selected adjacent lane. Edge lanes can only move inward; middle lanes use a separately seeded 50/50 direction RNG. If the preferred neighbor already has five enemies, Snake tries its other adjacent neighbor or waits motionless until capacity opens. Logical ownership switches atomically at transfer start, while its existing body slides smoothly across lane Z over 0.3 seconds and remains targetable in the destination. Its immutable global spawn ID, X, HP, original quota charge and global occupancy remain unchanged; only a collision-safe destination-local UID is remapped.
+After a nonfatal hit, Sickle Snake stops immediately for exactly 0.5 simulation seconds, then transfers to a randomly selected adjacent lane. Edge lanes can only move inward; middle lanes use a separately seeded 50/50 direction RNG. If the preferred neighbor already has five enemies, Snake tries its other adjacent neighbor or waits motionless until capacity opens. Logical ownership switches atomically at transfer start, while its existing sprite slides smoothly between lane rows over 0.3 seconds and remains targetable in the destination. Its immutable global spawn ID, X, HP, original quota charge and global occupancy remain unchanged; only a collision-safe destination-local UID is remapped.
 
-Each Healyzard owns an independent 15-second simulation timer. Every pulse targets all other non-Healyzard enemies currently in its lane, restores one HP up to each target's own maximum, and emits an event even when zero HP is restored. It never heals itself, another Healyzard or another lane. A reusable Sprite3D behind each healer displays a soft generated yellow radial gradient for 0.85 seconds, expanding and fading to its transparent circumference without external artwork or a new sound cue.
+Each Healyzard owns an independent 15-second simulation timer. Every pulse targets all other non-Healyzard enemies currently in its lane, restores one HP up to each target's own maximum, and emits an event even when zero HP is restored. It never heals itself, another Healyzard or another lane. A reusable `Sprite2D` behind each healer displays a soft generated yellow radial gradient for 0.85 seconds, expanding and fading to its transparent circumference without external artwork or a new sound cue.
 
-Each lane has a configurable encounter budget, initially eight enemy spawns including its starting enemy: 32 scheduled enemies overall. A full lane defers its remaining quota instead of consuming it, and no lane spawns a ninth enemy. The HUD reports neutralized enemies against the scheduled total. When an enemy reaches an active defender, that defender falls and spends its one emergency discharge to clear the lane instantly, regardless of the enemies' remaining HP. This one-use emergency is intentionally separate from the nonlethal tier-3 wave. A down defender needs two separate matches of its own color to revive; those matches still score and build combo but launch no attack. Later knockdowns do not clear enemies. Any live enemy crossing the far-left boundary ends the run immediately and shows GAME OVER. Every projectile or emergency neutralization transfers the actual enemy mesh into a one-second cosmetic actor: a small primitive explosion and sparks lead into a roughly 85-degree sideways fall, then body and shadow fade completely. Logical collision ends immediately, while this visual layer continues updating even after combat freezes.
+Each lane has a configurable encounter budget, initially eight enemy spawns including its starting enemy: 32 scheduled enemies overall. A full lane defers its remaining quota instead of consuming it, and no lane spawns a ninth enemy. The HUD reports neutralized enemies against the scheduled total. When an enemy reaches an active defender, that defender falls and spends its one emergency discharge to clear the lane instantly, regardless of the enemies' remaining HP. This one-use emergency is intentionally separate from the nonlethal tier-3 wave. A down defender needs two separate matches of its own color to revive; those matches still score and build combo but launch no attack. Later knockdowns do not clear enemies. Any live enemy crossing the far-left boundary ends the run immediately and shows GAME OVER. Every projectile or emergency neutralization transfers the actual enemy sprite into a one-second cosmetic actor: a small 2D explosion and sparks lead into a roughly 85-degree sideways fall, then body and shadow fade completely. Logical collision ends immediately, while this visual layer continues updating even after combat freezes.
 
 Once all four spawn budgets are exhausted and all remaining enemies are neutralized, authoritative victory immediately freezes shooting, swapping, chain motion, combat, spawning, attacks and scoring. WAVE CLEARED remains hidden for exactly 3.0 seconds of deterministic game time so the last death animation and synthesized cue can finish, then displays `All enemies neutralized`, the final score and restart control. A breach still shows GAME OVER immediately with `The lane was breached`. Restart cancels any pending victory countdown and removes transient death actors.
 
@@ -261,6 +269,10 @@ godot --headless --path . --script res://tests/p020_special_enemy_abilities_test
 godot --headless --path . --script res://tests/p021_web_menu_export_test.gd
 godot --headless --path . --script res://tests/p023_enemy_speed_victory_copy_test.gd
 godot --headless --path . --script res://tests/p022_hp_penetrating_attacks_test.gd
+godot --headless --path . --script res://tests/p034a_sprite_baking_test.gd
+godot --headless --path . --script res://tests/p034b_live_2d_battlefield_test.gd
+# Or run every suite in sorted order:
+./scripts/ci/run_regression_tests.sh
 ```
 
 For a manual end-to-end smoke test:
@@ -281,4 +293,4 @@ For a manual end-to-end smoke test:
 
 For conveyor troubleshooting, enable F3. `L` is the number of fully retained balls beyond LEFT, `X` is the leftmost center position, and `A` is the visible/near-screen/right active population. `U/G` report unsupported segments and physical gaps, `V/D` report rightward gravity speed/displacement, and `F` counts fresh generations. During a no-match run, `L` should grow while `A` stays at or below 24. After an appropriate match, `D` becomes positive and the same hidden balls may cross LEFT back into view. `I` must remain zero.
 
-Gameplay balance is centralized in `ChainModel`, `ShooterView.SHOT_TRAVEL_TIME`, `MatchProgression`, `Main.SHOOT_COOLDOWN`, `SfxManager`, `EnemyTypes`, `Battlefield`'s spawn/transfer directors, and the `LaneCombatModel.DEFAULT_*` constants (chain speed/refill/run weights, 50 ms insertion settle, gravity initial speed/acceleration/cap, shot travel/cooldown, combo window, SFX pool/volume, enemy roster weights/stats, Snake stun/transfer/gate/cooldown, Healyzard pulse interval, concurrent cap/eight-spawn lane budget, and projectile speed/damage). Team identity always uses both the shared color and DOT/SQUARE/TRIANGLE/DIAMOND geometry. An optional user-selectable high-contrast palette remains an accessibility follow-up; it was not added to this stabilization task because existing 3D materials are instantiated procedurally and the symbol channel already prevents color-only identification.
+Gameplay balance is centralized in `ChainModel`, `ShooterView.SHOT_TRAVEL_TIME`, `MatchProgression`, `Main.SHOOT_COOLDOWN`, `SfxManager`, `EnemyTypes`, `Battlefield`'s spawn/transfer directors, and the `LaneCombatModel.DEFAULT_*` constants (chain speed/refill/run weights, 50 ms insertion settle, gravity initial speed/acceleration/cap, shot travel/cooldown, combo window, SFX pool/volume, enemy roster weights/stats, Snake stun/transfer/gate/cooldown, Healyzard pulse interval, concurrent cap/eight-spawn lane budget, and projectile speed/damage). Team identity always uses both the shared color and DOT/SQUARE/TRIANGLE/DIAMOND geometry. An optional user-selectable high-contrast palette remains an accessibility follow-up; it was not added to this conversion because the symbol channel already prevents color-only identification.
