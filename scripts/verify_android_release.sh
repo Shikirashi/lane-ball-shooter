@@ -53,11 +53,11 @@ grep -q "name='com.shikirashi.laneballshooter'" <<<"$package_line" || {
 	echo "Unexpected Android package identifier." >&2
 	exit 1
 }
-grep -q "versionCode='1'" <<<"$package_line" || {
+grep -q "versionCode='2'" <<<"$package_line" || {
 	echo "Unexpected Android version code." >&2
 	exit 1
 }
-grep -q "versionName='0.1.0'" <<<"$package_line" || {
+grep -q "versionName='0.2.0'" <<<"$package_line" || {
 	echo "Unexpected Android version name." >&2
 	exit 1
 }
