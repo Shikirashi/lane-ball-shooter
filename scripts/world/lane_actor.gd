@@ -16,6 +16,8 @@ const MASTER_SIZE := Vector2(512.0, 512.0)
 const ASSET_DIR := "res://assets/sprites/baked"
 const ENEMY_ASSETS := ["enemy_hopper", "enemy_heavy", "enemy_sickle_snake", "enemy_healyzard"]
 const DEFENDER_ASSETS := ["defender_red", "defender_blue", "defender_yellow", "defender_green"]
+const HIT_FLASH_DURATION := 0.16
+const HIT_FLASH_SHADER := "shader_type canvas_item;\nuniform float flash_strength : hint_range(0.0, 1.0) = 0.0;\nvoid fragment() {\n vec4 pixel = texture(TEXTURE, UV) * COLOR;\n pixel.rgb = mix(pixel.rgb, vec3(1.0, 0.015, 0.015), flash_strength * pixel.a);\n COLOR = pixel;\n}\n"
 
 static var _pivot_metadata := {}
 
@@ -380,6 +382,11 @@ func _create_enemy_visual(uid: int, enemy_type: int) -> Dictionary:
 	root_node.z_index = 4
 	add_child(root_node)
 	var sprite := _make_actor_sprite(ENEMY_ASSETS[enemy_type])
+	var shader := Shader.new()
+	shader.code = HIT_FLASH_SHADER
+	var hit_material := ShaderMaterial.new()
+	hit_material.shader = shader
+	sprite.material = hit_material
 	sprite.name = "ActorSprite"
 	root_node.add_child(sprite)
 	var shadow := _ellipse_polygon(Vector2.ONE, Color(0.01, 0.018, 0.03, 0.52), 24)
@@ -436,7 +443,8 @@ func _update_enemy_visual(visual: Dictionary, enemy: Dictionary) -> void:
 	shadow.position = Vector2(world_x_to_local(float(enemy.x)), _baseline_y + transfer_y)
 	var width_multiplier := 1.28 if enemy_type == EnemyTypes.Type.HEAVY else (0.72 if enemy_type == EnemyTypes.Type.HEALYZARD else 1.0)
 	shadow.scale = Vector2(size.y * 0.19 * width_multiplier * (1.0 - hop_ratio * 0.25), size.y * 0.045 * (1.0 - hop_ratio * 0.2))
-	sprite.modulate = Color(1.0, 1.0 - hit_amount * 0.38, 1.0 - hit_amount * 0.38, 1.0)
+	sprite.modulate = Color.WHITE
+	(sprite.material as ShaderMaterial).set_shader_parameter("flash_strength", hit_amount)
 
 
 func _free_enemy_visual(uid: int) -> void:
@@ -593,6 +601,9 @@ func _on_enemy_neutralized_detail(enemy: Dictionary, cause: StringName, impact_x
 	var aura := visual.get("aura") as Sprite2D
 	if aura != null:
 		aura.visible = false
+	var death_material := visual.sprite.material as ShaderMaterial
+	if death_material != null:
+		death_material.set_shader_parameter("flash_strength", 1.0)
 	_death_effects.append({
 		"uid": enemy_uid,
 		"root": visual.root,
@@ -625,6 +636,8 @@ func _update_death_effects(delta: float) -> void:
 		shadow.scale.x *= 1.0 + delta * 0.35
 		var fade := 1.0 - clampf((age - 0.52) / (DEATH_EFFECT_DURATION - 0.52), 0.0, 1.0)
 		sprite.modulate.a = fade
+		var death_flash := 1.0 - clampf(age / HIT_FLASH_DURATION, 0.0, 1.0)
+		(sprite.material as ShaderMaterial).set_shader_parameter("flash_strength", death_flash)
 		shadow.modulate.a = fade
 		if age >= DEATH_EFFECT_DURATION:
 			root_node.queue_free()

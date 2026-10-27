@@ -25,8 +25,8 @@ func _run() -> void:
 	_finish()
 
 func _test_canonical_hp_and_fixture_caps() -> void:
-	var expected := [6, 12, 6, 6]
-	_check(LaneCombatModel.DEFAULT_ENEMY_HP == 6, "generic default enemy HP is canonical Hopper 6")
+	var expected := [3, 6, 3, 3]
+	_check(LaneCombatModel.DEFAULT_ENEMY_HP == 3, "generic default enemy HP is canonical Hopper 3")
 	for enemy_type in range(EnemyTypesScript.Type.size()):
 		_check(EnemyTypesScript.max_hp(enemy_type) == expected[enemy_type], "%s canonical max HP is %d" % [EnemyTypesScript.display_name(enemy_type), expected[enemy_type]])
 		var model := LaneCombatModel.new(enemy_type)
@@ -48,8 +48,8 @@ func _test_tier_one_first_contact_only() -> void:
 	model.update(1.0)
 	_check(int(attack.projectile_count) == 1 and not bool(attack.piercing), "tier 1 launches one ordinary non-piercing projectile")
 	_check(model.active_projectile_count() == 0 and model.hit_history.size() == 1, "tier 1 despawns on its first physical contact")
-	_check(int(model.enemies[0].uid) == first and int(model.enemies[0].hp) == 5, "tier 1 damages the first full Hopper by exactly 1")
-	_check(int(model.enemies[1].uid) == second and int(model.enemies[1].hp) == 6, "tier 1 leaves every enemy behind the first untouched")
+	_check(int(model.enemies[0].uid) == first and int(model.enemies[0].hp) == 2, "tier 1 damages the first full Hopper by exactly 1")
+	_check(int(model.enemies[1].uid) == second and int(model.enemies[1].hp) == 3, "tier 1 leaves every enemy behind the first untouched")
 
 	var lethal_first := LaneCombatModel.new(TeamData.Identity.RED)
 	lethal_first.clear_for_test()
@@ -57,7 +57,7 @@ func _test_tier_one_first_contact_only() -> void:
 	lethal_first.spawn_enemy(0.0, -1, false, EnemyTypesScript.Type.HOPPER, 2412)
 	lethal_first.fire_attack(_result(TeamData.Identity.RED, 1))
 	lethal_first.update(1.0)
-	_check(lethal_first.total_killed == 1 and lethal_first.active_enemy_count() == 1 and int(lethal_first.enemies[0].hp) == 6, "a lethal first contact still cannot pass damage to the second enemy")
+	_check(lethal_first.total_killed == 1 and lethal_first.active_enemy_count() == 1 and int(lethal_first.enemies[0].hp) == 3, "a lethal first contact still cannot pass damage to the second enemy")
 
 func _test_tier_two_penetration_and_rate_safety() -> void:
 	for step in [1.0 / 30.0, 1.0 / 60.0, 1.0 / 120.0, 0.08]:
@@ -72,7 +72,7 @@ func _test_tier_two_penetration_and_rate_safety() -> void:
 			elapsed += step
 		_check(int(attack.projectile_count) == 1 and bool(attack.piercing) and not bool(attack.wide), "tier 2 is one lane-local penetrating projectile at dt %.4f" % step)
 		_check(model.hit_history.size() == 3, "tier 2 hits all three collinear enemies once at dt %.4f" % step)
-		_check(model.enemies.all(func(enemy: Dictionary) -> bool: return int(enemy.hp) == 5), "tier 2 deals exactly 1 damage per encountered enemy at dt %.4f" % step)
+		_check(model.enemies.all(func(enemy: Dictionary) -> bool: return int(enemy.hp) == 2), "tier 2 deals exactly 1 damage per encountered enemy at dt %.4f" % step)
 		_check(model.active_projectile_count() == 0, "tier 2 continues through impacts and expires normally at dt %.4f" % step)
 
 	var passed := LaneCombatModel.new(TeamData.Identity.BLUE)
@@ -81,7 +81,7 @@ func _test_tier_two_penetration_and_rate_safety() -> void:
 	passed.update(1.0)
 	passed.spawn_enemy(-2.0, -1, false, EnemyTypesScript.Type.HOPPER, 2599)
 	passed.update(1.0)
-	_check(passed.hit_history.is_empty() and int(passed.enemies[0].hp) == 6, "an enemy spawned behind a projectile after it passed receives no retroactive damage")
+	_check(passed.hit_history.is_empty() and int(passed.enemies[0].hp) == 3, "an enemy spawned behind a projectile after it passed receives no retroactive damage")
 
 func _new_battlefield(seed: int) -> Battlefield:
 	var battlefield := Battlefield.new()
@@ -125,7 +125,7 @@ func _test_tier_three_wide_routing_and_deduplication() -> void:
 	_check(int(attack.projectile_count) == 1 and bool(attack.wide) and bool(attack.piercing), "tier 3 launches one wide penetrating attack")
 	_check(adjacent in [0, 2] and attack.target_lanes == [1, adjacent], "middle-lane tier 3 fixes one valid adjacent target for its lifetime")
 	for lane_index in range(4):
-		var expected_hp := 11 if lane_index in [1, adjacent] else 12
+		var expected_hp := 5 if lane_index in [1, adjacent] else 6
 		_check(int(battlefield.lanes[lane_index].combat_model.enemies[0].hp) == expected_hp, "tier 3 deals 1 only in intended lane %d" % lane_index)
 	_check(battlefield.encounter_neutralized() == 0, "tier 3 wounds full-health enemies without incrementing neutralized counters")
 	battlefield.queue_free()
@@ -154,7 +154,7 @@ func _test_tier_three_wide_routing_and_deduplication() -> void:
 	var shared_hits: Dictionary = origin_projectile.hit_spawn_ids
 	_advance_projectiles(dedup, 0.5)
 	var location: Dictionary = dedup.call("_find_enemy_by_spawn_id", snake_spawn_id)
-	_check(not location.is_empty() and int(location.enemy.hp) == 5 and shared_hits.has(snake_spawn_id), "wide projectile records the Snake's immutable spawn ID after one hit")
+	_check(not location.is_empty() and int(location.enemy.hp) == 2 and shared_hits.has(snake_spawn_id), "wide projectile records the Snake's immutable spawn ID after one hit")
 	if not location.is_empty():
 		var snake: Dictionary = location.enemy
 		var old_uid := int(snake.uid)
@@ -164,7 +164,7 @@ func _test_tier_three_wide_routing_and_deduplication() -> void:
 			dedup.lanes[target_lane].combat_model.accept_transferred_enemy(extracted)
 	_advance_projectiles(dedup, 0.8)
 	location = dedup.call("_find_enemy_by_spawn_id", snake_spawn_id)
-	_check(not location.is_empty() and int(location.enemy.hp) == 5, "Snake remapped into the other targeted lane is not hit twice by the same wide attack")
+	_check(not location.is_empty() and int(location.enemy.hp) == 2, "Snake remapped into the other targeted lane is not hit twice by the same wide attack")
 	dedup.queue_free()
 	await process_frame
 
@@ -173,16 +173,16 @@ func _test_healing_and_emergency() -> void:
 	model.clear_for_test()
 	model.max_enemies = 6
 	model.spawn_enemy(6.5, -1, false, EnemyTypesScript.Type.HEALYZARD, 2700)
-	var hopper_uid := model.spawn_enemy(5.0, 4, false, EnemyTypesScript.Type.HOPPER, 2701)
-	var heavy_uid := model.spawn_enemy(5.5, 10, false, EnemyTypesScript.Type.HEAVY, 2702)
-	var snake_uid := model.spawn_enemy(6.0, 4, false, EnemyTypesScript.Type.SICKLE_SNAKE, 2703)
+	var hopper_uid := model.spawn_enemy(5.0, 2, false, EnemyTypesScript.Type.HOPPER, 2701)
+	var heavy_uid := model.spawn_enemy(5.5, 4, false, EnemyTypesScript.Type.HEAVY, 2702)
+	var snake_uid := model.spawn_enemy(6.0, 2, false, EnemyTypesScript.Type.SICKLE_SNAKE, 2703)
 	model.update(15.0)
 	var health := {}
 	for enemy in model.enemies:
 		health[int(enemy.uid)] = [int(enemy.hp), int(enemy.max_hp)]
-	_check(health[hopper_uid] == [5, 6] and health[heavy_uid] == [11, 12] and health[snake_uid] == [5, 6], "Healyzard pulse remains +1 and respects the tripled canonical caps")
+	_check(health[hopper_uid] == [3, 3] and health[heavy_uid] == [5, 6] and health[snake_uid] == [3, 3], "Healyzard pulse remains +1 and respects the P033 canonical caps")
 	model.call("_discharge_emergency")
-	_check(model.enemies.is_empty() and model.total_emergency_cleared == 4 and model.total_killed == 0, "emergency remains an instant clear regardless of 6/12 HP")
+	_check(model.enemies.is_empty() and model.total_emergency_cleared == 4 and model.total_killed == 0, "emergency remains an instant clear regardless of canonical HP")
 
 func _finish() -> void:
 	if _failures.is_empty():

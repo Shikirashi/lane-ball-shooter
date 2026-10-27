@@ -36,7 +36,7 @@ func _test_live_scene_and_responsive_framing() -> void:
 	for viewport_size in [Vector2(960.0, 540.0), Vector2(1280.0, 720.0), Vector2(1600.0, 720.0), Vector2(2400.0, 1080.0)]:
 		main.call("_apply_layout", viewport_size, Rect2(Vector2.ZERO, viewport_size))
 		var layout: Dictionary = ResponsiveLayout.calculate(viewport_size)
-		_check(battlefield.position == layout.battlefield_rect.position and battlefield.size == layout.battlefield_rect.size, "%s applies the battlefield rectangle without raster scaling" % viewport_size)
+		_check(battlefield.position.is_equal_approx(layout.battlefield_rect.position) and battlefield.size.is_equal_approx(layout.battlefield_rect.size), "%s applies the battlefield rectangle without raster scaling" % viewport_size)
 		var expected_height := battlefield.size.y / 4.0
 		for lane_index in range(battlefield.lanes.size()):
 			var lane: LaneActor = battlefield.lanes[lane_index]

@@ -4,6 +4,8 @@ const SHOOT_COOLDOWN := 0.4
 const VICTORY_PRESENTATION_DELAY := 3.0
 const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
 const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
+const TouchRouterScript = preload("res://scripts/input/touch_control_router.gd")
+const PreferencesScript = preload("res://scripts/input/control_preferences.gd")
 
 var _background: ColorRect
 var _battlefield: Battlefield
@@ -12,13 +14,17 @@ var _shooter_view: ShooterView
 var _magazine_view: MagazineView
 var _hud_view: HudView
 var _game_over_overlay: GameOverOverlay
+var _settings_view: ControlSettingsView
 var _sfx: Node
 var _magazine := MagazineState.new()
 var _chain_model := ChainModel.new()
 var _progression := MatchProgression.new()
 var _cooldown_remaining := 0.0
-var _active_touch_id := -1
+var _active_touch_id := -1 # Compatibility mirror of the router's primary ID.
 var _touch_started_in_playfield := false
+var _touch_router := TouchRouterScript.new()
+var _preferences := PreferencesScript.new()
+var _mobile_platform_override := -1
 var _playfield_rect := Rect2()
 var _safe_rect := Rect2()
 var _game_over := false
@@ -30,6 +36,8 @@ var _processing_chain := false
 
 func _ready() -> void:
 	_build_scene()
+	_preferences.load_settings()
+	_touch_router.configure(_preferences.mode, _preferences.handedness, get_viewport().get_visible_rect())
 	_magazine.changed.connect(_on_magazine_changed)
 	_magazine_view.swap_requested.connect(_swap)
 	_shooter_view.shot_reached_lane.connect(_on_shot_reached_lane)
@@ -43,6 +51,9 @@ func _ready() -> void:
 	_battlefield.defender_revived.connect(_on_defender_revived)
 	_battlefield.enemy_death_started.connect(_on_enemy_death_started)
 	_game_over_overlay.restart_requested.connect(_restart_run)
+	_settings_view.choices_changed.connect(_on_control_choices_changed)
+	_settings_view.visibility_changed_by_user.connect(_on_settings_visibility_changed)
+	_settings_view.set_choices(_preferences.mode, _preferences.handedness)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
 	_progression.publish_state()
@@ -73,7 +84,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		_shooter_view.move_to(event.position.x)
 	elif event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_LEFT and _playfield_rect.has_point(event.position):
+		if event.button_index == MOUSE_BUTTON_LEFT:
 			_shooter_view.move_to(event.position.x)
 			_shoot()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -91,8 +102,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 	elif event is InputEventScreenTouch:
 		_handle_touch(event)
-	elif event is InputEventScreenDrag and event.index == _active_touch_id:
-		_shooter_view.move_to(event.position.x)
+	elif event is InputEventScreenDrag:
+		_apply_touch_action(_touch_router.drag(event.index, event.position, event.relative))
+		_active_touch_id = _touch_router.primary_id
 		get_viewport().set_input_as_handled()
 
 func _notification(what: int) -> void:
@@ -100,22 +112,46 @@ func _notification(what: int) -> void:
 		_clear_touch_ownership()
 
 func _handle_touch(event: InputEventScreenTouch) -> void:
-	if event.pressed:
-		if _active_touch_id == -1 and _playfield_rect.has_point(event.position):
-			_active_touch_id = event.index
-			_touch_started_in_playfield = true
-			_shooter_view.move_to(event.position.x)
-	else:
-		if event.index == _active_touch_id:
-			_shooter_view.move_to(event.position.x)
-			if _touch_started_in_playfield and not event.canceled:
-				_shoot()
-			_clear_touch_ownership()
+	var action := _touch_router.press(event.index, event.position) if event.pressed else _touch_router.release(event.index, event.position, event.canceled)
+	_apply_touch_action(action)
+	_active_touch_id = _touch_router.primary_id
+	_touch_started_in_playfield = _active_touch_id >= 0
 	get_viewport().set_input_as_handled()
 
+func _apply_touch_action(action: Dictionary) -> void:
+	if action.has("aim_absolute"):
+		_shooter_view.move_to(float(action.aim_absolute))
+	if action.has("aim_relative"):
+		_shooter_view.move_to(_shooter_view.shooter_x + float(action.aim_relative))
+	if bool(action.get("swap", false)):
+		_swap()
+	if bool(action.get("shoot", false)):
+		_shoot()
+
 func _clear_touch_ownership() -> void:
+	_touch_router.cancel_all()
 	_active_touch_id = -1
 	_touch_started_in_playfield = false
+
+func set_mobile_platform_override(value: int) -> void:
+	_mobile_platform_override = value
+	if _magazine_view != null:
+		_magazine_view.visible = not _is_mobile_platform()
+
+func _is_mobile_platform() -> bool:
+	if _mobile_platform_override >= 0:
+		return _mobile_platform_override == 1
+	return OS.has_feature("android")
+
+func _on_control_choices_changed(mode: int, handedness: int) -> void:
+	_preferences.mode = mode
+	_preferences.handedness = handedness
+	_preferences.save_settings()
+	_touch_router.configure(mode, handedness, _safe_rect)
+	_clear_touch_ownership()
+
+func _on_settings_visibility_changed(_open: bool) -> void:
+	_clear_touch_ownership()
 
 func _shoot() -> void:
 	if _game_over or _cooldown_remaining > 0.0:
@@ -253,9 +289,13 @@ func _build_scene() -> void:
 	_magazine_view = MagazineView.new()
 	_magazine_view.name = "Magazine"
 	add_child(_magazine_view)
+	_magazine_view.visible = not _is_mobile_platform()
 	_hud_view = HudView.new()
 	_hud_view.name = "HUD"
 	add_child(_hud_view)
+	_settings_view = ControlSettingsView.new()
+	_settings_view.name = "ControlSettings"
+	add_child(_settings_view)
 	_game_over_overlay = GameOverOverlay.new()
 	_game_over_overlay.name = "GameOverOverlay"
 	add_child(_game_over_overlay)
@@ -274,6 +314,7 @@ func _apply_layout(viewport_size: Vector2, safe_rect: Rect2) -> void:
 
 	_hud_view.position = layout.hud_rect.position
 	_hud_view.size = layout.hud_rect.size
+	_settings_view.configure_layout(_safe_rect, viewport_size)
 	_game_over_overlay.position = Vector2.ZERO
 	_game_over_overlay.size = viewport_size
 	_game_over_overlay.set_content_rect(_safe_rect)
@@ -288,8 +329,9 @@ func _apply_layout(viewport_size: Vector2, safe_rect: Rect2) -> void:
 	_magazine_view.size = layout.magazine_rect.size
 	_shooter_view.position = Vector2.ZERO
 	_shooter_view.size = viewport_size
-	_shooter_view.configure_layout(layout.shooter_y, layout.track_left, layout.track_right, layout.shot_ceiling)
+	_shooter_view.configure_layout(layout.shooter_y, layout.track_left, layout.track_right, layout.shot_ceiling, _safe_rect.position.x, _safe_rect.end.x)
 	_playfield_rect = layout.playfield_rect
+	_touch_router.safe_rect = _safe_rect
 
 func _resolve_safe_rect(viewport_size: Vector2) -> Rect2:
 	var fallback := Rect2(Vector2.ZERO, viewport_size)

@@ -63,14 +63,15 @@ Native desktop and Android builds enter gameplay immediately. The Web export ins
 
 Controls:
 
-- Move the mouse horizontally to position the shooter; left-click in the playfield to fire.
-- Right-click or press Space to swap the loaded and next balls.
-- On touch devices, press and drag in the playfield, then release to fire once. Tap the circular two-arrow HUD control to swap without firing.
+- Desktop/Web: move the mouse horizontally to aim. Left-click anywhere on noninteractive game canvas to aim and fire; right-click anywhere or press Space to swap. Real UI controls consume clicks first.
+- Android defaults to **Classic**: the first finger can aim by absolute X anywhere on noninteractive canvas and fires once on release; a second distinct finger swaps once on touch-down without stealing aim or firing.
+- Android **Side** mode uses a 1:2:1 screen split. For the default right-handed mapping, the right quarter is a relative 1:1 aim trackpad and the left quarter is actions (upper half SWAP, lower half SHOOT); left-handed mode mirrors these edges. Trackpad release never fires.
+- Open the small HUD gear to select Classic/Side and right-/left-handed mapping. Settings persist in `user://control_settings.cfg`; opening/using the panel cancels active gestures. The old circular swap button remains on desktop/Web and is hidden on Android.
 - Press F3 to show or hide live ball/segment/gap diagnostics, including retained-left count/position, active population, unsupported segments, gravity speed/displacement, fresh generation and invariant violations.
 - Press M to mute or unmute procedural sound effects.
 - After a lane breach or cleared wave, press R or use the on-screen RESTART button to begin a fresh run.
 
-The layout targets landscape screens and has automated coverage at 960×540, 1280×720, 1600×720 and 2400×1080. Native safe-area information is used when the platform supplies it; Web falls back to the browser canvas with an additional logical edge margin. The four balanced lane rows fill the area from two pixels below the conveyor to just above the shooter muzzle, and their authoritative world-X span uses 5.5% internal side margins. The shooter track spans the chain's full safe width with symmetric 24-pixel edge margins, so both edge balls are targetable. The large loaded ball and a smaller symbol-bearing NEXT ball travel together on the shooter. The old magazine panel is replaced by one circular 56×56 two-arrow swap control in the upper-right safe HUD, completely outside the firing playfield.
+The layout targets landscape screens and has automated coverage at 960×540, 1280×720, 1600×720 and 2400×1080. Native safe-area information is used when the platform supplies it; Web falls back to the browser canvas with an additional logical edge margin. The four balanced lane rows fill the area from two pixels below the conveyor to just above the raised shooter muzzle, and their authoritative world-X span uses 5.5% internal side margins. At 1280×720 the shooter is roughly 140 canvas pixels above the safe bottom, leaving a large thumb-rest strip; smaller and wider layouts scale that reserve. The track still reaches both conveyor edges. The large loaded ball stays exactly on the firing axis and the smaller NEXT ball sits beside it at the same Y, normally right and hysteretically flipping left near the right safe edge so both remain visible.
 
 Player-fired balls cross from their launch position to the upper lane in 0.20 seconds at every supported landscape height. Each shot locks its launch X and identity, while the 0.4-second firing cooldown remains unchanged.
 
@@ -96,12 +97,14 @@ Enemy HP is logical and intentionally has no bar, pip, number or health-driven s
 
 | Enemy | HP | Movement | Baked 2D appearance |
 |---|---:|---|---|
-| Hopper | 6 | Original grounded pause/airborne hop averaging 0.312 units/s | Original gray silhouette with exactly two permanent orange top horns |
-| Heavy | 12 | Continuous ground slide at 0.2184 units/s (0.7×) | Wider dark-orange Hopper construction, no horns |
-| Sickle Snake | 6 | Continuous ground slide at 0.624 units/s (2×) | Taller strong-yellow construction, no horns |
-| Healyzard | 6 | Stationary in a reserved rear support slot | Green 0.7-scale construction, no horns |
+| Hopper | 3 | Original grounded pause/airborne hop averaging 0.312 units/s | Original gray silhouette with exactly two permanent orange top horns |
+| Heavy | 6 | Continuous ground slide at 0.2184 units/s (0.7×) | Wider dark-orange Hopper construction, no horns |
+| Sickle Snake | 3 | Continuous ground slide at 0.624 units/s (2×) | Taller strong-yellow construction, no horns |
+| Healyzard | 3 | Stationary in a reserved rear support slot | Green 0.7-scale construction, no horns |
 
-Only Hopper receives hop height and landing squash; projectile collision uses the matching piecewise-hop, constant-slide or stationary swept model. All variants remain hittable throughout their movement, retain ordinary hit flash and use the existing explosion, sideways fall, fade and death cue. Healyzards use distinct rear X slots so multiple supports do not overlap each other or the right-edge entrance, and their presence does not stop normal spawns.
+Only Hopper receives hop height and landing squash; projectile collision uses the matching piecewise-hop, constant-slide or stationary swept model. Every actual damaging hit now drives an independent 0.16-second Compatibility-renderer shader mix toward vivid red while preserving sprite alpha. Repeat hits refresh it, survivors restore normally, and lethal actors remain red for the start of their existing explosion/sideways-fall/fade sequence. Unhurt and healed enemies are not tinted. Healyzards use distinct rear X slots so multiple supports do not overlap each other or the right-edge entrance, and their presence does not stop normal spawns.
+
+P033 renderer evidence can be reproduced with `./scripts/capture_p033_gameplay.sh`: `assets/previews/p033_controls_hit_flash_1280x720.png` shows the raised horizontal magazine and vivid hit state, while `assets/previews/p033_controls_settings_1600x720.png` shows the wide four-lane framing and live settings panel. The capture waits for `RenderingServer.frame_post_draw` and requires a real graphical renderer.
 
 P023 raises the single authoritative moving-enemy baseline by 30%, from 0.24 to 0.312 units/s. Heavy and Sickle Snake retain their 0.7× and 2× multipliers, while Healyzard remains at zero. Hopper's 0.55-second grounded dwell and 0.75-second airborne phase are unchanged; only horizontal travel during the airborne phase is faster.
 

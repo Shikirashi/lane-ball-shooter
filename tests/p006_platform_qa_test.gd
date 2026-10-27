@@ -33,7 +33,7 @@ func _test_layout_calculator() -> void:
 		_check(float(layout.track_left) <= layout.chain_rect.position.x + 25.0 and float(layout.track_right) >= layout.chain_rect.end.x - 25.0, "%s shooter track spans the targetable chain width" % size)
 		_check(LayoutCalculator.BATTLEFIELD_SIDE_MARGIN_RATIO >= 0.04 and LayoutCalculator.BATTLEFIELD_SIDE_MARGIN_RATIO <= 0.07, "%s 2D battlefield uses modest side margins" % size)
 		_check(layout.battlefield_rect.position.y - layout.chain_rect.end.y <= 2.01, "%s top lane reaches the conveyor edge" % size)
-		_check(float(layout.shooter_y) - 50.0 - layout.battlefield_rect.end.y <= 5.0, "%s bottom lane ends at the shooter muzzle region" % size)
+		_check(float(layout.shooter_y) - 50.0 - layout.battlefield_rect.end.y <= 10.0, "%s bottom lane ends just above the raised shooter muzzle" % size)
 
 	var cutout_safe := Rect2(96.0, 24.0, 2208.0, 1032.0)
 	var cutout_layout: Dictionary = LayoutCalculator.calculate(Vector2(2400, 1080), cutout_safe)
@@ -82,8 +82,10 @@ func _test_live_layout_and_input() -> void:
 	await _dispatch_touch(4, Vector2(safe.position.x + 20.0, safe.position.y + 10.0), true)
 	await _dispatch_drag(4, Vector2(touch_x, touch_y))
 	await _dispatch_touch(4, Vector2(touch_x, touch_y), false)
-	_check(shooter.get("_shots").is_empty(), "touch beginning outside playfield never fires after dragging inside")
+	_check(shooter.get("_shots").size() == 1, "classic touch beginning above the former playfield still aims and fires once")
 
+	shooter.reset_run()
+	main.set("_cooldown_remaining", 0.0)
 	await _dispatch_touch(5, Vector2(touch_x, touch_y), true)
 	var canceled := InputEventScreenTouch.new()
 	canceled.index = 5
@@ -128,7 +130,9 @@ func _test_live_layout_and_input() -> void:
 	shooter.reset_run()
 	main.set("_cooldown_remaining", 0.0)
 	await _dispatch_mouse_button(MOUSE_BUTTON_LEFT, Vector2(safe.position.x + 10.0, safe.position.y + 10.0))
-	_check(shooter.get("_shots").is_empty(), "left mouse click outside playfield cannot fire")
+	_check(shooter.get("_shots").size() == 1, "left mouse click anywhere on noninteractive canvas fires")
+	shooter.reset_run()
+	main.set("_cooldown_remaining", 0.0)
 	await _dispatch_mouse_button(MOUSE_BUTTON_LEFT, Vector2(touch_x, touch_y))
 	_check(shooter.get("_shots").size() == 1, "left mouse click in playfield fires once")
 	shooter.reset_run()

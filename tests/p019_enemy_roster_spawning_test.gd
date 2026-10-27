@@ -34,7 +34,7 @@ func _test_typed_stats_and_motion() -> void:
 	var model := LaneCombatModel.new(TeamData.Identity.RED)
 	model.clear_for_test()
 	model.max_enemies = 8
-	var expected_hp := [6, 12, 6, 6]
+	var expected_hp := [3, 6, 3, 3]
 	var expected_speed := [0.312, 0.2184, 0.624, 0.0]
 	for enemy_type in range(EnemyTypesScript.Type.HEALYZARD + 1):
 		var uid := model.spawn_enemy(5.0 + enemy_type * 0.1, -1, false, enemy_type, 100 + enemy_type)
@@ -45,7 +45,7 @@ func _test_typed_stats_and_motion() -> void:
 	var historical := LaneCombatModel.new(TeamData.Identity.BLUE)
 	historical.clear_for_test()
 	var default_uid := historical.spawn_enemy()
-	_check(int(historical.enemies[0].type) == EnemyTypesScript.Type.HOPPER and int(historical.enemies[0].hp) == 6 and default_uid > 0, "historical no-type spawn now uses canonical 6 HP Hopper")
+	_check(int(historical.enemies[0].type) == EnemyTypesScript.Type.HOPPER and int(historical.enemies[0].hp) == 3 and default_uid > 0, "historical no-type spawn uses canonical 3 HP Hopper")
 
 	var starts := {}
 	for enemy in model.enemies:

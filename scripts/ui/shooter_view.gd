@@ -12,6 +12,9 @@ var shooter_y := 650.0
 var track_left := 42.0
 var track_right := 850.0
 var shot_ceiling := 118.0
+var safe_left := 0.0
+var safe_right := 900.0
+var _preview_on_left := false
 var _shots: Array[Dictionary] = []
 var _muzzle_flash := 0.0
 var simulation_paused := false
@@ -20,12 +23,15 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_process(true)
 
-func configure_layout(y_position: float, left_edge: float, right_edge: float, ceiling: float) -> void:
+func configure_layout(y_position: float, left_edge: float, right_edge: float, ceiling: float, safe_left_edge := 0.0, safe_right_edge := 0.0) -> void:
 	shooter_y = y_position
 	track_left = left_edge
 	track_right = maxf(left_edge + 120.0, right_edge)
 	shot_ceiling = ceiling
+	safe_left = safe_left_edge
+	safe_right = safe_right_edge if safe_right_edge > safe_left_edge else right_edge + 48.0
 	shooter_x = clampf(shooter_x, track_left, track_right)
+	_update_preview_side()
 	queue_redraw()
 
 func set_loaded(identity: int) -> void:
@@ -41,7 +47,7 @@ func loaded_ball_center() -> Vector2:
 	return Vector2(shooter_x, shooter_y - 23.0)
 
 func next_ball_center() -> Vector2:
-	return Vector2(shooter_x, shooter_y + 8.0)
+	return Vector2(shooter_x + (-34.0 if _preview_on_left else 34.0), shooter_y - 23.0)
 
 func reset_run() -> void:
 	_shots.clear()
@@ -55,7 +61,14 @@ func set_simulation_paused(value: bool) -> void:
 
 func move_to(screen_x: float) -> void:
 	shooter_x = clampf(screen_x, track_left, track_right)
+	_update_preview_side()
 	queue_redraw()
+
+func _update_preview_side() -> void:
+	if not _preview_on_left and shooter_x + 45.0 > safe_right:
+		_preview_on_left = true
+	elif _preview_on_left and shooter_x + 58.0 < safe_right:
+		_preview_on_left = false
 
 func launch(identity: int) -> void:
 	var start := Vector2(shooter_x, shooter_y - 42.0)

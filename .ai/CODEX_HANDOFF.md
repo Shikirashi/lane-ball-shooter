@@ -1,4 +1,53 @@
-# Codex Handoff — LBS-P034C charge crystal revision
+# Codex Handoff — LBS-P033 mobile controls, ergonomics and enemy feedback
+
+**Status:** COMPLETE
+
+**Branch:** `master`
+
+## Delivered
+
+- Added deterministic `TouchControlRouter` handling Classic primary absolute aim/release-fire, one secondary down-swap, ignored extra fingers, cancellation/focus/reset cleanup, and Side mode's handed 1:2:1 fixed-role regions. Side aim is relative 1:1 drag with no down teleport or release shot; action taps fire/swap once on down.
+- Added an in-game, event-consuming gear/settings panel for Classic/Side and right-/left-handed selection. `ConfigFile` persistence uses safe Classic/right defaults for absent or corrupt data. Native Android detection is test-injectable and hides the legacy swap button; desktop/Web keeps button, right-click and Space behavior.
+- Desktop/Web left click now aims and fires anywhere on noninteractive canvas; right click swaps. Existing Controls retain input priority, so settings, restart and Web menu interactions cannot leak gameplay actions.
+- Raised the shooter responsively (140-pixel bottom reserve at 1280×720), reflowed the four-lane battlefield above its muzzle, and added a thumb-rest strip. Loaded ammo remains on exact shot X; NEXT is horizontal at the same Y and flips left near the right edge with hysteresis.
+- Canonical HP is now Hopper 3, Heavy 6, Sickle Snake 3 and Healyzard 3. Spawn/full/max HP and Healyzard caps agree. Projectile damage, piercing/deduplication, Snake behavior, emergency clear, speeds, budgets, chain and all other combat rules are unchanged.
+- Replaced the weak tint with a per-enemy Compatibility canvas shader that mixes textured RGB strongly toward red while preserving alpha. Real damage refreshes the 0.16-second parameter independently. Lethal visuals begin vividly red, then retain the existing explosion, fall and fade; restart removes transient state.
+
+## Real renderer evidence
+
+Reproduce on a graphical session with:
+
+```sh
+./scripts/capture_p033_gameplay.sh
+```
+
+- `assets/previews/p033_controls_hit_flash_1280x720.png` — SHA-256 `b84acbe4fbfc371913f50302fb6bd9a9eb05f672e7cecd896ca1da86e7b10912`; raised shooter/horizontal ammo, all rows and full-strength red hit.
+- `assets/previews/p033_controls_settings_1600x720.png` — SHA-256 `51f93825f967ea3d8f88c2cc13ac39f49d8c0619fec06013bbd87de441229875`; wide framing with the modal control selector.
+
+Both were captured from deterministic live Godot state after `RenderingServer.frame_post_draw` using Godot `4.7.2.stable.official.ed1daf0bf`, OpenGL 4.6 Compatibility, AMD Radeon RX 6700 XT / Mesa 26.2.5, and inspected at rendered resolution. The capture-only `SubViewport` is not part of runtime gameplay.
+
+## Verification
+
+- `./scripts/ci/run_regression_tests.sh`: **PASS — all 27 suites**. P033 adds 43 checks; P011 stress remains **16,485 checks / 2,400 operations**.
+- Historical HP and intentionally superseded vertical-ammo/playfield-only input assertions were updated without reducing tier, healing, transfer, cascade or 2D-runtime coverage.
+- `./scripts/build_web.sh`: **PASS**, ignored local nine-file release and ZIP rebuilt; no deployment performed.
+- `./scripts/ci/validate_web_release.sh exports/web`: **PASS**; PCK SHA-256 `4958642720be7bb33d9e6f29a4fd19f92d864bcde8a0944bba44326f27dc170d`.
+- `./scripts/ci/test_android_release_scaffolding.sh`: **PASS**.
+- `./scripts/ci/test_android_toolchain_setup.sh`: **PASS**.
+- `git diff --check`: **PASS**.
+
+## Limits / preservation
+
+- No Android device was attached, so physical multi-touch, safe-area ergonomics, haptics/audio and device GPU performance remain manual QA. No APK was built, published or replaced; version/signing/release metadata is untouched.
+- The Web build was statically validated only. Existing P024 publishing automation was not edited or manually invoked.
+- Pre-existing user modifications to `project.godot` and `scenes/main.tscn`, plus unrelated generated UID files, remain present and uncommitted.
+- P034A/B/C sprites and crystals remain intact. P028 and every other queued task were not started.
+
+Stop after P033.
+
+---
+
+# Previous handoff — LBS-P034C charge crystal revision
 
 **Status:** COMPLETE
 
