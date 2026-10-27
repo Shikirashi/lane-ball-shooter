@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**SOLE ACTIVE CODEX TASK (2026-10-27): P034C — re-bake defender PNGs without the old yellow ChargeOrb and introduce separate team-colored 2D diamond charge crystals that shatter permanently on emergency use until run restart.** New render screenshots required for SSH review. P034A and P034B completed previously. **P033 touch controls and P028 balancing remain NOT ACTIVE.** See `.ai/TASK.md`.
+**NO ACTIVE CODEX TASK (2026-10-27):** P034C completed in `16347b3` with handoff `04d6075`, source/image/test review PASSED; GitHub Actions `40555144242` test/build stage PASSED (publication status to be confirmed). All four genuine defender bakes now omit yellow ChargeOrb; separate team-colored crystals shatter when charge is spent. Archive `.ai/TASKS/LBS-P034C.md`. **P033 controls and P028 balance remain NOT ACTIVE.**
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
@@ -63,4 +63,4 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 
 P028A's balance-simulation laboratory remains proposed; **P034B** does not authorize color/speed/enemy changes.
 
-| LBS-P034C | **ACTIVE — `.ai/TASK.md`** | Remove embedded yellow sphere from actual 3D defender source, Godot-rebake authentic transparent PNGs, add separate faceted colored 2D charge crystal behind each defender; one-time shatter on emergency discharge, absent after revival, restored only on new run. Real gameplay screenshots and full regression required. No unrelated gameplay changes. |
+| LBS-P034C | **IMPLEMENTED — reviewed; visual/device QA pending**; `16347b3` | Rebaked 4 transparent defender PNGs without yellow orb; separate colored crystal shatters once when spent; 26 suites locally passed, real state/shatter screenshots, archive `.ai/TASKS/LBS-P034C.md`. |
