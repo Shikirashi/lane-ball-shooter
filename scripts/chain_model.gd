@@ -77,6 +77,11 @@ var longest_fresh_run := 0
 # Per-instance analysis seam. Production instances retain an exact duplicate of
 # FRESH_RUN_LENGTH_WEIGHTS; balancing tools may override only their own model.
 var fresh_run_length_weights: Array[int] = FRESH_RUN_LENGTH_WEIGHTS.duplicate()
+# Analysis-only per-instance callbacks. They are invalid on every production
+# instance, so the original generator branch and RNG call sequence stay exact.
+var analysis_fresh_run_selector: Callable = Callable()
+var analysis_fresh_run_observer: Callable = Callable()
+var analysis_fresh_run_length_selector: Callable = Callable()
 var total_rollbacks_started := 0
 var total_rollbacks_completed := 0
 var simulation_time := 0.0
@@ -814,7 +819,12 @@ func _validate_invariants() -> void:
 func _draw_fresh_identity() -> int:
 	if _fresh_run_remaining <= 0:
 		_fresh_run_identity = _draw_fresh_run_color()
-		_fresh_run_remaining = _draw_fresh_run_length()
+		var drawn_run_length := _draw_fresh_run_length()
+		_fresh_run_remaining = drawn_run_length
+		if analysis_fresh_run_length_selector.is_valid():
+			var selected_length = analysis_fresh_run_length_selector.call(drawn_run_length, fresh_runs_generated, simulation_time)
+			if typeof(selected_length) == TYPE_INT and int(selected_length) >= 1 and int(selected_length) <= FRESH_RUN_LENGTH_WEIGHTS.size():
+				_fresh_run_remaining = int(selected_length)
 		_previous_fresh_run_identity = _fresh_run_identity
 		fresh_runs_generated += 1
 		longest_fresh_run = maxi(longest_fresh_run, _fresh_run_remaining)
@@ -841,6 +851,11 @@ func set_analysis_fresh_run_length_weights(weights: Array[int]) -> bool:
 	_reset_fresh_generator()
 	return true
 
+func set_analysis_fresh_run_callbacks(selector: Callable = Callable(), observer: Callable = Callable(), run_length_selector: Callable = Callable()) -> void:
+	analysis_fresh_run_selector = selector
+	analysis_fresh_run_observer = observer
+	analysis_fresh_run_length_selector = run_length_selector
+
 func _reset_fresh_generator() -> void:
 	_fresh_rng.seed = fresh_seed
 	_fresh_color_bag.clear()
@@ -866,7 +881,26 @@ func _draw_fresh_run_color() -> int:
 		var temporary := _fresh_color_bag[-1]
 		_fresh_color_bag[-1] = _fresh_color_bag[swap_index]
 		_fresh_color_bag[swap_index] = temporary
-	return _fresh_color_bag.pop_back()
+	var legal := _fresh_color_bag.duplicate()
+	if legal.size() > 1 and legal.has(_previous_fresh_run_identity):
+		legal.erase(_previous_fresh_run_identity)
+	var baseline_choice := int(_fresh_color_bag[-1])
+	var chosen := baseline_choice
+	if analysis_fresh_run_selector.is_valid():
+		var selected = analysis_fresh_run_selector.call(legal.duplicate(), _previous_fresh_run_identity, simulation_time, baseline_choice)
+		if typeof(selected) == TYPE_INT and legal.has(int(selected)):
+			chosen = int(selected)
+	var selected_index := _fresh_color_bag.find(chosen)
+	_fresh_color_bag.remove_at(selected_index)
+	if analysis_fresh_run_observer.is_valid():
+		analysis_fresh_run_observer.call({
+			"time": simulation_time,
+			"legal": legal,
+			"previous": _previous_fresh_run_identity,
+			"baseline_choice": baseline_choice,
+			"chosen": chosen,
+		})
+	return chosen
 
 func _draw_fresh_run_length() -> int:
 	var roll := _fresh_rng.randi_range(1, 100)

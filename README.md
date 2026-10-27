@@ -137,6 +137,17 @@ Optional `--policy observe_only|basic_matcher|threat_priority|all` and `--scenar
 
 The corrected sweep leaves generator-only findings unchanged: fresh GREEN was 25.251% of 150,000 baseline-generated balls, with the same 20-ball p50 and 26-ball p95 drought as RED/YELLOW; length-7 groups were 4.00% of runs but 9.43% of emitted balls. Realistic misses now appear. Across the three 102 px/s baseline `basic_matcher` seeds, 128/148 arrivals inserted (86.5%), with 20 misses and six nonmatching insertions; all three still won, so the bot remains too strong to establish human difficulty. In the paired two-seed speed probe, GREEN adjacent-pair drought fell from 11.45 seconds at 102 to 10.95 at 120 and 9.45 at 140, while fixed-X hit rate fell from 88.5% to 87.0% and 82.8%. Faster motion therefore receives no shipping recommendation without phone playtesting. P028AR supersedes the earlier P028A combat/speed conclusions, not its 500-seed generator distribution.
 
+### P028B-EXP threat-aware generator study
+
+The simulation-only threat-bias laboratory compares the exact production generator with mild (`+0.5×`), moderate (`+1.5×`) and strong (`+3.0×`) urgency weights. At each new run, urgency comes from the current real Battlefield time-to-defender estimate; weighting may reorder only the legal colors remaining in that run bag. No-threat selection is exactly baseline, every complete bag still contains all four colors, and no playable `Main` instance installs the experimental callback.
+
+```sh
+./scripts/analyze_threat_bias.sh --smoke
+./scripts/analyze_threat_bias.sh --seeds 500 --scenario-seeds 12 --seed-start 29001 --duration 90 --step 0.1 --output analysis/reports/p028b_exp
+```
+
+The committed report covers 500 paired synthetic seeds and 144 authentic chain/magazine/combat scenarios—36 per generator arm—using `observe_only`, the P028AR fixed-X `basic_matcher`, and a deliberately weaker 1.2-second `delayed_matcher`. A paired shadow production generator keeps every arm's run-length sequence identical, isolating only color order. Moderate reduced summed paired mean threatened-starvation by 1.52 seconds under the basic bot and 1.12 seconds under the delayed bot, but delayed YELLOW worsened by 0.74 seconds. Mild had a larger 1.02-second delayed YELLOW regression; strong offered no clear tradeoff advantage and worsened basic RED by 0.94 seconds. All playing scenarios still won. The result is **collect more human data for moderate; reject mild/strong for now; ship none**. Full definitions, all-color outcomes, run-to-visible/pair/match delays, hardest seeds, JSON, and CSV are under `analysis/reports/p028b_exp/`.
+
 ## Export
 
 The committed `export_presets.cfg` contains `Web`, `Android Debug`, and `Android Release` presets. Install the **Godot 4.7.2 Standard** export templates matching the editor build before exporting. Mono templates do not satisfy this GDScript editor's template lookup.

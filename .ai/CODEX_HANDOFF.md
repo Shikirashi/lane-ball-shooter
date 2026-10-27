@@ -1,4 +1,51 @@
-# Codex Handoff — LBS-P028AR fixed-X balancing correction
+# Codex Handoff — LBS-P028B-EXP threat-aware generator study
+
+**Status:** COMPLETE
+
+**Branch:** `master`
+
+## Delivered
+
+- Added an analysis-only, per-instance fresh-run selector/observer seam to `ChainModel`. With no selector—the state of every playable instance—the original bag branch and fresh RNG calls remain exact. A 420-ball regression compares the untouched and observed paths byte-for-byte.
+- Added `ThreatRunSelector`, implementing baseline and mild/moderate/strong boosts of 0/0.5/1.5/3.0 with `urgency = clamp((15 - live_ttd) / 12, 0, 1)`. It can reorder only currently legal entries in the real four-color bag, never immediately repeats when another color is legal, records exhausted urgent colors, and returns the exact baseline candidate without drawing bias RNG when no threat is active.
+- Extended `BalanceLab.run_scenario()` without changing existing call behavior. Harness-owned adaptive instances receive actual live `Battlefield` time-to-danger immediately before chain advance (at most the configured 0.1-second snapshot lag), while authentic chain, run lengths, magazine, 0.20-second fixed-X shots, settling, matching, progression, attacks, spawn director and terminal rules continue to run.
+- Added exact first-fresh-UID tracking from run selection to first visibility and first visible adjacent pair, plus first subsequent real match of that color. Added 5/10/15/20-second danger bands, adaptive intervention diagnostics and a deterministic `delayed_matcher` with an invented 1.2-second decision cadence to expose more pressure without free actions or fake damage.
+- Added `./scripts/analyze_threat_bias.sh`, synthetic fixture sweeps, a Godot report generator, and stable schema-v1 JSON/CSV/Markdown artifacts under `analysis/reports/p028b_exp/`.
+- Added `p028b_threat_bias_test.gd` covering exact baseline/no-threat equivalence, determinism, bag fairness, no repeats, partial bags, monotonic controlled urgency response, unavailable urgent colors, RNG isolation, live Battlefield danger, Healyzard exclusion, accounting, fixed-X misses and unchanged production constants.
+
+## Executed workload and findings
+
+Command: `./scripts/analyze_threat_bias.sh --seeds 500 --scenario-seeds 12 --seed-start 29001 --duration 90 --step 0.1 --output analysis/reports/p028b_exp`
+
+- Godot `4.7.2.stable.official.ed1daf0bf`; 500 paired synthetic seeds × 300 balls × five schedules × four arms; 144 real-model scenarios, 36 paired seed/policy cases per arm; canonical runtime 78.87 seconds.
+- All 500 no-threat seeds in mild/moderate/strong produced the exact baseline sequence. Across all synthetic arms/schedules there were zero four-color bag violations and zero immediate-repeat violations. Under rotating threat, legal urgent selection rose from 44.0% baseline to 51.7% mild, 62.2% moderate and 71.2% strong; the unchanged bag frequently made the desired color unavailable, correctly preventing a rescue override.
+- A paired shadow production generator preserves the exact baseline run-length sequence in every adaptive arm, preventing bag-boundary RNG coupling from contaminating the color-order experiment. The dedicated suite proves equality for mild/moderate/strong.
+- Moderate was the best later human-A/B candidate, but is **not ready to ship**. Summed paired mean threatened-starvation improved by 1.52 seconds across colors with `basic_matcher` and 1.12 seconds with `delayed_matcher`; all 12 playing seeds won. Delayed YELLOW nevertheless worsened by 0.74 seconds, failing the all-color fairness gate cleanly.
+- Mild improved totals but worsened delayed YELLOW by 1.02 seconds. Strong offered no clear advantage over moderate and worsened basic RED by 0.94 seconds. Recommendation: collect human data only for moderate; reject mild/strong for now; enable none in production.
+- A selected run's first ball became visible in roughly 0.08–0.09 seconds in these retained offscreen/right-edge states, but reaching a visible pair commonly took 0.8–3.0 seconds and the next real same-color match roughly 3.3–4.3 seconds. This confirms that manipulating run order is not instant defensive assistance.
+
+## Verification
+
+- `./scripts/analyze_threat_bias.sh --smoke`: **PASS**, 8 synthetic seeds and 24 authentic scenarios.
+- Full command above: **PASS**. A second independent full run completed in 78.97 seconds; both CSVs were byte-identical, normalized JSON was identical, and the generated report matched after normalizing runtime/output path.
+- `godot --headless --path . --script res://tests/p028b_threat_bias_test.gd`: **PASS, 29 checks**.
+- `godot --headless --path . --script res://tests/p028a_balance_lab_test.gd`: **PASS, 38 checks**.
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 30 suites**; P011 remains 16,485 checks / 2,400 operations.
+- Exact-nine Web release validation: **PASS**; unchanged PCK SHA-256 `95bd5ebffb7e52dc739bc03645d79ec16823b431f8a45a34a3aaae3f0718a901`.
+- `git diff --check`: **PASS**.
+
+## Limitations and preservation
+
+- Threat-aware choice is not connected to `Main`, `Battlefield`, UI, or any shipped runtime configuration. Production remains 102 px/s, `[20,30,18,13,9,6,4]` run weights, four-color bags, enemy HP 3/6/3/3 and all existing spawn/combat/control/render/export settings.
+- `delayed_matcher` is deliberately weaker but not human-calibrated; both bots retain exact perception and lack touch error, occlusion, planning and human emergency strategy. Twelve encounter seeds per policy/arm are paired evidence, not population tails or phone usability.
+- Run-to-match associates a selected run with the first later real match of its color; overlapping runs can share that match. Unresolved delays remain explicitly counted in JSON rather than assigned fabricated durations.
+- Godot's optional `user://logs` and editor-settings writes were denied by the restricted CLI environment; tests and experiments still exited successfully with complete artifacts.
+- Existing user modifications to `project.godot`, `scenes/main.tscn`, and unrelated generated UID files remain uncommitted and untouched.
+- P028B-SHIP and all unrelated tasks remain unimplemented. No Web/Android build, deployment, signing, version or credential changes were made.
+
+---
+
+# Previous handoff — LBS-P028AR fixed-X balancing correction
 
 **Status:** COMPLETE
 

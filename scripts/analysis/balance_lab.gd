@@ -2,12 +2,13 @@ class_name BalanceLab
 extends RefCounted
 
 const EnemyTypes = preload("res://scripts/world/enemy_types.gd")
+const ThreatRunSelectorScript = preload("res://scripts/analysis/threat_run_selector.gd")
 
 const BASELINE_WEIGHTS: Array[int] = [20, 30, 18, 13, 9, 6, 4]
 const EXPERIMENTAL_WEIGHTS: Array[int] = [12, 30, 40, 10, 5, 2, 1]
 const SPEEDS: Array[float] = [102.0, 120.0, 140.0, 160.0]
 const WINDOW_SIZES: Array[int] = [25, 50, 100]
-const URGENCY_THRESHOLDS: Array[float] = [5.0, 10.0, 20.0]
+const URGENCY_THRESHOLDS: Array[float] = [5.0, 10.0, 15.0, 20.0]
 const SHOT_COOLDOWN := 0.4
 const SHOT_FLIGHT_TIME := 0.20
 const MATCH_GEOMETRY_FACTOR := 1.25
@@ -21,6 +22,7 @@ static func seed_tuple(seed_value: int) -> Dictionary:
 		"spawn": base * 3571 + 43,
 		"attack": base * 2377 + 59,
 		"snake": base * 1877 + 71,
+		"threat_bias": base * 1237 + 97,
 	}
 
 static func sample_generator(seed_value: int, incoming_count: int, weights: Array[int] = BASELINE_WEIGHTS) -> Dictionary:
@@ -154,12 +156,21 @@ static func sequence_metrics(sequence: Array[int]) -> Dictionary:
 		deficits[str(window)] = worst_deficit
 	return {"drought_balls": droughts, "window_max_spread": spreads, "window_worst_color_deficit": deficits}
 
-static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step: float, policy: String, speed: float = ChainModel.DEFAULT_SPEED, weights: Array[int] = BASELINE_WEIGHTS) -> Dictionary:
+static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step: float, policy: String, speed: float = ChainModel.DEFAULT_SPEED, weights: Array[int] = BASELINE_WEIGHTS, generator_arm := "baseline", decision_delay := 0.0) -> Dictionary:
 	var tuple := seed_tuple(seed_value)
 	var chain := ChainModel.new()
 	chain.speed = speed
 	chain.set_fresh_seed(int(tuple.chain))
 	chain.set_analysis_fresh_run_length_weights(weights)
+	var threat_selector = ThreatRunSelectorScript.new(generator_arm, int(tuple.threat_bias), int(tuple.chain))
+	threat_selector.chain_model = chain
+	var selector_callback := Callable()
+	if generator_arm != "baseline":
+		selector_callback = Callable(threat_selector, "choose")
+	var length_callback := Callable()
+	if generator_arm != "baseline":
+		length_callback = Callable(threat_selector, "choose_paired_run_length")
+	chain.set_analysis_fresh_run_callbacks(selector_callback, Callable(threat_selector, "observe"), length_callback)
 	chain.reset_run()
 	var magazine := MagazineState.new(int(tuple.magazine))
 	var progression := MatchProgression.new()
@@ -205,7 +216,7 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 	var pair_integral := [0.0, 0.0, 0.0, 0.0]
 	var group3_integral := [0.0, 0.0, 0.0, 0.0]
 	var entering_counts := [0, 0, 0, 0]
-	var threat_time := {"5": [0.0, 0.0, 0.0, 0.0], "10": [0.0, 0.0, 0.0, 0.0], "20": [0.0, 0.0, 0.0, 0.0]}
+	var threat_time := {"5": [0.0, 0.0, 0.0, 0.0], "10": [0.0, 0.0, 0.0, 0.0], "15": [0.0, 0.0, 0.0, 0.0], "20": [0.0, 0.0, 0.0, 0.0]}
 	var starved_time := [0.0, 0.0, 0.0, 0.0]
 	var starved_current := [0.0, 0.0, 0.0, 0.0]
 	var starved_longest := [0.0, 0.0, 0.0, 0.0]
@@ -225,10 +236,34 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 	var minimum_shot_interval := INF
 	var minimum_flight_time := INF
 	var maximum_flight_time := 0.0
+	var decision_clock := decision_delay
+	var run_event_cursor := 0
+	var pending_run_lags: Array[Dictionary] = []
+	var response_lags := {
+		"visible": [[], [], [], []],
+		"pair": [[], [], [], []],
+		"match": [[], [], [], []],
+	}
 	while elapsed < duration - 0.000001 and not battlefield.game_over and not battlefield.victory:
 		var dt := minf(step, duration - elapsed)
 		cooldown = maxf(0.0, cooldown - dt)
+		decision_clock += dt
+		# This is the actual live Battlefield state from the immediately preceding
+		# model step. A new run created during this chain advance sees <= one outer
+		# step (normally 0.1s) of causal snapshot lag and no future spawn state.
+		threat_selector.set_threat_snapshot(lane_time_to_danger(battlefield))
 		var shot_event := advance_chain_with_fixed_shot(chain, pending_shot, dt)
+		while run_event_cursor < threat_selector.selection_events.size():
+			var selection: Dictionary = threat_selector.selection_events[run_event_cursor]
+			pending_run_lags.append({
+				"identity": int(selection.chosen),
+				"selected_at": float(selection.time),
+				"first_uid": int(selection.first_uid),
+				"visible_done": false,
+				"pair_done": false,
+				"match_done": false,
+			})
+			run_event_cursor += 1
 		if bool(shot_event.arrived):
 			counts.shot_arrivals += 1
 			minimum_flight_time = minf(minimum_flight_time, float(shot_event.flight_time))
@@ -259,6 +294,10 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 				battlefield.handle_match(result)
 				match_counts[int(match_event.identity)] += 1
 				counts.matches += 1
+				for pending in pending_run_lags:
+					if not bool(pending.match_done) and int(pending.identity) == int(match_event.identity):
+						response_lags.match[int(pending.identity)].append(maxf(0.0, chain.simulation_time - float(pending.selected_at)))
+						pending.match_done = true
 			processed_matches += 1
 		progression.update(dt)
 		battlefield.call("_update_spawn_director", dt)
@@ -286,6 +325,15 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 				right_counts[identity] += 1
 				current_right[int(ball.uid)] = true
 		previous_right = current_right
+		for pending in pending_run_lags:
+			var lag_identity := int(pending.identity)
+			var first_uid := int(pending.first_uid)
+			if not bool(pending.visible_done) and _uid_is_visible(chain, first_uid):
+				response_lags.visible[lag_identity].append(maxf(0.0, chain.simulation_time - float(pending.selected_at)))
+				pending.visible_done = true
+			if not bool(pending.pair_done) and _uid_has_visible_pair(chain, first_uid):
+				response_lags.pair[lag_identity].append(maxf(0.0, chain.simulation_time - float(pending.selected_at)))
+				pending.pair_done = true
 		var ttd := lane_time_to_danger(battlefield)
 		for identity in range(TeamData.COUNT):
 			visible_integral[identity] += visible_counts[identity] * dt
@@ -342,7 +390,7 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 			total_breaches += lane.combat_model.total_breaches
 		counts.breaches = total_breaches
 
-		if policy != "observe_only" and cooldown <= 0.000001 and pending_shot.is_empty():
+		if policy != "observe_only" and cooldown <= 0.000001 and pending_shot.is_empty() and decision_clock + 0.000001 >= decision_delay:
 			var action := choose_action(policy, magazine, opportunities, ttd)
 			if not action.is_empty():
 				if bool(action.swap):
@@ -362,6 +410,7 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 					"launched_at": chain.simulation_time,
 				}
 				cooldown = SHOT_COOLDOWN
+				decision_clock = 0.0
 		elapsed += dt
 
 	var outcome := "victory" if battlefield.victory else ("defeat" if battlefield.game_over else "timeout")
@@ -369,6 +418,8 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 		"seed": seed_value,
 		"seed_tuple": tuple,
 		"policy": policy,
+		"generator_arm": generator_arm,
+		"decision_delay": decision_delay,
 		"speed": speed,
 		"weights": weights.duplicate(),
 		"duration_requested": duration,
@@ -405,6 +456,8 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 		"starved_threat_time_s": starved_time,
 		"starved_threat_longest_s": starved_longest,
 		"starvation_reasons_s": starvation_reasons,
+		"threat_selector": threat_selector.summary(),
+		"run_response_lags": _summarize_response_lags(response_lags, pending_run_lags),
 		"spawn_type_counts": spawn_type_counts,
 		"spawned": battlefield.encounter_spawned(),
 		"live_enemies": battlefield.encounter_live(),
@@ -414,6 +467,55 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 	}
 	battlefield.queue_free()
 	await tree.process_frame
+	return result
+
+static func _uid_is_visible(chain: ChainModel, uid: int) -> bool:
+	var index := chain._ball_index_by_uid(uid)
+	if index < 0:
+		return false
+	var x := float(chain.balls[index].x)
+	return x + chain.radius >= 0.0 and x - chain.radius <= chain.lane_width
+
+static func _uid_has_visible_pair(chain: ChainModel, uid: int) -> bool:
+	var index := chain._ball_index_by_uid(uid)
+	if index < 0 or chain.is_settling(uid):
+		return false
+	var ball: Dictionary = chain.balls[index]
+	var x := float(ball.x)
+	if x + chain.radius < 0.0 or x - chain.radius > chain.lane_width:
+		return false
+	for other in chain.balls:
+		if int(other.uid) == uid or int(other.identity) != int(ball.identity) or chain.is_settling(int(other.uid)):
+			continue
+		var other_x := float(other.x)
+		if other_x + chain.radius < 0.0 or other_x - chain.radius > chain.lane_width:
+			continue
+		if absf(other_x - x) <= chain.spacing * MATCH_GEOMETRY_FACTOR:
+			return true
+	return false
+
+static func _summarize_response_lags(values: Dictionary, pending: Array[Dictionary]) -> Dictionary:
+	var result := {}
+	for metric in ["visible", "pair", "match"]:
+		var per_color: Array = values[metric]
+		var summaries: Array[Dictionary] = []
+		for identity in range(TeamData.COUNT):
+			var samples: Array = per_color[identity]
+			summaries.append({
+				"count": samples.size(),
+				"mean_s": _mean(samples),
+				"p50_s": percentile(samples, 0.50),
+				"p95_s": percentile(samples, 0.95),
+				"worst_s": _max_value(samples),
+			})
+		result[metric] = summaries
+	var unresolved := {"visible": [0, 0, 0, 0], "pair": [0, 0, 0, 0], "match": [0, 0, 0, 0]}
+	for item in pending:
+		var identity := int(item.identity)
+		for metric in ["visible", "pair", "match"]:
+			if not bool(item[metric + "_done"]):
+				unresolved[metric][identity] += 1
+	result.unresolved = unresolved
 	return result
 
 static func advance_chain_with_fixed_shot(chain: ChainModel, pending_shot: Dictionary, delta: float) -> Dictionary:
@@ -592,6 +694,14 @@ static func _max_value(values: Array) -> float:
 	for value in values:
 		result = maxf(result, float(value))
 	return result
+
+static func _mean(values: Array) -> float:
+	if values.is_empty():
+		return 0.0
+	var total := 0.0
+	for value in values:
+		total += float(value)
+	return total / values.size()
 
 static func _divide_floats(values: Array, divisor: float) -> Array[float]:
 	var result: Array[float] = []
