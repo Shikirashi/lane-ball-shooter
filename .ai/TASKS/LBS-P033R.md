@@ -2,7 +2,7 @@
 
 **Implementation:** COMPLETE — Codex commit `f08ee3df7c8952eeb284af4e43e85b1f24cdf478` (2026-10-27). Parent task P033 controls/HP completed in `294ddae627f46b7dce13f50dcd2006277776ae81`.
 
-**Technical review:** PASS. Independently examined modified `LaneActor`, derived mask generator, full-alpha automated tests and actual Godot-rendered standard/wide/comparison captures. No blocking issue found; old shader deleted, unhit enemies render with unchanged materials, four exact-alpha red overlays fade over 0.16s, death/Snake/restart/healing all accounted for. Codex reports **28 passing regression suites**, 41 dedicated P033R checks and deterministic PNG regeneration. Web CI `40561363700` **test/build stage SUCCESS**; publishing is processing as of initial review and must be checked for final overall SUCCESS before claiming public deploy.
+**Technical review:** PASS. Independently examined modified `LaneActor`, derived mask generator, full-alpha automated tests and actual Godot-rendered standard/wide/comparison captures. No blocking issue found; old shader deleted, unhit enemies render with unchanged materials, four exact-alpha red overlays fade over 0.16s, death/Snake/restart/healing all accounted for. Codex reports **28 passing regression suites**, 41 dedicated P033R checks and deterministic PNG regeneration. Web CI `40561363700` fully completed SUCCESS, including test/build, portfolio publication and public browser verification.
 
 **Assets:** `assets/sprites/hit_masks/enemy_*_hit.png`. **Review images:** `assets/previews/p033_controls_hit_flash_1280x720.png`, `assets/previews/p033_controls_settings_1600x720.png`, `assets/previews/p033r_hit_overlay_comparison_1280x512.png`.
 
