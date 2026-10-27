@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** Planning/design brief; P028–P032 remain proposed. **P034A is now the sole active Codex task** (source-accurate transparent sprite capture and isolated 2D preview only).  
+**Status:** Planning/design brief; P028–P033 and P034B remain proposed. **P034A delivered** (commit `5dbd708`, technical review pass, user visual approval pending). **No active Codex task.**  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
@@ -204,8 +204,8 @@ All five are proposals requiring separately scoped authorization. **Do not activ
 
 ## 11. 2026-10-27 addendum — P033 controls and P034 staged 2D presentation
 
-This addendum supersedes the old "no active task / next P028" statement for the present handoff. The user requested the visual-experiment task now; P028 remains proposed, not active.
+This addendum was implemented as P034A (`5dbd708`, CI `40544273523` SUCCESS), with technical review passed. **No task is active while the user reviews the generated visual assets.** P028 remains proposed, not active.
 
 - **P033 — mobile/desktop controls (proposed, NOT ACTIVE):** Android Classic direct drag/release with second-finger swap; move shooter up for a comfortable bottom finger space; change ammo preview to horizontal (large loaded ball centered on shooter, small NEXT beside it with edge-safe placement); hide original Android swap button. Android Side mode: 1:2:1 horizontal split with one 25% edge acting as relative laptop-style trackpad, opposite 25% edge split vertically (top=swap tap, bottom=shoot tap), mirrored for selected handedness, remembered settings. Desktop/Web left-click to shoot and right-click to swap across the non-interactive gameplay canvas including conveyor, with real UI buttons preserving input precedence.
-- **P034A — visual baking proof of concept (ACTIVE):** render the real procedurally constructed Godot 3D actor meshes (four enemies + four colored defenders) into genuine transparent PNGs with orthographic camera/lighting; add reproducible baker, contact sheet and isolated 2D preview with goofy squash/stretch. Do NOT change the playable game, camera, combat, input, platform builds, balance or old 3D scene yet. Mailbox: `.ai/TASK.md`.
+- **P034A — visual baking proof of concept (IMPLEMENTED; user visual QA pending):** render the real procedurally constructed Godot 3D actor meshes (four enemies + four colored defenders) into genuine transparent PNGs with orthographic camera/lighting; add reproducible baker, contact sheet and isolated 2D preview with goofy squash/stretch. Do NOT change the playable game, camera, combat, input, platform builds, balance or old 3D scene yet. Archived task: `.ai/TASKS/LBS-P034A.md`.
 - **P034B — runtime 2D migration (proposed, NOT ACTIVE):** upon approval of P034A captures, replace only presentation with 2D rendered lanes, actors, projectiles and 2D feedback while keeping authoritative combat logic. Align battlefield upper/lower lanes with conveyor and raised shooter; leave proportional side margins but do not reserve empty 25% width merely for invisible Side control zones. Plan this separately and test on Web/Android.
