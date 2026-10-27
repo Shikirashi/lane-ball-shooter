@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**NO ACTIVE CODEX TASK (2026-10-27).** P028A initial lab `6564001` corrected by **P028AR `78b535b`**, which now correctly holds fixed X during 0.20s projectile flight and resolves collision after chain movement. Technical source and regenerated-report review PASS; Codex reports 29 suites and 38 dedicated checks passing. GitHub CI `40571348733` final status still under verification. Archive `.ai/TASKS/LBS-P028AR.md`. **P028B and P029–P032 remain PROPOSED / NOT ACTIVE.**
+**NO ACTIVE CODEX TASK (2026-10-27).** P028A initial lab `6564001` corrected by **P028AR `78b535b`**, which now correctly holds fixed X during 0.20s projectile flight and resolves collision after chain movement. Technical source and regenerated-report review PASS; Codex reports 29 suites and 38 dedicated checks passing. GitHub CI `40571348733` completed SUCCESS, test/build and portfolio publication. Archive `.ai/TASKS/LBS-P028AR.md`. **P028B and P029–P032 remain PROPOSED / NOT ACTIVE.**
 
 **HISTORICAL: P028A initially active and implemented in `6564001`.** User explicitly said 'looks good, continue' after P033/P033R technical review. Activate P028A alone in `.ai/TASK.md`: measure per-color fresh/visible/matchable ammo availability, droughts, enemy pressure and seeded skill-policy encounters; compare isolated test-only conveyor speeds/run-length candidates with NO shipping balance changes. **P028B gameplay tuning and P029–P032 remain NOT ACTIVE.** This current status overrides historical idle notices below.
 
@@ -74,4 +74,4 @@ P028A's balance-simulation laboratory remains proposed and NOT active. **P033 is
 | LBS-P028A | **COMPLETE `6564001`, corrected by `78b535b`** | Godot real-model simulator, seeded color/run/visible/matchable/ammo and enemy-pressure metrics, bounded scripted input bots, test-only speed/run-length probes, CSV/JSON plus readable causal report, regression checks; **no changes to production balance, HP, sprites or APK**. |
 | LBS-P028B | **PROPOSED — NOT ACTIVE** | Evaluate and obtain approval for selected future gameplay modifications (distribution weights, feed speed, time-to-danger color bias) only after P028A report and human discussion. |
 
-| LBS-P028AR | **COMPLETE `78b535b`; technical review PASS, CI verification pending** | Fixed launch-X collision and correct impact timing; moving-target miss regression; regenerated 500-seed generator + 25-scenario reports, no production balance changes. Archive `.ai/TASKS/LBS-P028AR.md`. |
+| LBS-P028AR | **COMPLETE `78b535b`; technical review PASS, CI SUCCESS** | Fixed launch-X collision and correct impact timing; moving-target miss regression; regenerated 500-seed generator + 25-scenario reports, no production balance changes. Archive `.ai/TASKS/LBS-P028AR.md`. |
