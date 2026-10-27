@@ -36,3 +36,17 @@ NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game 
 | LBS-P027 | RELEASED — Android `android-v0.1.0` GitHub Release APK SHA256 `cf390a1a...8450ea26`; portfolio mobile card `94c5e77`, Pages `40246539248` SUCCESS; phone QA pending | ARM64 signed, non-debuggable v0.1.0 release, verified package/signing/download metadata and current screenshot card. No attached physical Android device for real gameplay/touch/performance testing; no Codex task active. |
 
 Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 -> P009 -> P010 -> P011 -> P012 -> P013 -> P014 -> P015 -> P016 -> P017 -> P018 -> P019 -> P020 -> P021 -> P023. P023 is complete; P022's HTTP assets verified but Godot browser entry fails due insecure HTTP; P025 Serve configuration cancelled; P026 portfolio publishing complete with HTTPS Pages workflow success; P024 Web build/deploy fully verified and green after Chrome cleanup fix; P027 Android APK RELEASED; physical-device acceptance pending. Web P021 browser interaction and Android physical-device QA remain outstanding.
+
+
+## Ball Battalion — proposed continuation after P027 (2026-10-27)
+
+**NOT ACTIVE.** User chose the public-facing name **Ball Battalion**, with an exploratory `Batta + Lion = BattaLion` grasshopper/locust–lion mascot pun. The game repository, released Android APK and deployed Web game remain named Lane Ball Shooter until a separately approved branding migration. The complete, source-checked planning handoff is [`BALL_BATTALION_ROADMAP.md`](BALL_BATTALION_ROADMAP.md). **Do not have Codex execute this proposed backlog just because it is written here.** `.ai/TASK.md` still defines NO ACTIVE TASK.
+
+| Proposed ID | Status | Scope to be refined and activated one at a time |
+|---|---|---|
+| LBS-P028 | PROPOSED — NOT ACTIVE | Investigate perceived GREEN shortage: measure chain fresh run/ball counts, visible colors, magazine output, starvation intervals across seeds; only then decide targeted fairness correction while preserving long runs and causal matches. |
+| LBS-P029 | PROPOSED — NOT ACTIVE | Data-driven deterministic level definitions, retain current 32-enemy encounter, level completion, progression/save foundations. |
+| LBS-P030 | PROPOSED — NOT ACTIVE | Curated onboarding levels and seed-based archetype/difficulty generator; aim for 30 polished launch stages, optional expansion to 100+, human QA of generated stages. |
+| LBS-P031 | PROPOSED — NOT ACTIVE | Level select, next/retry, best-score/progression UI; optional, unapproved stars and survival mode. |
+| LBS-P032 | PROPOSED — NOT ACTIVE | Ball Battalion branding, low-cost mascot exploration, match/combat feedback and actual Web/Android QA, with release/package renaming separately scoped. |
+
