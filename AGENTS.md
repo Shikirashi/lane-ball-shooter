@@ -121,3 +121,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 - Test only alternate conveyor speed (102/120/140/160) and optional run weights in a sandbox. **NO SHIPPED BALANCE CHANGE**: do NOT adjust ChainModel default speed, current 1–7 run weights, four-color bag, seed policy, enemy HP **3/6/3/3**, speed/spawns, healing/Snake logic, physical off-left history, match/rollback, controls, 2D visuals or crystals.
 - **P028B is NOT ACTIVE**: do not implement threat-aware colors, starvation protection, speed increase or new weighted run distribution in gameplay until research report and a separate user decision. P029–P032 campaign/levels/branding and Android APK release NOT ACTIVE either.
 - Preserve all user-local files/signing secrets. Run whole regression suite plus bounded simulation smoke tests, commit generated report and tool/tests/handoff, push and STOP. Do not self-advance.
+
+## Current ACTIVE correction — P028AR (2026-10-27)
+
+- **ONLY ACTIVE task:** `LBS-P028AR`, authoritative `.ai/TASK.md`; earlier P028A ACTIVE status historical. The P028A lab landed as `6564001`, but bots were allowed to home horizontally to a moving target's current x at impact, unlike real `ShooterView.launch` which freezes X at firing. Also impact was resolved before time-slice chain motion. Fix these **simulation-only** fidelity errors, add real shot-miss/accuracy regression tests, regenerate authentic seed/scenario report and rerun full test/build validation.
+- Never change shipping defaults: conveyor speed 102 px/s, run weights [20,30,18,13,9,6,4], four-color feeder/bag, enemy HP 3/6/3/3, spawn director, physics, Android controls/signing or Web publisher. P028B is proposed only and NOT ACTIVE; stop after verified correction/handoff push.
