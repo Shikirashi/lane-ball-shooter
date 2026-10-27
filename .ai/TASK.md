@@ -2,7 +2,7 @@
 
 **Status (2026-10-27):** P034C crystal revision was implemented by Codex in `16347b377d044702c7748a94ebb53f8bce435e57` and documented in `04d6075a3b8af9f7625a0a0e1956a089f8a6de98`. Review found no blocking technical issue. The old yellow ChargeOrb is removed from the original 3D source and genuinely rebaked defender PNGs; separate team-colored crystals shatter on real emergency discharge, stay absent on revival and reappear on run reset. Entire defender remains bright when spent.
 
-**Verification:** Codex reports 26 Godot suites passed (P034C: 85 checks), two actual Godot-rendered screenshots and repeatable genuine OpenGL bake. GitHub Actions run `40555144242` completed its **test/build job successfully**, with publication job still being checked. Do not claim final Web publish success until the workflow finishes.
+**Verification:** Codex reports 26 Godot suites passed (P034C: 85 checks), two actual Godot-rendered screenshots and repeatable genuine OpenGL bake. GitHub Actions run `40555144242` completed **SUCCESS**, including test/build, publication, and browser checks.
 
 **Review:** `assets/previews/p034c_crystal_states_1280x720.png`, `assets/previews/p034c_crystal_shatter_1600x720.png`, `assets/sprites/baked/contact_sheet.png`; archived original scope `.ai/TASKS/LBS-P034C.md`, handoff `.ai/CODEX_HANDOFF.md`. Motion aesthetic and Android physical QA remain pending.
 
