@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**NO ACTIVE CODEX TASK (2026-10-27):** P034B completed in `b802096`, technically reviewed with actual 2D gameplay screenshots; Web CI `40548949659` SUCCESS (all tests, published Web and live browser startup). Player visual/interactive acceptance and Android QA pending. Archive `.ai/TASKS/LBS-P034B.md`. P034A completed previously in `5dbd708`. **P033 controls and P028 balancing remain NOT ACTIVE.** See `.ai/TASK.md` for next approval checkpoint.
+**SOLE ACTIVE CODEX TASK (2026-10-27): P034C — re-bake defender PNGs without the old yellow ChargeOrb and introduce separate team-colored 2D diamond charge crystals that shatter permanently on emergency use until run restart.** New render screenshots required for SSH review. P034A and P034B completed previously. **P033 touch controls and P028 balancing remain NOT ACTIVE.** See `.ai/TASK.md`.
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
@@ -62,3 +62,5 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 | LBS-P034B | **IMPLEMENTED — source/screenshots/CI review PASS; player QA pending**; `b802096` | Live 2D gameplay with genuine sprites, responsive lanes and 2D effects; 25 regression suites/CI passed. Real screenshots committed; archive `.ai/TASKS/LBS-P034B.md`. Android APK still old. |
 
 P028A's balance-simulation laboratory remains proposed; **P034B** does not authorize color/speed/enemy changes.
+
+| LBS-P034C | **ACTIVE — `.ai/TASK.md`** | Remove embedded yellow sphere from actual 3D defender source, Godot-rebake authentic transparent PNGs, add separate faceted colored 2D charge crystal behind each defender; one-time shatter on emergency discharge, absent after revival, restored only on new run. Real gameplay screenshots and full regression required. No unrelated gameplay changes. |
