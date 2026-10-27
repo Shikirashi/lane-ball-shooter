@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**ONE ACTIVE CODEX TASK (2026-10-27): LBS-P033 — mobile control modes, raised shooter/horizontal magazine, full-canvas desktop/Web clicks, halved enemy HP and vivid red enemy-hit flash.** User explicitly requested both HP and flash be folded into next P033 task. See `.ai/TASK.md`. P034C remains completed in `16347b3` (Web CI `40555144242` SUCCESS). **P028A balancing laboratory and P029–P032 remain NOT ACTIVE.**
+**ONE ACTIVE CODEX CORRECTION (2026-10-27): P033R — fix double texture sampling in the enemy damage-flash shader.** Codex delivered P033 as `294ddae` with both touch modes, horizontal/raised shooter, HP 3/6/3/3, red flash and local 27-suite test pass. Review spotted confirmed Godot CanvasItem bug: using `texture(TEXTURE, UV) * COLOR` in `fragment()` samples the texture twice, darkening undamaged enemies. `.ai/TASK.md` now authorizes **ONLY** narrow shader correction + real rendered color/alpha test, rerun tests and screenshots. P034C completed, **P028A and P029–P032 NOT ACTIVE.**
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
@@ -57,7 +57,7 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 
 | ID | Status | Scope |
 |---|---|---|
-| LBS-P033 | **ACTIVE — `.ai/TASK.md` (2026-10-27)** | Classic two-finger swap/drag-release, 1:2:1 Side relative trackpad and opposite-half swap/fire zones with handedness/settings, Android swap button hidden, raised shooter with horizontally arranged loaded/next balls, desktop/Web full-canvas mouse clicks; **halve canonical enemy HP to Hopper 3/Heavy 6/Snake 3/Healyzard 3 and vivid independent red sprite flash on real damage including lethal hits**; full regression and actual screenshots. |
+| LBS-P033 | **IMPLEMENTED `294ddae`; P033R REVIEW CORRECTION ACTIVE in `.ai/TASK.md`** | Classic two-finger swap/drag-release, 1:2:1 Side relative trackpad and opposite-half swap/fire zones with handedness/settings, Android swap button hidden, raised shooter with horizontally arranged loaded/next balls, desktop/Web full-canvas mouse clicks; **halve canonical enemy HP to Hopper 3/Heavy 6/Snake 3/Healyzard 3 and vivid independent red sprite flash on real damage including lethal hits**; full regression and actual screenshots. |
 | LBS-P034A | **IMPLEMENTED — source/asset review PASS, user visual QA pending**; `5dbd708` | Eight real transparent PNGs, pivot metadata, contact sheet, CLI baker and isolated 2D preview; existing game not migrated. Archived task `.ai/TASKS/LBS-P034A.md`. |
 | LBS-P034B | **IMPLEMENTED — source/screenshots/CI review PASS; player QA pending**; `b802096` | Live 2D gameplay with genuine sprites, responsive lanes and 2D effects; 25 regression suites/CI passed. Real screenshots committed; archive `.ai/TASKS/LBS-P034B.md`. Android APK still old. |
 
