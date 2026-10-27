@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**NO ACTIVE CODEX TASK (2026-10-27):** P034C completed in `16347b3` with handoff `04d6075`, source/image/test review PASSED; GitHub Actions `40555144242` all build/test and Web publication steps SUCCESS. All four genuine defender bakes now omit yellow ChargeOrb; separate team-colored crystals shatter when charge is spent. Archive `.ai/TASKS/LBS-P034C.md`. **P033 controls and P028 balance remain NOT ACTIVE.**
+**ONE ACTIVE CODEX TASK (2026-10-27): LBS-P033 — mobile control modes, raised shooter/horizontal magazine, full-canvas desktop/Web clicks, halved enemy HP and vivid red enemy-hit flash.** User explicitly requested both HP and flash be folded into next P033 task. See `.ai/TASK.md`. P034C remains completed in `16347b3` (Web CI `40555144242` SUCCESS). **P028A balancing laboratory and P029–P032 remain NOT ACTIVE.**
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
@@ -57,10 +57,10 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 
 | ID | Status | Scope |
 |---|---|---|
-| LBS-P033 | PROPOSED — NOT ACTIVE | Android Classic touch with two-finger swap and raised shooter; horizontal loaded/next-ball layout (loaded remains centered and larger, NEXT beside it, edge-safe). Android Side controls: 1:2:1 horizontal zones; 25% relative trackpad for left/right movement, opposite 25% split vertically (upper tap swap, lower tap shoot), selectable handedness; hide old Android swap button; settings/persistence. Desktop/Web click/shoot and right-click swap over all noninteractive game canvas including conveyor; keep UI buttons intercepting clicks. |
+| LBS-P033 | **ACTIVE — `.ai/TASK.md` (2026-10-27)** | Classic two-finger swap/drag-release, 1:2:1 Side relative trackpad and opposite-half swap/fire zones with handedness/settings, Android swap button hidden, raised shooter with horizontally arranged loaded/next balls, desktop/Web full-canvas mouse clicks; **halve canonical enemy HP to Hopper 3/Heavy 6/Snake 3/Healyzard 3 and vivid independent red sprite flash on real damage including lethal hits**; full regression and actual screenshots. |
 | LBS-P034A | **IMPLEMENTED — source/asset review PASS, user visual QA pending**; `5dbd708` | Eight real transparent PNGs, pivot metadata, contact sheet, CLI baker and isolated 2D preview; existing game not migrated. Archived task `.ai/TASKS/LBS-P034A.md`. |
 | LBS-P034B | **IMPLEMENTED — source/screenshots/CI review PASS; player QA pending**; `b802096` | Live 2D gameplay with genuine sprites, responsive lanes and 2D effects; 25 regression suites/CI passed. Real screenshots committed; archive `.ai/TASKS/LBS-P034B.md`. Android APK still old. |
 
-P028A's balance-simulation laboratory remains proposed; **P034B** does not authorize color/speed/enemy changes.
+P028A's balance-simulation laboratory remains proposed and NOT active. **P033 is authorized to change only the explicit HP values (3/6/3/3), not spawn patterns, speed, color distribution or damage.**
 
 | LBS-P034C | **IMPLEMENTED — reviewed; visual/device QA pending**; `16347b3` | Rebaked 4 transparent defender PNGs without yellow orb; separate colored crystal shatters once when spent; 26 suites locally passed, real state/shatter screenshots, archive `.ai/TASKS/LBS-P034C.md`. |
