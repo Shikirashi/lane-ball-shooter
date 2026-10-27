@@ -3,12 +3,19 @@ extends Control
 
 signal restart_requested
 
+# All terminal UI must draw ABOVE lane sprites, enemy/projectile effects,
+# charge crystals and the settings layer (z_index=100), so the full-screen
+# dimmer actually dims everything underneath and the button is unobstructed.
+const TERMINAL_Z_INDEX := 200
+
 var final_score := 0
 var victory := false
 var _restart_button: Button
 var _content_rect := Rect2()
 
 func _ready() -> void:
+	z_as_relative = false
+	z_index = TERMINAL_Z_INDEX
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	visible = false
 	_restart_button = Button.new()
