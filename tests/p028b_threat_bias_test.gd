@@ -60,16 +60,51 @@ func _test_controlled_sampler() -> void:
 		rates.append(chosen)
 	_check(rates[0] < rates[1] and rates[1] < rates[2] and rates[2] < rates[3], "urgent selection response increases monotonically across baseline/mild/moderate/strong")
 
-	var controller = ThreatRunSelectorScript.new("strong", 7001)
-	controller.set_threat_snapshot([2.0, INF, INF, INF])
-	var choice := controller.choose([1, 2, 3], 0, 0.0, 3)
-	_check([1, 2, 3].has(choice), "selector cannot choose an urgent color absent from the partial bag")
-	controller.observe({"time": 0.0, "legal": [1, 2, 3], "previous": 0, "baseline_choice": 3, "chosen": choice})
-	_check(controller.urgent_unavailable_count == 1, "urgent-but-exhausted bag state is recorded instead of bypassed")
+	for arm in ["mild", "moderate", "strong"]:
+		var exhausted = ThreatRunSelectorScript.new(arm, 7001)
+		exhausted.set_threat_snapshot([2.0, INF, INF, INF])
+		for iteration in range(12):
+			var baseline_choice: int = [1, 2, 3][iteration % 3]
+			var exhausted_choice: int = exhausted.choose([1, 2, 3], 0, float(iteration), baseline_choice)
+			_check(exhausted_choice == baseline_choice, "%s returns the exact baseline choice when RED is urgent but exhausted" % arm)
+			exhausted.observe({"time": float(iteration), "legal": [1, 2, 3], "previous": 0, "baseline_choice": baseline_choice, "chosen": exhausted_choice})
+		var exhausted_summary: Dictionary = exhausted.summary()
+		_check(exhausted_summary.world_active_threat == 12 and exhausted_summary.no_eligible_urgent == 12, "%s distinguishes world threat from no eligible urgent color" % arm)
+		_check(exhausted_summary.eligible_urgency_active == 0 and exhausted_summary.actual_interventions == 0 and exhausted_summary.ineligible_interventions == 0, "%s records no eligible or false interventions for exhausted RED" % arm)
+		_check(exhausted_summary.bias_rng_draws == 0, "%s does not consume bias RNG for ineligible threat states" % arm)
 
-	controller = ThreatRunSelectorScript.new("moderate", 7002)
+	var secondary_blue_choices := 0
+	for seed_value in range(31000, 31500):
+		var secondary = ThreatRunSelectorScript.new("strong", seed_value)
+		secondary.set_threat_snapshot([2.0, 8.0, INF, INF])
+		var secondary_choice: int = secondary.choose([1, 2, 3], 0, 0.0, 3)
+		secondary.observe({"time": 0.0, "legal": [1, 2, 3], "previous": 0, "baseline_choice": 3, "chosen": secondary_choice})
+		secondary_blue_choices += int(secondary_choice == 1)
+		var secondary_summary: Dictionary = secondary.summary()
+		_check(secondary_summary.eligible_urgency_active == 1 and secondary_summary.bias_rng_draws == 1, "secondary BLUE urgency remains eligible when more-urgent RED is exhausted")
+	_check(secondary_blue_choices > 250, "legal secondary BLUE urgency receives priority instead of falling back")
+
+	var skipped = ThreatRunSelectorScript.new("moderate", 99117)
+	var direct = ThreatRunSelectorScript.new("moderate", 99117)
+	skipped.set_threat_snapshot([2.0, INF, INF, INF])
+	var skipped_choice: int = skipped.choose([1, 2, 3], 0, 0.0, 2)
+	skipped.observe({"time": 0.0, "legal": [1, 2, 3], "previous": 0, "baseline_choice": 2, "chosen": skipped_choice})
+	var skipped_sequence: Array[int] = []
+	var direct_sequence: Array[int] = []
+	for iteration in range(24):
+		skipped.set_threat_snapshot([2.0, 8.0, INF, INF])
+		direct.set_threat_snapshot([2.0, 8.0, INF, INF])
+		var skipped_next: int = skipped.choose([1, 2, 3], 0, float(iteration + 1), 3)
+		var direct_next: int = direct.choose([1, 2, 3], 0, float(iteration + 1), 3)
+		skipped_sequence.append(skipped_next)
+		direct_sequence.append(direct_next)
+		skipped.observe({"time": float(iteration + 1), "legal": [1, 2, 3], "previous": 0, "baseline_choice": 3, "chosen": skipped_next})
+		direct.observe({"time": float(iteration + 1), "legal": [1, 2, 3], "previous": 0, "baseline_choice": 3, "chosen": direct_next})
+	_check(skipped_sequence == direct_sequence, "ineligible fallback and observer do not advance the bias RNG stream")
+
+	var controller = ThreatRunSelectorScript.new("moderate", 7002)
 	controller.set_threat_snapshot([5.0, 8.0, INF, INF])
-	choice = controller.choose([0, 1, 2, 3], -1, 0.0, 3)
+	var choice: int = controller.choose([0, 1, 2, 3], -1, 0.0, 3)
 	_check([0, 1, 2, 3].has(choice), "multiple-threat weighted selection remains legal")
 	_check(controller.urgency_for_ttd(5.0) > controller.urgency_for_ttd(8.0), "closer live danger has greater urgency")
 

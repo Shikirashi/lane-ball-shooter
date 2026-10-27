@@ -45,7 +45,7 @@ func _run() -> void:
 	var comparisons := _aggregate_comparisons(scenarios)
 	var runtime := (Time.get_ticks_msec() - started) / 1000.0
 	var payload := {
-		"schema_version": 1,
+		"schema_version": 2,
 		"task": "LBS-P028B-EXP",
 		"generated_utc": Time.get_datetime_string_from_system(true),
 		"godot_version": Engine.get_version_info().string,
@@ -136,8 +136,12 @@ func _aggregate_color(samples: Array, baseline_by_key: Dictionary, arm: String, 
 	var insertions := 0
 	var matches := 0
 	var neutralized := 0
-	var active_selections := 0
+	var world_active := 0
+	var eligible_active := 0
+	var no_eligible := 0
 	var interventions := 0
+	var ineligible_interventions := 0
+	var rng_draws := 0
 	var unavailable := 0
 	var urgent_selected := 0
 	var visible_lag := []
@@ -157,8 +161,12 @@ func _aggregate_color(samples: Array, baseline_by_key: Dictionary, arm: String, 
 		insertions += int(sample.counts.insertions)
 		matches += int(sample.counts.matches)
 		neutralized += int(sample.neutralized)
-		active_selections += int(sample.threat_selector.active_threat_selections)
-		interventions += int(sample.threat_selector.interventions)
+		world_active += int(sample.threat_selector.world_active_threat)
+		eligible_active += int(sample.threat_selector.eligible_urgency_active)
+		no_eligible += int(sample.threat_selector.no_eligible_urgent)
+		interventions += int(sample.threat_selector.actual_interventions)
+		ineligible_interventions += int(sample.threat_selector.ineligible_interventions)
+		rng_draws += int(sample.threat_selector.bias_rng_draws)
 		unavailable += int(sample.threat_selector.urgent_unavailable)
 		urgent_selected += int(sample.threat_selector.urgent_selected)
 		visible_lag.append(float(sample.run_response_lags.visible[identity].mean_s))
@@ -198,8 +206,12 @@ func _aggregate_color(samples: Array, baseline_by_key: Dictionary, arm: String, 
 		"hit_rate": 100.0 * insertions / maxf(float(arrivals), 1.0),
 		"matches": matches,
 		"neutralized": neutralized,
-		"active_threat_selections": active_selections,
-		"interventions": interventions,
+		"world_active_threat": world_active,
+		"eligible_urgency_active": eligible_active,
+		"no_eligible_urgent": no_eligible,
+		"actual_interventions": interventions,
+		"ineligible_interventions": ineligible_interventions,
+		"bias_rng_draws": rng_draws,
 		"urgent_unavailable": unavailable,
 		"urgent_selected": urgent_selected,
 		"mean_run_to_visible_s": _mean(visible_lag),
@@ -211,13 +223,13 @@ func _scenario_key(sample: Dictionary) -> String:
 	return "%d|%s" % [int(sample.seed), str(sample.policy)]
 
 func _scenario_csv(scenarios: Array[Dictionary]) -> String:
-	var headers := ["seed", "arm", "policy", "decision_delay_s", "duration_s", "outcome", "victory", "spawned", "neutralized", "shots", "arrivals", "insertions", "misses", "matches", "active_threat_selections", "interventions", "urgent_unavailable", "urgent_selected"]
+	var headers := ["seed", "arm", "policy", "decision_delay_s", "duration_s", "outcome", "victory", "spawned", "neutralized", "shots", "arrivals", "insertions", "misses", "matches", "world_active_threat", "eligible_urgency_active", "no_eligible_urgent", "actual_interventions", "ineligible_interventions", "bias_rng_draws", "urgent_unavailable", "urgent_selected"]
 	for prefix in ["fresh", "threat10_s", "threat15_s", "starved_s", "longest_starved_s", "launch_opportunity", "visible_pairs", "run_to_visible_s", "run_to_pair_s", "run_to_match_s"]:
 		for identity in range(TeamData.COUNT):
 			headers.append("%s_%s" % [prefix, TeamData.display_name(identity).to_lower()])
 	var lines := [",".join(headers)]
 	for sample in scenarios:
-		var values: Array = [sample.seed, sample.generator_arm, sample.policy, sample.decision_delay, sample.duration_simulated, sample.outcome, 1 if sample.outcome == "victory" else 0, sample.spawned, sample.neutralized, sample.counts.shots, sample.counts.shot_arrivals, sample.counts.insertions, sample.counts.shot_misses, sample.counts.matches, sample.threat_selector.active_threat_selections, sample.threat_selector.interventions, sample.threat_selector.urgent_unavailable, sample.threat_selector.urgent_selected]
+		var values: Array = [sample.seed, sample.generator_arm, sample.policy, sample.decision_delay, sample.duration_simulated, sample.outcome, 1 if sample.outcome == "victory" else 0, sample.spawned, sample.neutralized, sample.counts.shots, sample.counts.shot_arrivals, sample.counts.insertions, sample.counts.shot_misses, sample.counts.matches, sample.threat_selector.world_active_threat, sample.threat_selector.eligible_urgency_active, sample.threat_selector.no_eligible_urgent, sample.threat_selector.actual_interventions, sample.threat_selector.ineligible_interventions, sample.threat_selector.bias_rng_draws, sample.threat_selector.urgent_unavailable, sample.threat_selector.urgent_selected]
 		values.append_array(sample.fresh_counts)
 		values.append_array(sample.threat_time_s["10"])
 		values.append_array(sample.threat_time_s["15"])
@@ -232,7 +244,7 @@ func _scenario_csv(scenarios: Array[Dictionary]) -> String:
 	return "\n".join(lines) + "\n"
 
 func _comparison_csv(rows: Array[Dictionary]) -> String:
-	var headers := ["arm", "policy", "color", "scenarios", "victories", "defeats", "timeouts", "mean_starved_s", "starved_p50_s", "starved_p95_s", "starved_worst_s", "mean_longest_episode_s", "episode_p95_s", "paired_starved_delta_s", "paired_longest_delta_s", "mean_launch_opportunity", "paired_opportunity_delta", "mean_threat10_s", "mean_threat15_s", "mean_visible_pairs", "mean_fresh_balls", "shots", "arrivals", "insertions", "hit_rate_percent", "matches", "neutralized", "active_threat_selections", "interventions", "urgent_unavailable", "urgent_selected", "mean_run_to_visible_s", "mean_run_to_pair_s", "mean_run_to_match_s"]
+	var headers := ["arm", "policy", "color", "scenarios", "victories", "defeats", "timeouts", "mean_starved_s", "starved_p50_s", "starved_p95_s", "starved_worst_s", "mean_longest_episode_s", "episode_p95_s", "paired_starved_delta_s", "paired_longest_delta_s", "mean_launch_opportunity", "paired_opportunity_delta", "mean_threat10_s", "mean_threat15_s", "mean_visible_pairs", "mean_fresh_balls", "shots", "arrivals", "insertions", "hit_rate_percent", "matches", "neutralized", "world_active_threat", "eligible_urgency_active", "no_eligible_urgent", "actual_interventions", "ineligible_interventions", "bias_rng_draws", "urgent_unavailable", "urgent_selected", "mean_run_to_visible_s", "mean_run_to_pair_s", "mean_run_to_match_s"]
 	var lines := [",".join(headers)]
 	for row in rows:
 		var values: Array = []
@@ -250,14 +262,14 @@ func _report(payload: Dictionary) -> String:
 	var report := "# LBS-P028B-EXP threat-aware run-color experiment\n\n"
 	report += "Generated by Godot `%s` in %.2f seconds. This is a **simulation-only** paired experiment; the playable generator and every production balance setting remain unchanged.\n\n" % [payload.godot_version, payload.runtime_seconds]
 	report += "## Executive result\n\n"
-	report += "No arm is ready to ship. Moderate is the best candidate for a later human A/B: across all four colors it reduced paired mean threatened-starvation by %.2fs with `basic_matcher` and %.2fs with the weaker delayed policy, and all 12 playing seeds still won. However delayed YELLOW worsened by %.2fs, so even moderate does not pass the fairness gate cleanly. Mild improved totals by %.2fs / %.2fs but harmed delayed YELLOW by %.2fs; strong improved totals by %.2fs / %.2fs but harmed basic RED by %.2fs and offered no clear tradeoff advantage over moderate. The synthetic sweep proves progressively stronger urgency response with identical paired run lengths and no bag/repeat violations, but real outcomes show that selecting an urgent run is not equivalent to delivering a usable match in time.\n\n" % [-_sum_paired_delta(comparisons, "moderate", "basic_matcher"), -_sum_paired_delta(comparisons, "moderate", "delayed_matcher"), _color_delta(comparisons, "moderate", "delayed_matcher", TeamData.Identity.YELLOW), -_sum_paired_delta(comparisons, "mild", "basic_matcher"), -_sum_paired_delta(comparisons, "mild", "delayed_matcher"), _color_delta(comparisons, "mild", "delayed_matcher", TeamData.Identity.YELLOW), -_sum_paired_delta(comparisons, "strong", "basic_matcher"), -_sum_paired_delta(comparisons, "strong", "delayed_matcher"), _color_delta(comparisons, "strong", "basic_matcher", TeamData.Identity.RED)]
+	report += "No arm is ready to ship. After removing ineligible interventions, mild is the least-bad candidate for a later human A/B: its summed paired threatened-starvation deltas are %+.2fs with `basic_matcher` and %+.2fs with the weaker delayed policy, while all 12 playing seeds still won. It still fails the all-color fairness gate: basic BLUE worsened by %+.2fs and delayed YELLOW by %+.2fs. Moderate now worsens the basic-policy total by %+.2fs and delayed RED by %+.2fs; strong worsens both policy totals (%+.2fs / %+.2fs). The corrected `urgent_exhausted` sweep records zero interventions and zero bias RNG draws in all %d no-eligible states per arm. The synthetic sweep still proves progressively stronger urgency response when a legal threatened color exists, but real outcomes show that selecting an urgent run is not equivalent to delivering a usable match in time.\n\n" % [_sum_paired_delta(comparisons, "mild", "basic_matcher"), _sum_paired_delta(comparisons, "mild", "delayed_matcher"), _color_delta(comparisons, "mild", "basic_matcher", TeamData.Identity.BLUE), _color_delta(comparisons, "mild", "delayed_matcher", TeamData.Identity.YELLOW), _sum_paired_delta(comparisons, "moderate", "basic_matcher"), _color_delta(comparisons, "moderate", "delayed_matcher", TeamData.Identity.RED), _sum_paired_delta(comparisons, "strong", "basic_matcher"), _sum_paired_delta(comparisons, "strong", "delayed_matcher"), _synthetic_no_eligible(synthetic_rows, "strong", "urgent_exhausted")]
 	report += "## Reproduction and design\n\n```bash\n./scripts/analyze_threat_bias.sh --seeds %d --scenario-seeds %d --seed-start %d --duration %.1f --step %.3f --output analysis/reports/p028b_exp\n```\n\n" % [payload.synthetic.seed_count, payload.scenario_seed_count_per_arm / POLICIES.size(), int(payload.synthetic.seed_start), float(payload.command_options.duration), float(payload.command_options.step)]
 	report += "The synthetic manipulation sweep uses %d paired seeds, %d emitted balls per seed, five threat schedules and all four arms. The real-model study uses %d scenarios: %d paired seed/policy cases per arm, each capped at %.1f simulated seconds. `basic_matcher` is the P028AR fixed-X bot; `delayed_matcher` uses the same legal actions but can decide only every %.1f seconds; `observe_only` is a no-shot pressure sanity check.\n\n" % [payload.synthetic.seed_count, payload.synthetic.incoming_balls_per_seed, payload.scenario_count, payload.scenario_seed_count_per_arm, float(payload.effective_scenario_duration), DELAYED_DECISION_SECONDS]
-	report += "At each new run only, urgency is `clamp((15 - live time-to-defender) / 12, 0, 1)`. Remaining legal bag colors receive weight `1 + boost × urgency`: baseline 0, mild 0.5, moderate 1.5, strong 3.0. A no-threat moment returns the exact old bag candidate without consuming bias RNG. The current Battlefield snapshot is taken before chain advance, so run creation sees no future state and at most one outer step (%.3fs) of lag. Every complete bag still contains each color exactly once; run lengths, 102 px/s feed, magazine, enemy stats and combat are untouched.\n\n" % float(payload.command_options.step)
-	report += "## Synthetic manipulation and fairness\n\n| Schedule | Arm | Active selections | Intervention rate | Urgent chosen when legal | Urgent unavailable | Bag/repeat violations | No-threat exact seeds |\n|---|---|---:|---:|---:|---:|---:|---:|\n"
+	report += "At each new run only, urgency is `clamp((15 - live time-to-defender) / 12, 0, 1)`. Remaining legal bag colors receive weight `1 + boost × urgency`: baseline 0, mild 0.5, moderate 1.5, strong 3.0. A no-threat moment—or a world threat with no urgent color remaining in the current bag—returns the exact old bag candidate without consuming bias RNG. The current Battlefield snapshot is taken before chain advance, so run creation sees no future state and at most one outer step (%.3fs) of lag. Every complete bag still contains each color exactly once; run lengths, 102 px/s feed, magazine, enemy stats and combat are untouched.\n\n" % float(payload.command_options.step)
+	report += "## Synthetic manipulation and fairness\n\n| Schedule | Arm | World threat | Eligible urgency | No eligible urgent | Actual interventions | Ineligible interventions | Bias RNG draws | Urgent chosen when legal | Urgent unavailable | Bag/repeat violations | No-threat exact seeds |\n|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n"
 	for row in synthetic_rows:
-		report += "| %s | %s | %d | %.1f%% | %.1f%% | %d | %d/%d | %d |\n" % [row.schedule, row.arm, row.active_threat_selections, 100.0 * float(row.intervention_rate), 100.0 * float(row.urgent_selection_rate), row.urgent_unavailable, row.bag_violations, row.repeat_violations, row.no_threat_exact_matches]
-	report += "\nSelecting the urgent color more often is only a manipulation check. It does not establish faster visibility, a valid shot, a match, or survival. `urgent_unavailable` is expected when that color has already left the current bag; no arm bypasses the bag.\n\n"
+		report += "| %s | %s | %d | %d | %d | %d | %d | %d | %.1f%% | %d | %d/%d | %d |\n" % [row.schedule, row.arm, row.world_active_threat, row.eligible_urgency_active, row.no_eligible_urgent, row.actual_interventions, row.ineligible_interventions, row.bias_rng_draws, 100.0 * float(row.urgent_selection_rate), row.urgent_unavailable, row.bag_violations, row.repeat_violations, row.no_threat_exact_matches]
+	report += "\n`World threat` records any urgent color in the full palette. `Eligible urgency` means at least one remaining legal bag color is urgent. `No eligible urgent` is the corrected fallback path: it returns the exact baseline choice, records zero intervention, and consumes no bias RNG. Selecting an urgent color more often is only a manipulation check; it does not establish faster visibility, a valid shot, a match, or survival. `urgent_unavailable` is expected when the globally most urgent color has already left the current bag; another less-urgent legal color may still make the selection eligible.\n\n"
 	report += "### Rotating-threat distribution diagnostics\n\n| Arm | Ball-count spread | Run-count spread | Max all-color ball-drought p95 | Max run-drought p95 | 25-ball spread p95 |\n|---|---:|---:|---:|---:|---:|\n"
 	for row in synthetic_rows:
 		if row.schedule == "rotating":
@@ -266,12 +278,12 @@ func _report(payload: Dictionary) -> String:
 	report += "## Real-model paired results\n\nThe table reports all colors, because helping one lane while harming another is not acceptable. Paired deltas are arm minus the same baseline seed/policy; negative starvation is favorable.\n\n| Arm | Policy | Color | W/L/T | Mean starved | Paired Δ | p95 episode | Launch opportunity | Hit rate | Matches | Run→visible / pair / match |\n|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|\n"
 	for row in comparisons:
 		report += "| %s | %s | %s | %d/%d/%d | %.2fs | %+.2fs | %.2fs | %.1f%% | %.1f%% | %d | %.2f / %.2f / %.2fs |\n" % [row.arm, row.policy, row.color, row.victories, row.defeats, row.timeouts, row.mean_starved_s, row.paired_starved_delta_s, row.episode_p95_s, 100.0 * float(row.mean_launch_opportunity), row.hit_rate, row.matches, row.mean_run_to_visible_s, row.mean_run_to_pair_s, row.mean_run_to_match_s]
-	report += "\n### Hardest delayed-policy cases\n\n| Arm | Seed | Outcome | Total threatened-starved | Worst episode | Active selections / interventions / unavailable |\n|---|---:|---|---:|---:|---:|\n"
+	report += "\n### Hardest delayed-policy cases\n\n| Arm | Seed | Outcome | Total threatened-starved | Worst episode | World / eligible / interventions / no-eligible |\n|---|---:|---|---:|---:|---:|\n"
 	for case in _hardest_cases(payload.scenario_diagnostics):
-		report += "| %s | %d | %s | %.2fs | %.2fs | %d / %d / %d |\n" % [case.arm, case.seed, case.outcome, case.total_starved, case.worst_episode, case.active, case.interventions, case.unavailable]
+		report += "| %s | %d | %s | %.2fs | %.2fs | %d / %d / %d / %d |\n" % [case.arm, case.seed, case.outcome, case.total_starved, case.worst_episode, case.world, case.eligible, case.interventions, case.no_eligible]
 	report += "\n## Interpretation and recommendation\n\n"
 	report += _recommendations(comparisons)
-	report += "\n## Measurement definitions and limitations\n\n- **Threatened starvation** is time with a direct non-Healyzard enemy at ≤10 seconds estimated contact while pair + loaded/next ammo + ready timing are not all present. Pair presence remains a launch proxy, never a guaranteed hit or match.\n- Run-to-visible follows the first fresh ball UID from that selected run. Run-to-pair requires that same ball to join a visible adjacent same-color pair. Run-to-match is the first subsequent real match of that color, so overlapping runs can share a later match and causality is associative rather than exclusive. Unresolved events are retained in JSON scenario state but do not receive invented delays.\n- The adaptive choice observes only current live enemy positions/states. Healyzards are excluded from direct breach time; their real healing still affects combat. Snake stun/transfer is included by `lane_time_to_danger`.\n- The delayed bot's %.1fs cadence is deliberately weaker but invented, not human-calibrated. Both bots still see exact geometry instantly and lack touch error, perception delay, occlusion, planning and human emergency strategy. Win rate therefore cannot establish player difficulty or fun.\n- Bag reordering cannot help when the urgent color was already consumed, and a selected run enters offscreen right before it can affect play. Bounded seeds describe this encounter and these policies, not population tails or phone usability.\n\nMachine-readable files: schema v1 `generator_diagnostics.json`, `scenario_summary.csv`, and `baseline_comparison.csv`.\n" % DELAYED_DECISION_SECONDS
+	report += "\n## Measurement definitions and limitations\n\n- **Threatened starvation** is time with a direct non-Healyzard enemy at ≤10 seconds estimated contact while pair + loaded/next ammo + ready timing are not all present. Pair presence remains a launch proxy, never a guaranteed hit or match.\n- Run-to-visible follows the first fresh ball UID from that selected run. Run-to-pair requires that same ball to join a visible adjacent same-color pair. Run-to-match is the first subsequent real match of that color, so overlapping runs can share a later match and causality is associative rather than exclusive. Unresolved events are retained in JSON scenario state but do not receive invented delays.\n- The adaptive choice observes only current live enemy positions/states. Healyzards are excluded from direct breach time; their real healing still affects combat. Snake stun/transfer is included by `lane_time_to_danger`.\n- The delayed bot's %.1fs cadence is deliberately weaker but invented, not human-calibrated. Both bots still see exact geometry instantly and lack touch error, perception delay, occlusion, planning and human emergency strategy. Win rate therefore cannot establish player difficulty or fun.\n- Bag reordering cannot help when the urgent color was already consumed, and a selected run enters offscreen right before it can affect play. Bounded seeds describe this encounter and these policies, not population tails or phone usability.\n\nMachine-readable files: schema v2 `generator_diagnostics.json`, `scenario_summary.csv`, and `baseline_comparison.csv`.\n" % DELAYED_DECISION_SECONDS
 	return report
 
 func _recommendations(rows: Array) -> String:
@@ -284,12 +296,12 @@ func _recommendations(rows: Array) -> String:
 			starvation_delta += float(row.paired_starved_delta_s)
 			worst_color_delta = maxf(worst_color_delta, float(row.paired_starved_delta_s))
 		var verdict := "reject for now"
-		if arm == "moderate" and starvation_delta < 0.0:
-			verdict = "collect more human data in a later A/B; do not ship"
-		elif arm == "mild":
-			verdict = "reject this setting; its all-color fairness regression exceeds moderate"
+		if arm == "mild" and starvation_delta < 0.0:
+			verdict = "least-bad candidate for a later human A/B; do not ship because its per-color fairness gate still fails"
+		elif arm == "moderate":
+			verdict = "reject; the corrected experiment no longer supports it over mild"
 		elif arm == "strong":
-			verdict = "reject; extra strength offers no clear advantage over moderate"
+			verdict = "reject; extra strength worsens aggregate starvation under both playing policies"
 		text += "- **%s:** %s. Across delayed-policy colors, summed paired mean-starvation delta is %+.2fs and the worst color delta is %+.2fs.\n" % [arm.capitalize(), verdict, starvation_delta, worst_color_delta]
 	return text
 
@@ -305,6 +317,12 @@ func _color_delta(rows: Array, arm: String, policy: String, identity: int) -> fl
 		if row.arm == arm and row.policy == policy and int(row.color_id) == identity:
 			return float(row.paired_starved_delta_s)
 	return 0.0
+
+func _synthetic_no_eligible(rows: Array, arm: String, schedule: String) -> int:
+	for row in rows:
+		if row.arm == arm and row.schedule == schedule:
+			return int(row.no_eligible_urgent)
+	return 0
 
 func _int_spread(values: Array) -> int:
 	return int(values.max()) - int(values.min()) if not values.is_empty() else 0
@@ -335,9 +353,10 @@ func _hardest_cases(diagnostics: Array) -> Array[Dictionary]:
 					"outcome": sample.outcome,
 					"total_starved": total,
 					"worst_episode": worst,
-					"active": sample.threat_selector.active_threat_selections,
-					"interventions": sample.threat_selector.interventions,
-					"unavailable": sample.threat_selector.urgent_unavailable,
+					"world": sample.threat_selector.world_active_threat,
+					"eligible": sample.threat_selector.eligible_urgency_active,
+					"interventions": sample.threat_selector.actual_interventions,
+					"no_eligible": sample.threat_selector.no_eligible_urgent,
 				}
 		if not hardest.is_empty(): result.append(hardest)
 	return result

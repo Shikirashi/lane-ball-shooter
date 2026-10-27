@@ -1,4 +1,44 @@
-# Codex Handoff — LBS-P028B-EXP threat-aware generator study
+# Codex Handoff — LBS-P028B-EXPR eligible-threat correction
+
+**Status:** COMPLETE
+
+**Branch:** `master`
+
+## Correction delivered
+
+- Corrected the simulation-only `ThreatRunSelector` to calculate urgency over the colors still legal in the current four-color bag. If no legal color has positive urgency, it returns the original baseline candidate exactly, consumes no bias RNG and does not reshuffle unrelated colors.
+- Preserved adaptive selection when at least one legal color is genuinely threatened. This includes the case where the globally most urgent color is exhausted but a secondary threatened color remains legal.
+- Split diagnostics into world-active threat, eligible legal urgency, no-eligible urgency, actual interventions, ineligible interventions and bias RNG draws. Schema-v2 JSON and both CSVs expose those counters; compatibility aliases remain inside selector summaries only.
+- Expanded the deterministic P028B suite from 29 to 574 checks. It repeatedly exercises `[BLUE, YELLOW, GREEN]` with only exhausted RED urgent across mild/moderate/strong, proves exact baseline output and zero RNG draws, verifies secondary BLUE urgency remains eligible, and proves the fallback plus observer leave the subsequent RNG sequence unchanged.
+
+## Corrected experiment and findings
+
+Command: `./scripts/analyze_threat_bias.sh --seeds 500 --scenario-seeds 12 --seed-start 29001 --duration 90 --step 0.1 --output analysis/reports/p028b_exp`
+
+- Godot `4.7.2.stable.official.ed1daf0bf`; 500 paired synthetic seeds × 300 balls × five schedules × four arms; 144 authentic model scenarios, 36 paired seed/policy cases per arm; canonical runtime 80.62 seconds.
+- The `urgent_exhausted` schedule produced 51,099 world-threat selections per arm. Only 500 had an urgent legal color; all 50,599 no-eligible states per adaptive arm had zero interventions and zero bias RNG draws. Ineligible interventions were zero across every schedule and arm. Bag and immediate-repeat violations remained zero.
+- The corrected results no longer support moderate as the leading candidate. Mild is merely the least-bad later human-A/B candidate: summed paired threatened-starvation deltas were -0.27 seconds for `basic_matcher` and -1.53 seconds for `delayed_matcher`, but basic BLUE worsened by +0.43 seconds and delayed YELLOW by +0.05 seconds.
+- Moderate worsened the basic-policy total by +0.65 seconds and delayed RED by +0.63 seconds. Strong worsened both playing-policy totals (+0.58 / +0.49 seconds). All 12 seeds per playing-policy arm still won, which reinforces that the bots do not establish human difficulty. Recommendation: ship none; only mild merits a later human A/B, and only as an explicitly unapproved experiment.
+- A second independent full run reproduced `scenario_summary.csv` and `baseline_comparison.csv` byte-for-byte. JSON was identical after removing timestamp, runtime and output path.
+
+## Verification
+
+- Focused P028B suite: **PASS, 574 checks**.
+- Smoke workload: **PASS**, 8 synthetic seeds and 24 authentic scenarios.
+- Full workload above: **PASS**, twice; canonical 80.62 seconds, repeat 80.74 seconds; deterministic CSV/normalized-JSON hashes matched.
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 30 suites**; P011 remains 16,485 checks / 2,400 operations, P028A remains 38 checks, and P028B now passes 574 checks.
+- Exact-nine Web release validation: **PASS**; unchanged PCK SHA-256 `95bd5ebffb7e52dc739bc03645d79ec16823b431f8a45a34a3aaae3f0718a901`.
+- `git diff --check`: **PASS**.
+
+## Preservation and limitations
+
+- This remains analysis-only. No playable `Main` instance installs the selector; production colors, 102 px/s conveyor speed, `[20,30,18,13,9,6,4]` run weights, HP 3/6/3/3, spawning, controls, graphics, Web or Android release settings are unchanged.
+- The same P028B bot and bounded-seed limitations remain. Correct selection accounting removes the confound but cannot turn exact-perception automated policies into human playtest evidence.
+- Existing user modifications to `project.godot`, `scenes/main.tscn`, and unrelated generated UID files remain uncommitted and untouched.
+
+---
+
+# Previous handoff — LBS-P028B-EXP threat-aware generator study
 
 **Status:** COMPLETE
 

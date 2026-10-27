@@ -116,8 +116,12 @@ static func _empty_aggregate(schedule: String, arm: String) -> Dictionary:
 		"window_spread_samples": {"25": [], "50": [], "100": []},
 		"bag_violations": 0,
 		"repeat_violations": 0,
-		"active_threat_selections": 0,
-		"interventions": 0,
+		"world_active_threat": 0,
+		"eligible_urgency_active": 0,
+		"no_eligible_urgent": 0,
+		"actual_interventions": 0,
+		"ineligible_interventions": 0,
+		"bias_rng_draws": 0,
 		"urgent_unavailable": 0,
 		"urgent_selected": 0,
 		"no_threat_exact_matches": 0,
@@ -136,8 +140,12 @@ static func _accumulate(aggregate: Dictionary, sample: Dictionary) -> void:
 		aggregate.window_spread_samples[str(window)].append(int(sample.window_spreads[str(window)]))
 	aggregate.bag_violations += int(sample.bag_violations)
 	aggregate.repeat_violations += int(sample.repeat_violations)
-	aggregate.active_threat_selections += int(sample.selector.active_threat_selections)
-	aggregate.interventions += int(sample.selector.interventions)
+	aggregate.world_active_threat += int(sample.selector.world_active_threat)
+	aggregate.eligible_urgency_active += int(sample.selector.eligible_urgency_active)
+	aggregate.no_eligible_urgent += int(sample.selector.no_eligible_urgent)
+	aggregate.actual_interventions += int(sample.selector.actual_interventions)
+	aggregate.ineligible_interventions += int(sample.selector.ineligible_interventions)
+	aggregate.bias_rng_draws += int(sample.selector.bias_rng_draws)
 	aggregate.urgent_unavailable += int(sample.selector.urgent_unavailable)
 	aggregate.urgent_selected += int(sample.selector.urgent_selected)
 
@@ -156,8 +164,8 @@ static func _finish_aggregate(aggregate: Dictionary) -> Dictionary:
 			"p95": BalanceLab.percentile(values, 0.95),
 			"worst": BalanceLab._max_value(values),
 		}
-	result.intervention_rate = float(aggregate.interventions) / maxf(float(aggregate.active_threat_selections), 1.0)
-	result.urgent_selection_rate = float(aggregate.urgent_selected) / maxf(float(aggregate.active_threat_selections - aggregate.urgent_unavailable), 1.0)
+	result.intervention_rate = float(aggregate.actual_interventions) / maxf(float(aggregate.eligible_urgency_active), 1.0)
+	result.urgent_selection_rate = float(aggregate.urgent_selected) / maxf(float(aggregate.world_active_threat - aggregate.urgent_unavailable), 1.0)
 	return result
 
 static func _per_color_summary(samples: Array) -> Array[Dictionary]:
