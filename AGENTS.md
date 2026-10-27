@@ -74,3 +74,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 - Build a fully playable 2D-rendered battlefield using committed transparent P034A PNG actors, procedural 2D motion/effects and appropriately filled responsive lanes; keep existing combat, ball chain, enemy schedule/HP/abilities and platform input rules unchanged.
 - **Mandatory remote review evidence:** commit reproducible real Godot-rendered screenshots of the live 2D game in standard and wide landscape layouts. Do not require a GUI or user visual intervention. Preserve P034A's baker and reproducibility.
 - **P033 touch controls, P028 balancing, P029+ content/branding and Android packaging/release updates are NOT ACTIVE.** Only run P034B. When complete, update Codex handoff, commit/push verified work and stop. Do not self-advance.
+
+## After P034B technical review — 2026-10-27
+
+- **NO ACTIVE TASK:** P034B 2D runtime migration was pushed as `b802096` and verified by code/screenshot review and GitHub Web CI run `40548949659` (all tests, publishing and browser startup SUCCESS). Archived task: `.ai/TASKS/LBS-P034B.md`. User's hands-on visual feedback still pending. This supersedes the earlier "P034B ACTIVE" and legacy 3D-only sections above.
+- Only re-activate from a new explicit user request through `.ai/TASK.md`; P033 controls and P028 balancing are proposals. Native Android v0.1.0 release predates P034B and was not updated. Never modify its protected signing files without a separately authorized release task.
