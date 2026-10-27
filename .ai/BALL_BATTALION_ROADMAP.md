@@ -1,13 +1,13 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A and P034B implemented (P034B commit `b802096`, CI `40548949659` SUCCESS); **P034C active** for rebaked orb-free defender sprites and one-use 2D charge crystals. Player 2D visual acceptance and Android QA pending. P028–P033 remain proposed, not active.  
+**Status:** P034A and P034B implemented (P034B commit `b802096`, CI `40548949659` SUCCESS); **P034C implemented** (`16347b3`; technical review pass) for rebaked orb-free defender sprites and one-use 2D charge crystals. **No active Codex task.** Player 2D visual acceptance and Android QA pending. P028–P033 remain proposed, not active.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
 > **User-confirmed decision:** The game's intended public name is **Ball Battalion**. The old *Lane Ball Shooter* repo/project name remains in place for now. **Do not automatically rename paths, packages, Godot identifiers, URLs, APK signing identity, deployed assets or existing releases.** Plan and test a deliberate branding migration when appropriate.
 >
-> Most of this document records **proposals, not permission to implement them**. P034B was authorized and implemented in `b802096`, with actual 2D live gameplay screenshots committed for SSH review; the user has now authorized **only P034C** as a narrow follow-up to replace the spent-charge visual. User playtest feedback and Android QA remain pending. All other phases are NOT active.
+> Most of this document records **proposals, not permission to implement them**. P034B was authorized and implemented in `b802096`, with actual 2D live gameplay screenshots committed for SSH review; that narrow follow-up P034C has been **implemented and technically reviewed**; no current active task. User playtest feedback and Android QA remain pending. All other phases are NOT active.
 
 ## 1. Product concept
 
@@ -210,8 +210,8 @@ P034A was implemented in `5dbd708`, CI `40544273523` SUCCESS, and technically re
 - **P034A — visual baking proof of concept (IMPLEMENTED; user visual QA pending):** render the real procedurally constructed Godot 3D actor meshes (four enemies + four colored defenders) into genuine transparent PNGs with orthographic camera/lighting; add reproducible baker, contact sheet and isolated 2D preview with goofy squash/stretch. Do NOT change the playable game, camera, combat, input, platform builds, balance or old 3D scene yet. Archived task: `.ai/TASKS/LBS-P034A.md`.
 - **P034B — runtime 2D migration (IMPLEMENTED: `.ai/TASKS/LBS-P034B.md`):** use genuine P034A sprites to replace all live 3D presentation with 2D rendered lane floors, defenders, enemies, projectiles, shadows and cartoon effects while keeping authoritative combat and spawn logic. Fit top/bottom rows to current conveyor and shooter layout, respecting future P033 adjustments; 4–7% side margins, not 25% blank columns. Preserve P001–P023 and P034A regression coverage. **Remote QA delivered:** actual Godot-rendered full-game screenshots at 1280x720 and 1600x720 are committed, reviewed; Web CI fully SUCCESS, hands-on motion/device acceptance pending. Do not implement P033/P028 or modify already published Android identity.
 
-## 12. P034C — Charge-crystal visual revision (ACTIVE, 2026-10-27)
+## 12. P034C — Charge-crystal visual revision (IMPLEMENTED, 2026-10-27)
 
 User wants no strange yellow sphere in the defender art: **remove old 3D `ChargeOrb` from `ActorVisualFactory`; rebake genuine Godot transparent defender PNGs**, retaining all other source model details. Add **separate 2D faceted diamond crystals**, each matching its defender's lane color, positioned visibly behind and slightly rearward of the character. When `LaneCombatModel.emergency_discharged` occurs, crystal breaks into several spinning/fading shards, then disappears. Charge does **not** replenish on defender revival; only restart restores the intact crystal. Never dim entire defender to represent spent charge; keep status `CHARGE`/`SPENT`.
 
-P034C must provide new **real** Godot-rendered gameplay screenshots for SSH-only review, full regression, and keep current 2D gameplay and combat rules intact. Scope: `.ai/TASK.md`. P033/P028 not active; no Android release changes.
+P034C delivered genuine re-baked PNGs, state/shatter **real Godot-rendered gameplay screenshots** and passing full local regression. Source/asset review pass, human visual QA pending. Archive: `.ai/TASKS/LBS-P034C.md`. P033/P028 not active; no Android release changes.
