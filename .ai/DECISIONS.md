@@ -36,6 +36,15 @@ Status: P024 COMPLETE (GitHub Actions `40246262499` green, auto-Web deploy verif
 - Add minimal gameplay settings panel for Classic/Side and handedness (persisted), comprehensive touch and desktop input simulation, HP/feedback regression, and real Godot gameplay screenshots for SSH user review. No released Android APK/version change or signing use is authorized by P033; Web auto-publish CI remains.
 - **P028A color/speed/spawn-balancing simulator remains PROPOSED, not active.** Do not secretly reweight spawn or balls as part of HP halving. P029–P032 remain proposed.
 
+## 2026-10-27 — P028A balancing laboratory ACTIVATED after P033R acceptance
+
+- User approved continuing to the next previously proposed phase after approving P033R's red silhouette. **Sole active Codex task: P028A** in `.ai/TASK.md`: deterministic Godot-headless research harness, seeded generator/visible/matchability/magazine/combat-pressure telemetry, bounded scripted play policies, causal analysis reports in portable formats. This **supersedes historical NO ACTIVE TASK notices** above and does **not** approve a new production color/speed/spawn balancing implementation.
+- Preserve actual P033 HP: Hopper **3**, Heavy **6**, Sickle Snake **3**, Healyzard **3**; match damage, Snake cooldown/transfer, healer pulses and all current mechanics unchanged.
+- Experimental **test-only** speed candidates 102 baseline versus 120/140/160 px/s and run-length weights baseline `[20,30,18,13,9,6,4]` vs proposed `[12,30,40,10,5,2,1]`; no shipping `ChainModel.DEFAULT_SPEED` / generator weight change. Compare with paired seeds and clearly labeled automated policies, not fictional human win rates.
+- Measure unique starting preset separately from fresh feeder; avoid conflating four-color run-bag **run frequency** and ball frequency, generated magazine and fired ammo, visible vs offscreen-left retained balls, pre-existing adjacent triples and genuinely insertion-triggered match chances.
+- Future adaptive priority for threatened lanes: measure danger/time-to-defender now, but any **threat-aware color generator**, deficit balancing, minimum drought rules or production speed tweaks belong to **P028B, PROPOSED / NOT ACTIVE** and require discussion of baseline report first.
+- P029–P032 campaign/branding/levels remain proposals; no Web/Android release identity/signing, user-local content or sprite/control changes authorized.
+
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
 
