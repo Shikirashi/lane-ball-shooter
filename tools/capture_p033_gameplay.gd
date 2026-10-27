@@ -2,8 +2,9 @@ extends SceneTree
 
 const EnemyTypesScript = preload("res://scripts/world/enemy_types.gd")
 const CAPTURES := [
-	{"size": Vector2i(1280, 720), "path": "res://assets/previews/p033_controls_hit_flash_1280x720.png", "settings": false},
-	{"size": Vector2i(1600, 720), "path": "res://assets/previews/p033_controls_settings_1600x720.png", "settings": true},
+	{"size": Vector2i(1280, 720), "path": "res://assets/previews/p033_controls_hit_flash_1280x720.png", "settings": false, "comparison": false},
+	{"size": Vector2i(1600, 720), "path": "res://assets/previews/p033_controls_settings_1600x720.png", "settings": true, "comparison": false},
+	{"size": Vector2i(1280, 512), "path": "res://assets/previews/p033r_hit_overlay_comparison_1280x512.png", "settings": false, "comparison": true},
 ]
 
 func _initialize() -> void:
@@ -29,15 +30,18 @@ func _capture(definition: Dictionary) -> bool:
 	viewport.render_target_clear_mode = SubViewport.CLEAR_MODE_ALWAYS
 	viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	root.add_child(viewport)
-	var main := (load("res://scenes/main.tscn") as PackedScene).instantiate()
-	viewport.add_child(main)
-	await process_frame
-	await process_frame
-	main.call("_apply_layout", Vector2(capture_size), Rect2(Vector2.ZERO, Vector2(capture_size)))
-	_stage_fixture(main)
-	if bool(definition.settings):
-		(main.get("_settings_view") as ControlSettingsView).call("_open")
-	main.process_mode = Node.PROCESS_MODE_DISABLED
+	if bool(definition.comparison):
+		_build_comparison(viewport, Vector2(capture_size))
+	else:
+		var main := (load("res://scenes/main.tscn") as PackedScene).instantiate()
+		viewport.add_child(main)
+		await process_frame
+		await process_frame
+		main.call("_apply_layout", Vector2(capture_size), Rect2(Vector2.ZERO, Vector2(capture_size)))
+		_stage_fixture(main)
+		if bool(definition.settings):
+			(main.get("_settings_view") as ControlSettingsView).call("_open")
+		main.process_mode = Node.PROCESS_MODE_DISABLED
 	await process_frame
 	await RenderingServer.frame_post_draw
 	await RenderingServer.frame_post_draw
@@ -71,3 +75,45 @@ func _stage_fixture(main: Node) -> void:
 		lane.call("_update_status_visual")
 	var shooter: ShooterView = main.get("_shooter_view")
 	shooter.move_to(float(main.get("_safe_rect").get_center().x))
+
+func _build_comparison(viewport: SubViewport, capture_size: Vector2) -> void:
+	var background := ColorRect.new()
+	background.color = Color(0.025, 0.035, 0.065)
+	background.size = capture_size
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	viewport.add_child(background)
+	var lane := LaneActor.new()
+	lane.setup(TeamData.Identity.BLUE, 1)
+	lane.position = Vector2(20.0, 62.0)
+	lane.size = Vector2(capture_size.x - 40.0, capture_size.y - 92.0)
+	viewport.add_child(lane)
+	lane.set_process(false)
+	lane.combat_model.clear_for_test()
+	lane.combat_model.max_enemies = 4
+	lane.configure_layout(lane.size)
+	var unhit_uid := lane.combat_model.spawn_enemy(0.0, -1, false, EnemyTypesScript.Type.HEAVY, 40331)
+	var hit_uid := lane.combat_model.spawn_enemy(4.2, -1, false, EnemyTypesScript.Type.HEAVY, 40332)
+	lane.call("_sync_visuals")
+	lane.combat_model.call("_damage_enemy", hit_uid, 1, 4.2)
+	lane.call("_sync_visuals")
+	var source_sprite: Sprite2D = lane.call("_make_actor_sprite", "enemy_heavy")
+	source_sprite.name = "DirectSourcePNG"
+	source_sprite.position = Vector2(lane.world_x_to_local(-4.2), float(lane.get("_baseline_y")))
+	source_sprite.scale = Vector2.ONE * float(lane.get("_actor_scale"))
+	source_sprite.z_index = 20
+	lane.add_child(source_sprite)
+	var headings := ["DIRECT SOURCE PNG", "LIVE UNHIT (IDENTICAL)", "LIVE HIT OVERLAY"]
+	var world_positions := [-4.2, 0.0, 4.2]
+	for index in range(headings.size()):
+		var label := Label.new()
+		label.text = headings[index]
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 18)
+		label.position = Vector2(lane.world_x_to_local(world_positions[index]) - 135.0, 20.0)
+		label.size = Vector2(270.0, 36.0)
+		label.z_index = 30
+		lane.add_child(label)
+	# Assert fixture construction early so a missing runtime visual cannot silently
+	# produce misleading evidence.
+	if not lane.get("_enemy_visuals").has(unhit_uid) or not lane.get("_enemy_visuals").has(hit_uid):
+		push_error("P033R comparison fixture failed to create both live Heavy actors")

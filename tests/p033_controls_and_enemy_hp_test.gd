@@ -119,16 +119,20 @@ func _test_live_layout_input_ui_and_flash() -> void:
 	lane.call("_sync_visuals")
 	lane.combat_model.call("_damage_enemy", first, 1, 1.0)
 	lane.call("_sync_visuals")
-	var first_material := (lane.get("_enemy_visuals")[first].sprite as Sprite2D).material as ShaderMaterial
-	var second_material := (lane.get("_enemy_visuals")[second].sprite as Sprite2D).material as ShaderMaterial
-	_check(float(first_material.get_shader_parameter("flash_strength")) > 0.99 and float(second_material.get_shader_parameter("flash_strength")) < 0.01, "damage drives a strong per-enemy red-mix shader only on the victim")
+	var first_visual: Dictionary = lane.get("_enemy_visuals")[first]
+	var second_visual: Dictionary = lane.get("_enemy_visuals")[second]
+	var first_overlay := first_visual.hit_overlay as Sprite2D
+	var second_overlay := second_visual.hit_overlay as Sprite2D
+	_check((first_visual.sprite as Sprite2D).material == null and (second_visual.sprite as Sprite2D).material == null, "original enemy sprites remain shader-free and unmodified")
+	_check(first_overlay.visible and first_overlay.modulate.a > 0.99 and not second_overlay.visible, "damage shows only the victim's solid-red silhouette overlay")
+	var overlay_instance_id := first_overlay.get_instance_id()
 	lane.combat_model.call("_damage_enemy", first, 1, 1.0)
 	lane.call("_sync_visuals")
-	_check(float(first_material.get_shader_parameter("flash_strength")) > 0.99, "repeat damage refreshes full red flash")
+	_check(first_overlay.get_instance_id() == overlay_instance_id and first_overlay.modulate.a > 0.99, "repeat damage refreshes the existing overlay without allocation")
 	lane.combat_model.call("_damage_enemy", first, 1, 1.0)
-	_check(lane.get("_death_effects").size() == 1 and float(first_material.get_shader_parameter("flash_strength")) > 0.99, "lethal victim enters corpse animation still vividly red")
+	_check(lane.get("_death_effects").size() == 1 and first_overlay.visible and first_overlay.modulate.a > 0.99, "lethal victim enters corpse animation with its vivid-red silhouette")
 	lane.call("_update_death_effects", 0.17)
-	_check(float(first_material.get_shader_parameter("flash_strength")) < 0.01, "corpse red flash restores before existing fall/fade completes")
+	_check(not first_overlay.visible and first_overlay.modulate.a < 0.01, "corpse overlay hides before existing fall/fade completes")
 	main.call("_restart_run")
 	_check((main.get("_battlefield") as Battlefield).lanes.all(func(item: LaneActor) -> bool: return item.get("_death_effects").is_empty()), "restart clears all flash/corpse state")
 	_check(main.find_children("*", "Node3D", true, false).is_empty(), "P033 keeps live gameplay fully 2D")

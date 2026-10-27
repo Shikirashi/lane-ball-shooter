@@ -102,9 +102,11 @@ Enemy HP is logical and intentionally has no bar, pip, number or health-driven s
 | Sickle Snake | 3 | Continuous ground slide at 0.624 units/s (2×) | Taller strong-yellow construction, no horns |
 | Healyzard | 3 | Stationary in a reserved rear support slot | Green 0.7-scale construction, no horns |
 
-Only Hopper receives hop height and landing squash; projectile collision uses the matching piecewise-hop, constant-slide or stationary swept model. Every actual damaging hit now drives an independent 0.16-second Compatibility-renderer shader mix toward vivid red while preserving sprite alpha. Repeat hits refresh it, survivors restore normally, and lethal actors remain red for the start of their existing explosion/sideways-fall/fade sequence. Unhurt and healed enemies are not tinted. Healyzards use distinct rear X slots so multiple supports do not overlap each other or the right-edge entrance, and their presence does not stop normal spawns.
+Only Hopper receives hop height and landing squash; projectile collision uses the matching piecewise-hop, constant-slide or stationary swept model. Enemy base sprites remain material-free and render the original P034A artwork unchanged. Every real damaging hit reveals a separate, aligned solid-red `Sprite2D` silhouette whose alpha mask is byte-for-byte derived from that enemy's source PNG, then fades it over the authoritative 0.16-second timer. Repeat hits reuse and refresh the same overlay; damage-caused corpses retain it for their first 0.16 seconds, while healing, unhurt enemies and emergency-only clears do not invent a flash. Healyzards use distinct rear X slots so multiple supports do not overlap each other or the right-edge entrance, and their presence does not stop normal spawns.
 
-P033 renderer evidence can be reproduced with `./scripts/capture_p033_gameplay.sh`: `assets/previews/p033_controls_hit_flash_1280x720.png` shows the raised horizontal magazine and vivid hit state, while `assets/previews/p033_controls_settings_1600x720.png` shows the wide four-lane framing and live settings panel. The capture waits for `RenderingServer.frame_post_draw` and requires a real graphical renderer.
+The four committed masks under `assets/sprites/hit_masks/` are deterministic derivatives, not hand-painted or generated artwork. Rebuild them headlessly with `./scripts/generate_enemy_hit_masks.sh`; the script loads each original 512×512 RGBA enemy image, writes exact red RGB with the original alpha for all 262,144 pixels, and never modifies the source bakes.
+
+P033/P033R renderer evidence can be reproduced with `./scripts/capture_p033_gameplay.sh`: `assets/previews/p033_controls_hit_flash_1280x720.png` shows normal-color unhit actors beside the vivid hit overlay, `assets/previews/p033_controls_settings_1600x720.png` shows the wide gameplay/settings framing, and `assets/previews/p033r_hit_overlay_comparison_1280x512.png` compares the direct Heavy source PNG, shader-free live unhit Heavy, and solid-red live hit silhouette. The capture waits for `RenderingServer.frame_post_draw` and requires a real Compatibility renderer.
 
 P023 raises the single authoritative moving-enemy baseline by 30%, from 0.24 to 0.312 units/s. Heavy and Sickle Snake retain their 0.7× and 2× multipliers, while Healyzard remains at zero. Hopper's 0.55-second grounded dwell and 0.75-second airborne phase are unchanged; only horizontal travel during the airborne phase is faster.
 
@@ -282,6 +284,8 @@ godot --headless --path . --script res://tests/p020_special_enemy_abilities_test
 godot --headless --path . --script res://tests/p021_web_menu_export_test.gd
 godot --headless --path . --script res://tests/p023_enemy_speed_victory_copy_test.gd
 godot --headless --path . --script res://tests/p022_hp_penetrating_attacks_test.gd
+godot --headless --path . --script res://tests/p033_controls_and_enemy_hp_test.gd
+godot --headless --path . --script res://tests/p033r_hit_silhouette_test.gd
 godot --headless --path . --script res://tests/p034a_sprite_baking_test.gd
 godot --headless --path . --script res://tests/p034b_live_2d_battlefield_test.gd
 godot --headless --path . --script res://tests/p034c_charge_crystal_test.gd

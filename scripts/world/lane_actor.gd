@@ -14,10 +14,10 @@ const CHARGE_SHATTER_DURATION := 0.52
 const CHARGE_SHARD_COUNT := 7
 const MASTER_SIZE := Vector2(512.0, 512.0)
 const ASSET_DIR := "res://assets/sprites/baked"
+const HIT_MASK_DIR := "res://assets/sprites/hit_masks"
 const ENEMY_ASSETS := ["enemy_hopper", "enemy_heavy", "enemy_sickle_snake", "enemy_healyzard"]
 const DEFENDER_ASSETS := ["defender_red", "defender_blue", "defender_yellow", "defender_green"]
 const HIT_FLASH_DURATION := 0.16
-const HIT_FLASH_SHADER := "shader_type canvas_item;\nuniform float flash_strength : hint_range(0.0, 1.0) = 0.0;\nvoid fragment() {\n vec4 pixel = texture(TEXTURE, UV) * COLOR;\n pixel.rgb = mix(pixel.rgb, vec3(1.0, 0.015, 0.015), flash_strength * pixel.a);\n COLOR = pixel;\n}\n"
 
 static var _pivot_metadata := {}
 
@@ -382,13 +382,10 @@ func _create_enemy_visual(uid: int, enemy_type: int) -> Dictionary:
 	root_node.z_index = 4
 	add_child(root_node)
 	var sprite := _make_actor_sprite(ENEMY_ASSETS[enemy_type])
-	var shader := Shader.new()
-	shader.code = HIT_FLASH_SHADER
-	var hit_material := ShaderMaterial.new()
-	hit_material.shader = shader
-	sprite.material = hit_material
 	sprite.name = "ActorSprite"
 	root_node.add_child(sprite)
+	var hit_overlay := _make_hit_overlay(ENEMY_ASSETS[enemy_type], sprite)
+	root_node.add_child(hit_overlay)
 	var shadow := _ellipse_polygon(Vector2.ONE, Color(0.01, 0.018, 0.03, 0.52), 24)
 	shadow.name = "EnemyShadow_%d" % uid
 	shadow.z_index = 2
@@ -401,7 +398,7 @@ func _create_enemy_visual(uid: int, enemy_type: int) -> Dictionary:
 		aura.visible = false
 		aura.z_index = -1
 		root_node.add_child(aura)
-	var visual := {"root": root_node, "sprite": sprite, "shadow": shadow, "aura": aura, "aura_age": -1.0, "type": enemy_type, "base_scale": _actor_scale}
+	var visual := {"root": root_node, "sprite": sprite, "hit_overlay": hit_overlay, "shadow": shadow, "aura": aura, "aura_age": -1.0, "type": enemy_type, "base_scale": _actor_scale}
 	_configure_enemy_scale(visual)
 	return visual
 
@@ -418,6 +415,7 @@ func _configure_enemy_scale(visual: Dictionary) -> void:
 func _update_enemy_visual(visual: Dictionary, enemy: Dictionary) -> void:
 	var root_node: Node2D = visual.root
 	var sprite: Sprite2D = visual.sprite
+	var hit_overlay: Sprite2D = visual.hit_overlay
 	var shadow: Polygon2D = visual.shadow
 	var enemy_type := int(enemy.get("type", EnemyTypes.Type.HOPPER))
 	var hop_progress := float(enemy.get("hop_progress", 0.0))
@@ -444,7 +442,7 @@ func _update_enemy_visual(visual: Dictionary, enemy: Dictionary) -> void:
 	var width_multiplier := 1.28 if enemy_type == EnemyTypes.Type.HEAVY else (0.72 if enemy_type == EnemyTypes.Type.HEALYZARD else 1.0)
 	shadow.scale = Vector2(size.y * 0.19 * width_multiplier * (1.0 - hop_ratio * 0.25), size.y * 0.045 * (1.0 - hop_ratio * 0.2))
 	sprite.modulate = Color.WHITE
-	(sprite.material as ShaderMaterial).set_shader_parameter("flash_strength", hit_amount)
+	_set_hit_overlay(hit_overlay, hit_amount)
 
 
 func _free_enemy_visual(uid: int) -> void:
@@ -601,13 +599,15 @@ func _on_enemy_neutralized_detail(enemy: Dictionary, cause: StringName, impact_x
 	var aura := visual.get("aura") as Sprite2D
 	if aura != null:
 		aura.visible = false
-	var death_material := visual.sprite.material as ShaderMaterial
-	if death_material != null:
-		death_material.set_shader_parameter("flash_strength", 1.0)
+	var hit_overlay := visual.hit_overlay as Sprite2D
+	var hit_flash_start := clampf(float(enemy.get("hit_flash", 0.0)), 0.0, HIT_FLASH_DURATION)
+	_set_hit_overlay(hit_overlay, hit_flash_start / HIT_FLASH_DURATION)
 	_death_effects.append({
 		"uid": enemy_uid,
 		"root": visual.root,
 		"sprite": visual.sprite,
+		"hit_overlay": hit_overlay,
+		"hit_flash_start": hit_flash_start,
 		"shadow": visual.shadow,
 		"age": 0.0,
 		"start_position": visual.root.position,
@@ -626,6 +626,7 @@ func _update_death_effects(delta: float) -> void:
 		var age := float(effect.age)
 		var root_node: Node2D = effect.root
 		var sprite: Sprite2D = effect.sprite
+		var hit_overlay: Sprite2D = effect.hit_overlay
 		var shadow: Polygon2D = effect.shadow
 		var fall_ratio := clampf(age / DEATH_FALL_DURATION, 0.0, 1.0)
 		var eased_fall := 1.0 - pow(1.0 - fall_ratio, 3.0)
@@ -636,8 +637,8 @@ func _update_death_effects(delta: float) -> void:
 		shadow.scale.x *= 1.0 + delta * 0.35
 		var fade := 1.0 - clampf((age - 0.52) / (DEATH_EFFECT_DURATION - 0.52), 0.0, 1.0)
 		sprite.modulate.a = fade
-		var death_flash := 1.0 - clampf(age / HIT_FLASH_DURATION, 0.0, 1.0)
-		(sprite.material as ShaderMaterial).set_shader_parameter("flash_strength", death_flash)
+		var death_flash := maxf(0.0, float(effect.hit_flash_start) - age) / HIT_FLASH_DURATION
+		_set_hit_overlay(hit_overlay, death_flash * fade)
 		shadow.modulate.a = fade
 		if age >= DEATH_EFFECT_DURATION:
 			root_node.queue_free()
@@ -711,6 +712,25 @@ func _make_actor_sprite(asset_name: String) -> Sprite2D:
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	sprite.z_index = 2
 	return sprite
+
+
+func _make_hit_overlay(asset_name: String, base_sprite: Sprite2D) -> Sprite2D:
+	var overlay := Sprite2D.new()
+	overlay.name = "HitSilhouette"
+	overlay.texture = load("%s/%s_hit.png" % [HIT_MASK_DIR, asset_name]) as Texture2D
+	overlay.offset = base_sprite.offset
+	overlay.centered = base_sprite.centered
+	overlay.texture_filter = base_sprite.texture_filter
+	overlay.z_index = base_sprite.z_index + 1
+	overlay.visible = false
+	overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	return overlay
+
+
+func _set_hit_overlay(overlay: Sprite2D, strength: float) -> void:
+	var alpha := clampf(strength, 0.0, 1.0)
+	overlay.visible = alpha > 0.000001
+	overlay.modulate = Color(1.0, 1.0, 1.0, alpha)
 
 
 static func _load_pivot_metadata() -> void:
