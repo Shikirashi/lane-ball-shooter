@@ -88,5 +88,5 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 ## After P034C technical review — 2026-10-27
 
-- **NO ACTIVE CODEX TASK.** The prior P034C ACTIVE status above is historical: Codex implemented the transparent rebake / colored crystal / one-shot shatter as `16347b3`, with handoff `04d6075`, source and screenshot review PASS. Archive `.ai/TASKS/LBS-P034C.md`. GitHub CI `40555144242` test/build job passed, final publication status still needs verification.
+- **NO ACTIVE CODEX TASK.** The prior P034C ACTIVE status above is historical: Codex implemented the transparent rebake / colored crystal / one-shot shatter as `16347b3`, with handoff `04d6075`, source and screenshot review PASS. Archive `.ai/TASKS/LBS-P034C.md`. GitHub CI `40555144242` completed SUCCESS (build/test and public portfolio publication).
 - Do not self-activate P033 controls, P028 balancing, branding, levels or Android publishing. `.ai/TASK.md` is the ONLY authority for future work. Preserve local edits/signing files.
