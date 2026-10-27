@@ -1,13 +1,13 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** Planning/design brief; P028–P033 and P034B remain proposed. **P034A delivered** (commit `5dbd708`, technical review pass, user visual approval pending). **No active Codex task.**  
+**Status:** P034A delivered (`5dbd708`, CI `40544273523` SUCCESS); **P034B is the sole ACTIVE Codex task** (real runtime 2D migration and SSH review screenshots). P028–P033 remain proposed, not active.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
 > **User-confirmed decision:** The game's intended public name is **Ball Battalion**. The old *Lane Ball Shooter* repo/project name remains in place for now. **Do not automatically rename paths, packages, Godot identifiers, URLs, APK signing identity, deployed assets or existing releases.** Plan and test a deliberate branding migration when appropriate.
 >
-> This document records **proposals, not permission to implement them**. The current mailbox explicitly has NO ACTIVE CODEX TASK. When the user approves a phase, ChatGPT should promote exactly one scoped task into `.ai/TASK.md`; Codex should implement only that active task.
+> Most of this document records **proposals, not permission to implement them**. The mailbox currently activates **only P034B**, the 2D runtime migration, after express user approval on 2026-10-27. The user cannot view a local Godot GUI over SSH, so P034B must commit actual live gameplay screenshots for review. All other phases are NOT active.
 
 ## 1. Product concept
 
@@ -204,8 +204,8 @@ All five are proposals requiring separately scoped authorization. **Do not activ
 
 ## 11. 2026-10-27 addendum — P033 controls and P034 staged 2D presentation
 
-This addendum was implemented as P034A (`5dbd708`, CI `40544273523` SUCCESS), with technical review passed. **No task is active while the user reviews the generated visual assets.** P028 remains proposed, not active.
+P034A was implemented in `5dbd708`, CI `40544273523` SUCCESS, and technically reviewed. User chose to proceed directly to P034B despite being remote over SSH and unable to inspect the animated Godot preview. **P034B is now active**; P028/P033 remain proposed, not active.
 
 - **P033 — mobile/desktop controls (proposed, NOT ACTIVE):** Android Classic direct drag/release with second-finger swap; move shooter up for a comfortable bottom finger space; change ammo preview to horizontal (large loaded ball centered on shooter, small NEXT beside it with edge-safe placement); hide original Android swap button. Android Side mode: 1:2:1 horizontal split with one 25% edge acting as relative laptop-style trackpad, opposite 25% edge split vertically (top=swap tap, bottom=shoot tap), mirrored for selected handedness, remembered settings. Desktop/Web left-click to shoot and right-click to swap across the non-interactive gameplay canvas including conveyor, with real UI buttons preserving input precedence.
 - **P034A — visual baking proof of concept (IMPLEMENTED; user visual QA pending):** render the real procedurally constructed Godot 3D actor meshes (four enemies + four colored defenders) into genuine transparent PNGs with orthographic camera/lighting; add reproducible baker, contact sheet and isolated 2D preview with goofy squash/stretch. Do NOT change the playable game, camera, combat, input, platform builds, balance or old 3D scene yet. Archived task: `.ai/TASKS/LBS-P034A.md`.
-- **P034B — runtime 2D migration (proposed, NOT ACTIVE):** upon approval of P034A captures, replace only presentation with 2D rendered lanes, actors, projectiles and 2D feedback while keeping authoritative combat logic. Align battlefield upper/lower lanes with conveyor and raised shooter; leave proportional side margins but do not reserve empty 25% width merely for invisible Side control zones. Plan this separately and test on Web/Android.
+- **P034B — runtime 2D migration (ACTIVE: `.ai/TASK.md`):** use genuine P034A sprites to replace all live 3D presentation with 2D rendered lane floors, defenders, enemies, projectiles, shadows and cartoon effects while keeping authoritative combat and spawn logic. Fit top/bottom rows to current conveyor and shooter layout, respecting future P033 adjustments; 4–7% side margins, not 25% blank columns. Preserve P001–P023 and P034A regression coverage. **Required remote QA:** capture/commit actual Godot-rendered 2D full-game screenshots of 1280x720 and wide/responsive play; review them here after the Codex push. Do not implement P033/P028 or modify already published Android identity.
