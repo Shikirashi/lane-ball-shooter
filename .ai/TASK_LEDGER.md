@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**ONLY ACTIVE CODEX TASK (2026-10-27): LBS-P034B — migrate live battlefield to truly 2D sprites, lanes, projectiles and effects, with real gameplay screenshot QA for SSH review.** User elected to proceed after P034A technical/contact-sheet review despite being unable to run an interactive preview over SSH. Authoritative scope is `.ai/TASK.md`. P034A delivered at `5dbd708` (CI `40544273523` SUCCESS), archived at `.ai/TASKS/LBS-P034A.md`. **P033 controls and P028 balancing remain NOT ACTIVE.**
+**NO ACTIVE CODEX TASK (2026-10-27):** P034B completed in `b802096`, technically reviewed with actual 2D gameplay screenshots; Web CI `40548949659` SUCCESS (all tests, published Web and live browser startup). Player visual/interactive acceptance and Android QA pending. Archive `.ai/TASKS/LBS-P034B.md`. P034A completed previously in `5dbd708`. **P033 controls and P028 balancing remain NOT ACTIVE.** See `.ai/TASK.md` for next approval checkpoint.
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
@@ -59,6 +59,6 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 |---|---|---|
 | LBS-P033 | PROPOSED — NOT ACTIVE | Android Classic touch with two-finger swap and raised shooter; horizontal loaded/next-ball layout (loaded remains centered and larger, NEXT beside it, edge-safe). Android Side controls: 1:2:1 horizontal zones; 25% relative trackpad for left/right movement, opposite 25% split vertically (upper tap swap, lower tap shoot), selectable handedness; hide old Android swap button; settings/persistence. Desktop/Web click/shoot and right-click swap over all noninteractive game canvas including conveyor; keep UI buttons intercepting clicks. |
 | LBS-P034A | **IMPLEMENTED — source/asset review PASS, user visual QA pending**; `5dbd708` | Eight real transparent PNGs, pivot metadata, contact sheet, CLI baker and isolated 2D preview; existing game not migrated. Archived task `.ai/TASKS/LBS-P034A.md`. |
-| LBS-P034B | **ACTIVE — `.ai/TASK.md`** | Migrate the live battlefield to actual 2D sprites/lanes/projectiles/effects, preserve gameplay/legacy tests, responsive framing, and commit real rendered screenshots for remote visual review. No P033 or P028 changes. |
+| LBS-P034B | **IMPLEMENTED — source/screenshots/CI review PASS; player QA pending**; `b802096` | Live 2D gameplay with genuine sprites, responsive lanes and 2D effects; 25 regression suites/CI passed. Real screenshots committed; archive `.ai/TASKS/LBS-P034B.md`. Android APK still old. |
 
 P028A's balance-simulation laboratory remains proposed; **P034B** does not authorize color/speed/enemy changes.
