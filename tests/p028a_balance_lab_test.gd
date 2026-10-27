@@ -17,6 +17,7 @@ func _run() -> void:
 	_test_generator_determinism_and_schema()
 	_test_known_sequence_metrics()
 	_test_default_guardrails()
+	_test_fixed_x_shot_fidelity()
 	await _test_time_to_danger()
 	await _test_real_scenario_reproducibility()
 	_finish()
@@ -73,6 +74,40 @@ func _test_default_guardrails() -> void:
 	var magazine := MagazineState.new(17)
 	_check(BalanceLab.choose_action("basic_matcher", magazine, empty_opportunities, [1.0, 1.0, 1.0, 1.0]).is_empty(), "policy cannot invent a match action without real geometry")
 
+func _test_fixed_x_shot_fidelity() -> void:
+	var moving := ChainModel.new()
+	moving.set_test_state([TeamData.Identity.RED], 200.0)
+	moving.speed = 240.0
+	var target_uid := int(moving.balls[0].uid)
+	var pending := {"identity": TeamData.Identity.RED, "target_uid": target_uid, "shot_x": 199.0, "remaining": BalanceLab.SHOT_FLIGHT_TIME}
+	var event := BalanceLab.advance_chain_with_fixed_shot(moving, pending, 0.20)
+	_check(bool(event.arrived) and absf(float(event.impact_time) - 0.20) < 0.0001, "fixed shot impacts after the full 0.20-second chain movement")
+	_check(float(event.shot_x) == 199.0 and absf(float(event.target_drift) + 47.0) < 0.001, "launch X remains immutable while the originally aimed ball moves away")
+	_check(not bool(event.inserted) and not bool(event.original_target_contact) and moving.balls.size() == 1, "moving target genuinely misses instead of receiving the former UID-homing insertion")
+	_check(moving.event_log.is_empty(), "a realistic miss creates no match event or free attack input")
+
+	var replacement := ChainModel.new()
+	replacement.set_test_state([TeamData.Identity.BLUE], 200.0)
+	replacement.speed = 0.0
+	pending = {"identity": TeamData.Identity.BLUE, "target_uid": 999999, "shot_x": 200.0, "remaining": 0.20}
+	event = BalanceLab.advance_chain_with_fixed_shot(replacement, pending, 0.20)
+	_check(bool(event.target_gone) and bool(event.inserted), "collision uses actual geometry at fixed X even when the reporting target UID is gone")
+
+	var coarse := ChainModel.new()
+	coarse.set_test_state([TeamData.Identity.YELLOW], 200.0)
+	coarse.speed = 240.0
+	var coarse_pending := {"identity": TeamData.Identity.YELLOW, "target_uid": int(coarse.balls[0].uid), "shot_x": 199.0, "remaining": 0.20}
+	var coarse_event := BalanceLab.advance_chain_with_fixed_shot(coarse, coarse_pending, 0.20)
+	var fine := ChainModel.new()
+	fine.set_test_state([TeamData.Identity.YELLOW], 200.0)
+	fine.speed = 240.0
+	var fine_pending := {"identity": TeamData.Identity.YELLOW, "target_uid": int(fine.balls[0].uid), "shot_x": 199.0, "remaining": 0.20}
+	var fine_event: Dictionary
+	for unused in range(4):
+		fine_event = BalanceLab.advance_chain_with_fixed_shot(fine, fine_pending, 0.05)
+	_check(bool(coarse_event.arrived) and bool(fine_event.arrived) and not bool(coarse_event.inserted) and not bool(fine_event.inserted), "coarse and fine steps preserve the same fixed-X miss")
+	_check(absf(coarse.simulation_time - 0.20) < 0.0001 and absf(fine.simulation_time - 0.20) < 0.0001 and absf(float(coarse.balls[0].x) - float(fine.balls[0].x)) < 0.001, "flight arrival and chain position remain step-invariant")
+
 func _test_time_to_danger() -> void:
 	var battlefield := Battlefield.new()
 	root.add_child(battlefield)
@@ -105,6 +140,9 @@ func _test_real_scenario_reproducibility() -> void:
 	_check(_sum(first.fired_counts) == int(first.counts.shots) and int(first.counts.insertions) + int(first.counts.shot_misses) <= int(first.counts.shots), "fired, inserted and missed ammunition definitions remain distinct and conserved")
 	_check(first.starting_preset_counts == [3, 3, 2, 4] and first.visible_mean.size() == 4 and first.left_clipped_mean.size() == 4 and first.right_clipped_mean.size() == 4, "scenario schema separates starter, visible, off-left and off-right layers")
 	_check(first.loaded_fraction.size() == 4 and first.next_fraction.size() == 4 and first.visible_adjacent_pair_mean.size() == 4 and first.visible_preexisting_group3_fraction.size() == 4, "scenario schema separates loaded/next ammo and pair/pre-existing-group geometry")
+	var fine_step: Dictionary = await BalanceLab.run_scenario(self, 28111, 8.0, 0.05, "basic_matcher")
+	_check(absf(float(first.minimum_flight_time) - 0.20) < 0.0001 and absf(float(first.maximum_flight_time) - 0.20) < 0.0001 and absf(float(fine_step.minimum_flight_time) - 0.20) < 0.0001 and absf(float(fine_step.maximum_flight_time) - 0.20) < 0.0001, "0.20-second fixed-X flight survives 0.10 and 0.05 outer steps")
+	_check(float(first.minimum_shot_interval) >= BalanceLab.SHOT_COOLDOWN - 0.0001 and float(fine_step.minimum_shot_interval) >= BalanceLab.SHOT_COOLDOWN - 0.0001, "0.4-second cooldown survives different outer steps")
 	var observed: Dictionary = await BalanceLab.run_scenario(self, 28113, 8.0, 0.1, "observe_only")
 	_check(int(observed.counts.shots) == 0 and int(observed.counts.matches) == 0 and _sum(observed.fired_counts) == 0, "observe-only policy creates no fake shots, matches or attacks")
 

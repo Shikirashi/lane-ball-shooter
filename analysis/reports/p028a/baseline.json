@@ -11,28 +11,42 @@
   },
   "comparison": [
     {
+      "arrivals": 148,
       "defeats": 0,
-      "matches": 131,
-      "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 10.1333333333333,
-      "mean_visible_green": 2.72188547997468,
+      "hit_rate": 86.4864864864865,
+      "insertions": 128,
+      "matches": 130,
+      "mean_green_starved_threat_s": 2.63333333333333,
+      "mean_longest_green_match_drought_s": 10.1,
+      "mean_visible_green": 2.9909925122003,
+      "misses": 20,
       "neutralized": 96,
+      "nonmatched_insertions": 6,
+      "off_target_insertions": 35,
+      "original_target_contacts": 93,
       "policy": "basic_matcher",
       "scenario_count": 3,
       "series": "policy_baseline",
-      "shots": 130,
+      "shots": 148,
       "speed": 102.0,
       "timeouts": 0,
       "victories": 3,
       "weights_label": "baseline"
     },
     {
+      "arrivals": 0,
       "defeats": 3,
+      "hit_rate": 0.0,
+      "insertions": 0,
       "matches": 0,
       "mean_green_starved_threat_s": 6.83333333333332,
       "mean_longest_green_match_drought_s": 2.73333333333333,
       "mean_visible_green": 5.48778963094513,
+      "misses": 0,
       "neutralized": 59,
+      "nonmatched_insertions": 0,
+      "off_target_insertions": 0,
+      "original_target_contacts": 0,
       "policy": "observe_only",
       "scenario_count": 3,
       "series": "policy_baseline",
@@ -43,151 +57,214 @@
       "weights_label": "baseline"
     },
     {
+      "arrivals": 139,
       "defeats": 0,
-      "matches": 137,
+      "hit_rate": 90.6474820143885,
+      "insertions": 126,
+      "matches": 129,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 10.1333333333333,
-      "mean_visible_green": 2.79092175888113,
+      "mean_longest_green_match_drought_s": 11.5666666666666,
+      "mean_visible_green": 2.27199487318252,
+      "misses": 13,
       "neutralized": 96,
+      "nonmatched_insertions": 5,
+      "off_target_insertions": 41,
+      "original_target_contacts": 85,
       "policy": "threat_priority",
       "scenario_count": 3,
       "series": "policy_baseline",
-      "shots": 134,
+      "shots": 139,
       "speed": 102.0,
       "timeouts": 0,
       "victories": 3,
       "weights_label": "baseline"
     },
     {
+      "arrivals": 104,
       "defeats": 0,
-      "matches": 82,
+      "hit_rate": 88.4615384615385,
+      "insertions": 92,
+      "matches": 95,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 11.85,
-      "mean_visible_green": 3.01172151491122,
+      "mean_longest_green_match_drought_s": 11.45,
+      "mean_visible_green": 1.911981215751,
+      "misses": 12,
       "neutralized": 64,
+      "nonmatched_insertions": 2,
+      "off_target_insertions": 25,
+      "original_target_contacts": 67,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 83,
+      "shots": 105,
       "speed": 102.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "baseline"
     },
     {
+      "arrivals": 108,
       "defeats": 0,
-      "matches": 86,
+      "hit_rate": 87.037037037037,
+      "insertions": 94,
+      "matches": 92,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 9.99999999999998,
-      "mean_visible_green": 2.63631241893642,
+      "mean_longest_green_match_drought_s": 10.95,
+      "mean_visible_green": 2.00280633959815,
+      "misses": 14,
       "neutralized": 64,
+      "nonmatched_insertions": 7,
+      "off_target_insertions": 28,
+      "original_target_contacts": 66,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 84,
+      "shots": 109,
       "speed": 120.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "baseline"
     },
     {
+      "arrivals": 116,
       "defeats": 0,
-      "matches": 98,
+      "hit_rate": 82.7586206896552,
+      "insertions": 96,
+      "matches": 100,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 8.69999999999999,
-      "mean_visible_green": 2.56047937569674,
+      "mean_longest_green_match_drought_s": 9.44999999999998,
+      "mean_visible_green": 1.99246084028691,
+      "misses": 20,
       "neutralized": 64,
+      "nonmatched_insertions": 2,
+      "off_target_insertions": 28,
+      "original_target_contacts": 68,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 95,
+      "shots": 116,
       "speed": 140.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "baseline"
     },
     {
+      "arrivals": 116,
       "defeats": 0,
-      "matches": 106,
+      "hit_rate": 84.4827586206897,
+      "insertions": 98,
+      "matches": 100,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 7.74999999999999,
-      "mean_visible_green": 2.58350455448255,
+      "mean_longest_green_match_drought_s": 7.64999999999999,
+      "mean_visible_green": 2.80408031335824,
+      "misses": 18,
       "neutralized": 64,
+      "nonmatched_insertions": 3,
+      "off_target_insertions": 29,
+      "original_target_contacts": 69,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 101,
+      "shots": 116,
       "speed": 160.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "baseline"
     },
     {
+      "arrivals": 112,
       "defeats": 0,
-      "matches": 96,
+      "hit_rate": 82.1428571428571,
+      "insertions": 92,
+      "matches": 95,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 8.84999999999998,
-      "mean_visible_green": 2.03548723094802,
+      "mean_longest_green_match_drought_s": 8.74999999999999,
+      "mean_visible_green": 2.26987557677737,
+      "misses": 20,
       "neutralized": 64,
+      "nonmatched_insertions": 2,
+      "off_target_insertions": 22,
+      "original_target_contacts": 70,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 95,
+      "shots": 112,
       "speed": 102.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "experimental"
     },
     {
+      "arrivals": 106,
       "defeats": 0,
-      "matches": 105,
+      "hit_rate": 88.6792452830189,
+      "insertions": 94,
+      "matches": 96,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 7.64999999999999,
-      "mean_visible_green": 2.03941127951333,
+      "mean_longest_green_match_drought_s": 8.14999999999999,
+      "mean_visible_green": 1.95488095238094,
+      "misses": 12,
       "neutralized": 64,
+      "nonmatched_insertions": 3,
+      "off_target_insertions": 24,
+      "original_target_contacts": 70,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 104,
+      "shots": 107,
       "speed": 120.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "experimental"
     },
     {
+      "arrivals": 107,
       "defeats": 0,
-      "matches": 105,
+      "hit_rate": 89.7196261682243,
+      "insertions": 96,
+      "matches": 101,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 6.59999999999999,
-      "mean_visible_green": 2.08048872453706,
+      "mean_longest_green_match_drought_s": 6.64999999999999,
+      "mean_visible_green": 1.94877554615925,
+      "misses": 11,
       "neutralized": 64,
+      "nonmatched_insertions": 3,
+      "off_target_insertions": 24,
+      "original_target_contacts": 72,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 103,
+      "shots": 107,
       "speed": 140.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "experimental"
     },
     {
+      "arrivals": 123,
       "defeats": 0,
-      "matches": 114,
+      "hit_rate": 83.739837398374,
+      "insertions": 103,
+      "matches": 103,
       "mean_green_starved_threat_s": 0.0,
-      "mean_longest_green_match_drought_s": 5.99999999999999,
-      "mean_visible_green": 2.29985728848112,
+      "mean_longest_green_match_drought_s": 2.75,
+      "mean_visible_green": 5.90546821956438,
+      "misses": 20,
       "neutralized": 64,
+      "nonmatched_insertions": 4,
+      "off_target_insertions": 25,
+      "original_target_contacts": 78,
       "policy": "basic_matcher",
       "scenario_count": 2,
       "series": "speed_weights",
-      "shots": 113,
+      "shots": 124,
       "speed": 160.0,
       "timeouts": 0,
       "victories": 2,
       "weights_label": "experimental"
     }
   ],
-  "generated_utc": "2026-10-27T19:13:12",
+  "generated_utc": "2026-10-27T19:38:58",
   "generator": {
     "baseline": {
       "drought_summary": [
@@ -65462,11 +65539,12 @@
   "metric_definitions": {
     "ammo_available_fraction": "Fraction of simulated time the color is loaded or next; it does not imply chain geometry.",
     "fresh_counts": "Weighted-run generator output only; excludes the fixed 12-ball starter preset.",
-    "match_opportunity": "A visible adjacent same-color pair within 1.25 spacing which the policy targets with an actual try_insert_shot call.",
+    "match_opportunity": "A visible adjacent same-color pair within 1.25 spacing: a launch-time proxy, not a guaranteed hit or match.",
+    "shot_trajectory": "The bot freezes current target X at launch; after exactly 0.20s of chain movement, actual try_insert_shot collision runs only at that immutable X.",
     "starved_threat": "Enemy estimated <=10s from defender while pair+ammo+ready timing are not all simultaneously available.",
     "visible_mean": "Time-weighted mean circles intersecting [0,lane_width]; off-left/right history is unavailable."
   },
-  "runtime_seconds": 7.133,
+  "runtime_seconds": 8.031,
   "scenarios": [
     {
       "ammo_available_fraction": [
@@ -65485,7 +65563,11 @@
         "knockdowns": 4,
         "matches": 0,
         "nonmatched_insertions": 0,
+        "off_target_insertions": 0,
+        "original_target_contacts": 0,
+        "original_targets_gone": 0,
         "revivals": 0,
+        "shot_arrivals": 0,
         "shot_misses": 0,
         "shots": 0,
         "swaps": 0
@@ -65511,6 +65593,12 @@
         32
       ],
       "fresh_generated": 120,
+      "launch_opportunity_fraction": [
+        0.860499265785613,
+        0.961820851688695,
+        0.0,
+        0.0
+      ],
       "left_clipped_mean": [
         11.5066079295153,
         12.0205580029367,
@@ -65543,6 +65631,9 @@
         2.4,
         3.8
       ],
+      "maximum_flight_time": 0.0,
+      "minimum_flight_time": 0.0,
+      "minimum_shot_interval": 0.0,
       "neutralized": 19,
       "next_fraction": [
         1.0,
@@ -65690,7 +65781,11 @@
         "knockdowns": 4,
         "matches": 0,
         "nonmatched_insertions": 0,
+        "off_target_insertions": 0,
+        "original_target_contacts": 0,
+        "original_targets_gone": 0,
         "revivals": 0,
+        "shot_arrivals": 0,
         "shot_misses": 0,
         "shots": 0,
         "swaps": 0
@@ -65716,6 +65811,12 @@
         30
       ],
       "fresh_generated": 129,
+      "launch_opportunity_fraction": [
+        0.0,
+        0.994542974079127,
+        1.0,
+        0.0
+      ],
       "left_clipped_mean": [
         13.6616643929058,
         14.0477489768076,
@@ -65748,6 +65849,9 @@
         0.0,
         0.0
       ],
+      "maximum_flight_time": 0.0,
+      "minimum_flight_time": 0.0,
+      "minimum_shot_interval": 0.0,
       "neutralized": 20,
       "next_fraction": [
         0.0,
@@ -65895,7 +65999,11 @@
         "knockdowns": 4,
         "matches": 0,
         "nonmatched_insertions": 0,
+        "off_target_insertions": 0,
+        "original_target_contacts": 0,
+        "original_targets_gone": 0,
         "revivals": 0,
+        "shot_arrivals": 0,
         "shot_misses": 0,
         "shots": 0,
         "swaps": 0
@@ -65921,6 +66029,12 @@
         31
       ],
       "fresh_generated": 123,
+      "launch_opportunity_fraction": [
+        0.0,
+        0.0,
+        0.97854077253219,
+        0.915593705293281
+      ],
       "left_clipped_mean": [
         13.4907010014305,
         12.587982832618,
@@ -65953,6 +66067,9 @@
         1.5,
         4.4
       ],
+      "maximum_flight_time": 0.0,
+      "minimum_flight_time": 0.0,
+      "minimum_shot_interval": 0.0,
       "neutralized": 20,
       "next_fraction": [
         0.0,
@@ -66085,106 +66202,119 @@
     },
     {
       "ammo_available_fraction": [
-        0.728169014084511,
-        0.235211267605633,
-        0.14507042253521,
-        0.318309859154929
+        0.108256880733944,
+        0.581651376146787,
+        0.137614678899081,
+        0.660550458715595
       ],
       "counts": {
         "breaches": 0,
-        "damage_hits": 79,
+        "damage_hits": 81,
         "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 48,
+        "healer_pulses": 1,
+        "insertions": 40,
         "kills": 32,
         "knockdowns": 0,
-        "matches": 49,
-        "nonmatched_insertions": 0,
+        "matches": 39,
+        "nonmatched_insertions": 3,
+        "off_target_insertions": 13,
+        "original_target_contacts": 27,
+        "original_targets_gone": 0,
         "revivals": 0,
-        "shot_misses": 0,
-        "shots": 48,
-        "swaps": 29
+        "shot_arrivals": 49,
+        "shot_misses": 9,
+        "shots": 49,
+        "swaps": 25
       },
       "duration_requested": 120.0,
-      "duration_simulated": 71.0000000000002,
+      "duration_simulated": 54.5000000000005,
       "entering_counts": [
-        10,
-        12,
-        12,
-        13
+        9,
+        6,
+        9,
+        8
       ],
       "fired_counts": [
+        12,
         11,
-        12,
-        12,
+        13,
         13
       ],
       "fresh_counts": [
+        20,
         26,
-        40,
-        35,
-        36
+        32,
+        25
       ],
-      "fresh_generated": 137,
+      "fresh_generated": 103,
+      "launch_opportunity_fraction": [
+        0.0275229357798163,
+        0.022018348623853,
+        0.0275229357798163,
+        0.0275229357798163
+      ],
       "left_clipped_mean": [
-        0.4056338028169,
-        0.197183098591549,
-        0.239436619718309,
-        0.169014084507041
+        0.00366972477064217,
+        0.0,
+        0.0,
+        0.0
       ],
       "live_enemies": 0,
       "loaded_fraction": [
-        0.639436619718313,
-        0.115492957746478,
-        0.0338028169014084,
-        0.211267605633802
+        0.022018348623853,
+        0.467889908256878,
+        0.0458715596330271,
+        0.464220183486236
       ],
-      "magazine_draw_count": 50,
+      "magazine_draw_count": 51,
       "magazine_generated_counts": [
-        12,
+        13,
         12,
         13,
         13
       ],
       "match_counts": [
+        5,
+        10,
         11,
-        13,
-        12,
         13
       ],
       "match_opportunity_absent_longest_s": [
-        12.6,
-        7.69999999999999,
-        5.4,
-        12.2
+        4.0,
+        11.7,
+        3.4,
+        12.6
       ],
+      "maximum_flight_time": 0.2,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
       "neutralized": 32,
       "next_fraction": [
-        0.478873239436621,
-        0.119718309859154,
-        0.116901408450704,
-        0.28450704225352
+        0.0862385321100909,
+        0.335779816513758,
+        0.0990825688073385,
+        0.478899082568805
       ],
       "off_left_final": 0,
       "off_right_final": 0,
       "outcome": "victory",
       "policy": "basic_matcher",
       "right_clipped_mean": [
-        0.0140845070422535,
-        0.0169014084507042,
-        0.0169014084507042,
-        0.0183098591549295
+        0.0165137614678898,
+        0.0128440366972476,
+        0.0165137614678898,
+        0.0146788990825687
       ],
       "run_length_counts": [
-        11,
-        16,
-        6,
-        5,
+        8,
+        13,
+        4,
+        4,
         1,
-        5,
+        3,
         3
       ],
-      "score": 7100,
+      "score": 4950,
       "seed": 28001,
       "seed_tuple": {
         "attack": 66558436,
@@ -66196,9 +66326,9 @@
       },
       "series": "policy_baseline",
       "spawn_type_counts": [
-        17,
+        18,
         5,
-        3,
+        2,
         7
       ],
       "spawned": 32,
@@ -66211,71 +66341,71 @@
       ],
       "starvation_reasons_s": {
         "ammo": 0.0,
-        "chain": 7.29999999999999,
+        "chain": 2.1,
         "timing": 0.1
       },
       "starved_threat_longest_s": [
-        7.29999999999999,
         0.0,
+        1.6,
         0.0,
         0.0
       ],
       "starved_threat_time_s": [
-        7.39999999999999,
         0.0,
+        2.2,
         0.0,
         0.0
       ],
       "step": 0.1,
       "threat_time_s": {
         "10": [
-          7.49999999999999,
           0.0,
+          2.3,
           0.0,
           0.0
         ],
         "20": [
-          10.8,
-          9.19999999999998,
-          0.7,
+          2.8,
+          14.0,
+          1.1,
           0.0
         ],
         "5": [
-          2.5,
+          0.0,
           0.0,
           0.0,
           0.0
         ]
       },
       "usable_response_fraction": [
-        0.0183098591549295,
-        0.0169014084507042,
-        0.0197183098591549,
-        0.0197183098591549
+        0.0275229357798163,
+        0.022018348623853,
+        0.0275229357798163,
+        0.0275229357798163
       ],
       "visible_absent_longest_s": [
-        3.1,
-        5.9,
-        4.9,
-        5.4
+        3.4,
+        6.89999999999999,
+        0.8,
+        5.7
       ],
       "visible_adjacent_pair_mean": [
-        0.473239436619717,
-        2.09436619718309,
-        2.18591549295774,
-        1.73661971830985
+        2.52844036697246,
+        0.530275229357794,
+        2.39999999999997,
+        0.218348623853208
       ],
       "visible_mean": [
-        2.07042253521124,
-        3.44788732394364,
-        3.3788732394366,
-        3.0507042253521
+        4.86972477064218,
+        1.48256880733943,
+        4.4660550458715,
+        1.19266055045871
       ],
       "visible_preexisting_group3_fraction": [
-        0.0704225352112673,
-        0.512676056338026,
-        0.481690140845072,
-        0.430985915492956
+        0.376146788990823,
+        0.110091743119265,
+        0.429357798165135,
+        0.0201834862385319
       ],
       "weights": [
         20,
@@ -66290,106 +66420,119 @@
     },
     {
       "ammo_available_fraction": [
-        0.644486692015207,
-        0.268060836501898,
-        0.209125475285169,
-        0.530418250950568
+        0.118122977346277,
+        0.713592233009708,
+        0.249190938511324,
+        0.59061488673139
       ],
       "counts": {
         "breaches": 0,
-        "damage_hits": 87,
-        "emergency_clears": 0,
-        "healer_pulses": 1,
-        "insertions": 38,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 39,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 39,
-        "swaps": 16
+        "damage_hits": 90,
+        "emergency_clears": 3,
+        "healer_pulses": 3,
+        "insertions": 43,
+        "kills": 29,
+        "knockdowns": 1,
+        "matches": 46,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 12,
+        "original_target_contacts": 31,
+        "original_targets_gone": 0,
+        "revivals": 1,
+        "shot_arrivals": 51,
+        "shot_misses": 8,
+        "shots": 51,
+        "swaps": 31
       },
       "duration_requested": 120.0,
-      "duration_simulated": 52.6000000000005,
+      "duration_simulated": 61.8000000000006,
       "entering_counts": [
         10,
-        8,
-        7,
-        7
+        10,
+        5,
+        14
       ],
       "fired_counts": [
-        9,
-        10,
-        10,
-        10
+        13,
+        13,
+        12,
+        13
       ],
       "fresh_counts": [
-        26,
-        25,
-        29,
-        25
+        30,
+        32,
+        32,
+        27
       ],
-      "fresh_generated": 105,
+      "fresh_generated": 121,
+      "launch_opportunity_fraction": [
+        0.0226537216828477,
+        0.0226537216828477,
+        0.0210355987055014,
+        0.0242718446601939
+      ],
       "left_clipped_mean": [
-        0.0570342205323189,
-        0.066539923954372,
+        0.0323624595469253,
         0.0,
-        0.0722433460076039
+        0.0,
+        0.00323624595469253
       ],
       "live_enemies": 0,
       "loaded_fraction": [
-        0.401140684410643,
-        0.144486692015208,
-        0.096958174904942,
-        0.357414448669198
+        0.00647249190938505,
+        0.527508090614885,
+        0.13430420711974,
+        0.331715210355984
       ],
-      "magazine_draw_count": 41,
+      "magazine_draw_count": 53,
       "magazine_generated_counts": [
-        10,
-        11,
-        10,
-        10
+        13,
+        14,
+        13,
+        13
       ],
       "match_counts": [
-        9,
-        9,
-        10,
-        11
+        7,
+        14,
+        13,
+        12
       ],
       "match_opportunity_absent_longest_s": [
-        13.6,
-        8.09999999999999,
-        6.59999999999999,
-        7.49999999999999
+        2.2,
+        11.2,
+        5.99999999999999,
+        9.69999999999998
       ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
       "neutralized": 32,
       "next_fraction": [
-        0.431558935361214,
-        0.123574144486691,
-        0.112167300380227,
-        0.33269961977186
+        0.111650485436892,
+        0.381877022653719,
+        0.114886731391584,
+        0.391585760517797
       ],
       "off_left_final": 0,
       "off_right_final": 0,
       "outcome": "victory",
       "policy": "basic_matcher",
       "right_clipped_mean": [
-        0.0190114068441063,
-        0.015209125475285,
-        0.0133079847908744,
-        0.0133079847908744
+        0.0161812297734626,
+        0.0161812297734626,
+        0.00970873786407757,
+        0.0226537216828477
       ],
       "run_length_counts": [
         5,
-        12,
+        17,
         4,
         4,
         5,
-        4,
+        5,
         0
       ],
-      "score": 5350,
+      "score": 6000,
       "seed": 28002,
       "seed_tuple": {
         "attack": 66560813,
@@ -66401,8 +66544,8 @@
       },
       "series": "policy_baseline",
       "spawn_type_counts": [
-        20,
-        7,
+        19,
+        8,
         2,
         3
       ],
@@ -66415,72 +66558,72 @@
         4
       ],
       "starvation_reasons_s": {
-        "ammo": 0.1,
-        "chain": 3.1,
-        "timing": 0.0
+        "ammo": 11.9,
+        "chain": 5.0,
+        "timing": 1.5
       },
       "starved_threat_longest_s": [
-        0.0,
-        2.8,
+        3.0,
+        5.0,
         0.0,
         0.0
       ],
       "starved_threat_time_s": [
-        0.0,
-        3.2,
+        13.4,
+        5.0,
         0.0,
         0.0
       ],
       "step": 0.1,
       "threat_time_s": {
         "10": [
-          0.0,
-          3.3,
+          13.9,
+          5.0,
           0.0,
           0.0
         ],
         "20": [
-          14.1,
-          7.09999999999999,
+          40.6000000000003,
+          7.59999999999999,
           0.0,
-          2.7
+          0.0
         ],
         "5": [
-          0.0,
-          0.0,
+          0.7,
+          5.0,
           0.0,
           0.0
         ]
       },
       "usable_response_fraction": [
-        0.0209125475285169,
-        0.0228136882129275,
-        0.0228136882129275,
-        0.0228136882129275
+        0.0226537216828477,
+        0.0226537216828477,
+        0.0210355987055014,
+        0.0242718446601939
       ],
       "visible_absent_longest_s": [
-        7.69999999999999,
-        7.49999999999999,
-        5.99999999999999,
-        3.6
+        0.0,
+        9.19999999999998,
+        5.4,
+        3.0
       ],
       "visible_adjacent_pair_mean": [
-        1.0190114068441,
-        1.43346007604561,
-        2.11787072243344,
-        0.760456273764251
+        2.86407766990288,
+        0.21197411003236,
+        0.818770226537213,
+        0.823624595469247
       ],
       "visible_mean": [
-        2.63307984790873,
-        2.32129277566537,
-        3.28517110266156,
-        2.40684410646386
+        5.59061488673135,
+        0.839805825242712,
+        2.04692556634301,
+        2.8640776699029
       ],
       "visible_preexisting_group3_fraction": [
-        0.188212927756652,
-        0.51330798479087,
-        0.378326996197715,
-        0.245247148288971
+        0.605177993527501,
+        0.0404530744336566,
+        0.0776699029126206,
+        0.137540453074432
       ],
       "weights": [
         20,
@@ -66495,106 +66638,773 @@
     },
     {
       "ammo_available_fraction": [
-        0.207207207207205,
-        0.479279279279277,
-        0.677477477477476,
-        0.409009009009006
+        0.241025641025638,
+        0.529914529914528,
+        0.76068376068376,
+        0.160683760683759
       ],
       "counts": {
         "breaches": 0,
-        "damage_hits": 91,
+        "damage_hits": 92,
         "emergency_clears": 0,
         "healer_pulses": 3,
-        "insertions": 42,
+        "insertions": 45,
         "kills": 32,
         "knockdowns": 0,
-        "matches": 43,
-        "nonmatched_insertions": 0,
+        "matches": 45,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 10,
+        "original_target_contacts": 35,
+        "original_targets_gone": 0,
         "revivals": 0,
-        "shot_misses": 0,
-        "shots": 43,
-        "swaps": 23
+        "shot_arrivals": 48,
+        "shot_misses": 3,
+        "shots": 48,
+        "swaps": 29
       },
       "duration_requested": 120.0,
-      "duration_simulated": 55.5000000000005,
+      "duration_simulated": 58.5000000000006,
       "entering_counts": [
-        12,
-        7,
         8,
-        8
+        7,
+        10,
+        10
       ],
       "fired_counts": [
+        12,
+        12,
         11,
-        11,
-        10,
-        11
+        13
       ],
       "fresh_counts": [
         27,
         32,
-        28,
+        27,
         26
       ],
-      "fresh_generated": 113,
+      "fresh_generated": 112,
+      "launch_opportunity_fraction": [
+        0.022222222222222,
+        0.022222222222222,
+        0.0188034188034186,
+        0.0256410256410254
+      ],
       "left_clipped_mean": [
-        0.0468468468468464,
+        0.357264957264954,
         0.0,
-        0.102702702702702,
-        0.0108108108108107
+        0.266666666666664,
+        0.215384615384613
       ],
       "live_enemies": 0,
       "loaded_fraction": [
-        0.00720720720720714,
-        0.369369369369366,
-        0.365765765765763,
-        0.257657657657655
+        0.14188034188034,
+        0.417094017094014,
+        0.427350427350425,
+        0.0136752136752135
       ],
-      "magazine_draw_count": 45,
+      "magazine_draw_count": 50,
       "magazine_generated_counts": [
-        11,
-        11,
         12,
-        11
+        12,
+        13,
+        13
       ],
       "match_counts": [
         11,
+        12,
         11,
-        10,
         11
       ],
       "match_opportunity_absent_longest_s": [
-        10.2,
-        7.69999999999999,
-        11.2,
-        10.7
+        7.49999999999999,
+        8.29999999999999,
+        12.2,
+        7.99999999999999
       ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999825,
+      "minimum_shot_interval": 0.39999999999997,
       "neutralized": 32,
       "next_fraction": [
-        0.199999999999998,
-        0.227027027027024,
-        0.421621621621619,
-        0.15135135135135
+        0.0991452991452981,
+        0.229059829059826,
+        0.524786324786323,
+        0.147008547008545
       ],
-      "off_left_final": 2,
+      "off_left_final": 0,
       "off_right_final": 0,
       "outcome": "victory",
       "policy": "basic_matcher",
       "right_clipped_mean": [
-        0.0216216216216214,
-        0.0126126126126125,
-        0.0144144144144143,
-        0.0144144144144143
+        0.0136752136752135,
+        0.0136752136752135,
+        0.0170940170940169,
+        0.0170940170940169
       ],
       "run_length_counts": [
         10,
-        12,
+        11,
         10,
         5,
         2,
         1,
         2
       ],
-      "score": 5100,
+      "score": 5600,
+      "seed": 28003,
+      "seed_tuple": {
+        "attack": 66563190,
+        "chain": 221755774,
+        "magazine": 172246482,
+        "snake": 52561702,
+        "source": 28003,
+        "spawn": 99998756
+      },
+      "series": "policy_baseline",
+      "spawn_type_counts": [
+        17,
+        7,
+        2,
+        6
+      ],
+      "spawned": 32,
+      "speed": 102.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 4.8,
+        "chain": 2.9,
+        "timing": 0.6
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.4,
+        0.0,
+        2.7
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.4,
+        0.0,
+        7.89999999999999
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.4,
+          0.0,
+          8.29999999999999
+        ],
+        "20": [
+          0.0,
+          6.39999999999999,
+          4.9,
+          27.4000000000001
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          2.9
+        ]
+      },
+      "usable_response_fraction": [
+        0.022222222222222,
+        0.022222222222222,
+        0.0188034188034186,
+        0.0256410256410254
+      ],
+      "visible_absent_longest_s": [
+        0.2,
+        3.8,
+        5.5,
+        4.3
+      ],
+      "visible_adjacent_pair_mean": [
+        1.16239316239315,
+        0.769230769230761,
+        0.258119658119656,
+        1.78974358974357
+      ],
+      "visible_mean": [
+        4.0529914529914,
+        2.7316239316239,
+        3.04273504273503,
+        4.91623931623928
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.307692307692304,
+        0.282051282051279,
+        0.0837606837606829,
+        0.432478632478629
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.522834645669289,
+        0.281889763779525,
+        0.170078740157478,
+        0.513385826771651
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 81,
+        "emergency_clears": 0,
+        "healer_pulses": 1,
+        "insertions": 39,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 41,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 12,
+        "original_target_contacts": 27,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 44,
+        "shot_misses": 5,
+        "shots": 44,
+        "swaps": 26
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 63.5000000000006,
+      "entering_counts": [
+        11,
+        11,
+        9,
+        6
+      ],
+      "fired_counts": [
+        10,
+        11,
+        11,
+        12
+      ],
+      "fresh_counts": [
+        23,
+        32,
+        33,
+        31
+      ],
+      "fresh_generated": 119,
+      "launch_opportunity_fraction": [
+        0.0188976377952754,
+        0.0188976377952754,
+        0.0204724409448817,
+        0.0204724409448817
+      ],
+      "left_clipped_mean": [
+        0.173228346456691,
+        0.00314960629921257,
+        0.0976377952755895,
+        0.0472440944881885
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.388976377952753,
+        0.229921259842517,
+        0.0472440944881885,
+        0.333858267716533
+      ],
+      "magazine_draw_count": 46,
+      "magazine_generated_counts": [
+        12,
+        11,
+        11,
+        12
+      ],
+      "match_counts": [
+        8,
+        10,
+        11,
+        12
+      ],
+      "match_opportunity_absent_longest_s": [
+        12.4,
+        10.3,
+        6.59999999999999,
+        12.6
+      ],
+      "maximum_flight_time": 0.2,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.321259842519682,
+        0.133858267716534,
+        0.129133858267715,
+        0.41574803149606
+      ],
+      "off_left_final": 0,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "threat_priority",
+      "right_clipped_mean": [
+        0.0173228346456691,
+        0.0173228346456691,
+        0.0141732283464566,
+        0.0094488188976377
+      ],
+      "run_length_counts": [
+        9,
+        13,
+        6,
+        4,
+        1,
+        4,
+        3
+      ],
+      "score": 5700,
+      "seed": 28001,
+      "seed_tuple": {
+        "attack": 66558436,
+        "chain": 221739936,
+        "magazine": 172234180,
+        "snake": 52557948,
+        "source": 28001,
+        "spawn": 99991614
+      },
+      "series": "policy_baseline",
+      "spawn_type_counts": [
+        18,
+        5,
+        2,
+        7
+      ],
+      "spawned": 32,
+      "speed": 102.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          2.0,
+          6.39999999999999,
+          1.4,
+          0.0
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0188976377952754,
+        0.0188976377952754,
+        0.0204724409448817,
+        0.0204724409448817
+      ],
+      "visible_absent_longest_s": [
+        3.4,
+        6.49999999999999,
+        0.8,
+        5.7
+      ],
+      "visible_adjacent_pair_mean": [
+        1.06771653543306,
+        1.22362204724408,
+        2.14173228346454,
+        0.640944881889757
+      ],
+      "visible_mean": [
+        3.36062992125982,
+        2.36220472440942,
+        3.93543307086608,
+        1.91968503937006
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.204724409448816,
+        0.237795275590548,
+        0.502362204724407,
+        0.0929133858267707
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.110932475884243,
+        0.709003215434082,
+        0.254019292604498,
+        0.599678456591638
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 90,
+        "emergency_clears": 3,
+        "healer_pulses": 3,
+        "insertions": 43,
+        "kills": 29,
+        "knockdowns": 1,
+        "matches": 46,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 11,
+        "original_target_contacts": 32,
+        "original_targets_gone": 0,
+        "revivals": 1,
+        "shot_arrivals": 51,
+        "shot_misses": 8,
+        "shots": 51,
+        "swaps": 33
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 62.2000000000006,
+      "entering_counts": [
+        10,
+        10,
+        5,
+        14
+      ],
+      "fired_counts": [
+        13,
+        13,
+        12,
+        13
+      ],
+      "fresh_counts": [
+        30,
+        32,
+        32,
+        27
+      ],
+      "fresh_generated": 121,
+      "launch_opportunity_fraction": [
+        0.0209003215434082,
+        0.0209003215434082,
+        0.0225080385852088,
+        0.02572347266881
+      ],
+      "left_clipped_mean": [
+        0.0321543408360125,
+        0.0,
+        0.0,
+        0.00321543408360125
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.0,
+        0.524115755627008,
+        0.139871382636654,
+        0.336012861736332
+      ],
+      "magazine_draw_count": 53,
+      "magazine_generated_counts": [
+        13,
+        14,
+        13,
+        13
+      ],
+      "match_counts": [
+        7,
+        14,
+        13,
+        12
+      ],
+      "match_opportunity_absent_longest_s": [
+        2.2,
+        11.2,
+        5.99999999999999,
+        9.69999999999998
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.110932475884243,
+        0.379421221864949,
+        0.114147909967844,
+        0.395498392282956
+      ],
+      "off_left_final": 0,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "threat_priority",
+      "right_clipped_mean": [
+        0.0160771704180063,
+        0.0160771704180063,
+        0.00964630225080376,
+        0.0225080385852088
+      ],
+      "run_length_counts": [
+        5,
+        17,
+        4,
+        4,
+        5,
+        5,
+        0
+      ],
+      "score": 6000,
+      "seed": 28002,
+      "seed_tuple": {
+        "attack": 66560813,
+        "chain": 221747855,
+        "magazine": 172240331,
+        "snake": 52559825,
+        "source": 28002,
+        "spawn": 99995185
+      },
+      "series": "policy_baseline",
+      "spawn_type_counts": [
+        19,
+        8,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 102.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 13.6,
+        "chain": 4.6,
+        "timing": 1.5
+      },
+      "starved_threat_longest_s": [
+        3.9,
+        4.6,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        15.1,
+        4.6,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          15.6,
+          4.6,
+          0.0,
+          0.0
+        ],
+        "20": [
+          41.7000000000003,
+          7.49999999999999,
+          0.0,
+          0.0
+        ],
+        "5": [
+          1.6,
+          4.6,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0209003215434082,
+        0.0209003215434082,
+        0.0225080385852088,
+        0.02572347266881
+      ],
+      "visible_absent_longest_s": [
+        0.0,
+        9.19999999999998,
+        5.4,
+        3.0
+      ],
+      "visible_adjacent_pair_mean": [
+        2.87620578778132,
+        0.196141479099676,
+        0.819935691318324,
+        0.837620578778127
+      ],
+      "visible_mean": [
+        5.59967845659159,
+        0.815112540192919,
+        2.04662379421218,
+        2.87138263665593
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.607717041800636,
+        0.0321543408360126,
+        0.0771704180064301,
+        0.143086816720256
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.659468438538204,
+        0.10299003322259,
+        0.506644518272423,
+        0.652823920265779
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 88,
+        "emergency_clears": 0,
+        "healer_pulses": 2,
+        "insertions": 44,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 42,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 18,
+        "original_target_contacts": 26,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 44,
+        "shot_misses": 0,
+        "shots": 44,
+        "swaps": 26
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 60.2000000000006,
+      "entering_counts": [
+        5,
+        16,
+        9,
+        7
+      ],
+      "fired_counts": [
+        11,
+        11,
+        11,
+        11
+      ],
+      "fresh_counts": [
+        27,
+        32,
+        29,
+        29
+      ],
+      "fresh_generated": 117,
+      "launch_opportunity_fraction": [
+        0.0215946843853819,
+        0.0182724252491693,
+        0.0182724252491693,
+        0.0199335548172756
+      ],
+      "left_clipped_mean": [
+        1.04485049833886,
+        0.649501661129562,
+        0.598006644518267,
+        0.199335548172755
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.159468438538204,
+        0.0249169435215944,
+        0.290697674418601,
+        0.524916943521593
+      ],
+      "magazine_draw_count": 46,
+      "magazine_generated_counts": [
+        11,
+        11,
+        12,
+        12
+      ],
+      "match_counts": [
+        11,
+        9,
+        11,
+        11
+      ],
+      "match_opportunity_absent_longest_s": [
+        10.8,
+        2.6,
+        12.1,
+        12.4
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.506644518272423,
+        0.0780730897009959,
+        0.215946843853818,
+        0.199335548172755
+      ],
+      "off_left_final": 5,
+      "off_right_final": 1,
+      "outcome": "victory",
+      "policy": "threat_priority",
+      "right_clipped_mean": [
+        0.00830564784053148,
+        0.0265780730897007,
+        0.0149501661129567,
+        0.0132890365448504
+      ],
+      "run_length_counts": [
+        10,
+        12,
+        10,
+        5,
+        3,
+        1,
+        2
+      ],
+      "score": 5450,
       "seed": 28003,
       "seed_tuple": {
         "attack": 66563190,
@@ -66645,10 +67455,10 @@
           0.0
         ],
         "20": [
-          0.5,
           0.0,
           0.0,
-          12.9
+          0.0,
+          13.2
         ],
         "5": [
           0.0,
@@ -66658,34 +67468,34 @@
         ]
       },
       "usable_response_fraction": [
-        0.0216216216216214,
-        0.0216216216216214,
-        0.0180180180180178,
-        0.0234234234234232
+        0.0215946843853819,
+        0.0182724252491693,
+        0.0182724252491693,
+        0.0199335548172756
       ],
       "visible_absent_longest_s": [
-        3.7,
-        3.5,
-        5.0,
+        0.0,
+        0.0,
+        5.3,
         3.9
       ],
       "visible_adjacent_pair_mean": [
-        0.751351351351345,
-        0.832432432432423,
-        0.320720720720718,
-        0.482882882882879
+        0.212624584717605,
+        3.77906976744181,
+        0.805647840531556,
+        0.380398671096343
       ],
       "visible_mean": [
-        3.05225225225224,
-        3.00900900900899,
-        3.72252252252249,
-        2.70810810810809
+        3.64451827242522,
+        7.47840531561454,
+        3.8787375415282,
+        2.02491694352158
       ],
       "visible_preexisting_group3_fraction": [
-        0.180180180180178,
-        0.288288288288285,
-        0.111711711711711,
-        0.115315315315314
+        0.0016611295681063,
+        0.980066445182721,
+        0.308970099667771,
+        0.0946843853820588
       ],
       "weights": [
         20,
@@ -66700,721 +67510,119 @@
     },
     {
       "ammo_available_fraction": [
-        0.733802816901413,
-        0.235211267605633,
-        0.14507042253521,
-        0.312676056338028
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 79,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 48,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 49,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 48,
-        "swaps": 30
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 71.0000000000002,
-      "entering_counts": [
-        10,
-        12,
-        12,
-        13
-      ],
-      "fired_counts": [
-        11,
-        12,
-        12,
-        13
-      ],
-      "fresh_counts": [
-        26,
-        40,
-        35,
-        36
-      ],
-      "fresh_generated": 137,
-      "left_clipped_mean": [
-        0.4056338028169,
-        0.197183098591549,
-        0.239436619718309,
-        0.169014084507041
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.645070422535214,
-        0.115492957746478,
-        0.0338028169014084,
-        0.2056338028169
-      ],
-      "magazine_draw_count": 50,
-      "magazine_generated_counts": [
-        12,
-        12,
-        13,
-        13
-      ],
-      "match_counts": [
-        11,
-        13,
-        12,
-        13
-      ],
-      "match_opportunity_absent_longest_s": [
-        12.6,
-        7.69999999999999,
-        5.4,
-        12.2
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.478873239436621,
-        0.119718309859154,
-        0.116901408450704,
-        0.28450704225352
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "threat_priority",
-      "right_clipped_mean": [
-        0.0140845070422535,
-        0.0169014084507042,
-        0.0169014084507042,
-        0.0183098591549295
-      ],
-      "run_length_counts": [
-        11,
-        16,
-        6,
-        5,
-        1,
-        5,
-        3
-      ],
-      "score": 7100,
-      "seed": 28001,
-      "seed_tuple": {
-        "attack": 66558436,
-        "chain": 221739936,
-        "magazine": 172234180,
-        "snake": 52557948,
-        "source": 28001,
-        "spawn": 99991614
-      },
-      "series": "policy_baseline",
-      "spawn_type_counts": [
-        17,
-        5,
-        3,
-        7
-      ],
-      "spawned": 32,
-      "speed": 102.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 7.29999999999999,
-        "timing": 0.1
-      },
-      "starved_threat_longest_s": [
-        7.29999999999999,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        7.39999999999999,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          7.49999999999999,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          10.8,
-          9.59999999999998,
-          1.2,
-          0.0
-        ],
-        "5": [
-          2.5,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0197183098591549,
-        0.0169014084507042,
-        0.0197183098591549,
-        0.0183098591549295
-      ],
-      "visible_absent_longest_s": [
-        3.1,
-        5.9,
-        4.9,
-        5.4
-      ],
-      "visible_adjacent_pair_mean": [
-        0.478873239436619,
-        2.09436619718309,
-        2.18591549295774,
-        1.71971830985915
-      ],
-      "visible_mean": [
-        2.08169014084505,
-        3.44788732394364,
-        3.3788732394366,
-        3.0281690140845
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.0704225352112673,
-        0.512676056338026,
-        0.481690140845072,
-        0.425352112676055
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.694444444444443,
-        0.331349206349203,
-        0.317460317460314,
-        0.452380952380949
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 87,
-        "emergency_clears": 0,
-        "healer_pulses": 1,
-        "insertions": 35,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 38,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 2,
-        "shots": 37,
-        "swaps": 21
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 50.4000000000004,
-      "entering_counts": [
-        7,
-        8,
-        7,
-        7
-      ],
-      "fired_counts": [
-        9,
-        9,
-        9,
-        10
-      ],
-      "fresh_counts": [
-        26,
-        23,
-        29,
-        23
-      ],
-      "fresh_generated": 101,
-      "left_clipped_mean": [
-        0.0535714285714281,
-        0.0654761904761899,
-        0.0,
-        0.0714285714285708
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.45833333333333,
-        0.146825396825395,
-        0.178571428571427,
-        0.216269841269839
-      ],
-      "magazine_draw_count": 39,
-      "magazine_generated_counts": [
-        9,
-        10,
-        10,
-        10
-      ],
-      "match_counts": [
-        9,
-        9,
-        10,
-        10
-      ],
-      "match_opportunity_absent_longest_s": [
-        13.6,
-        6.39999999999999,
-        6.59999999999999,
-        7.49999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.43253968253968,
-        0.184523809523808,
-        0.138888888888887,
-        0.244047619047616
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "threat_priority",
-      "right_clipped_mean": [
-        0.0158730158730157,
-        0.0158730158730157,
-        0.0138888888888888,
-        0.0138888888888888
-      ],
-      "run_length_counts": [
-        5,
-        12,
-        3,
-        4,
-        5,
-        4,
-        0
-      ],
-      "score": 5150,
-      "seed": 28002,
-      "seed_tuple": {
-        "attack": 66560813,
-        "chain": 221747855,
-        "magazine": 172240331,
-        "snake": 52559825,
-        "source": 28002,
-        "spawn": 99995185
-      },
-      "series": "policy_baseline",
-      "spawn_type_counts": [
-        20,
-        7,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 102.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.1,
-        "chain": 3.1,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        2.8,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        3.2,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          3.3,
-          0.0,
-          0.0
-        ],
-        "20": [
-          14.5,
-          7.09999999999999,
-          0.0,
-          2.7
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0198412698412697,
-        0.0198412698412697,
-        0.0198412698412697,
-        0.0238095238095236
-      ],
-      "visible_absent_longest_s": [
-        7.69999999999999,
-        6.19999999999999,
-        5.99999999999999,
-        3.2
-      ],
-      "visible_adjacent_pair_mean": [
-        0.857142857142851,
-        1.42460317460316,
-        1.42857142857142,
-        0.841269841269833
-      ],
-      "visible_mean": [
-        2.20039682539682,
-        2.30357142857141,
-        2.34920634920633,
-        2.31349206349204
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.166666666666665,
-        0.519841269841265,
-        0.244047619047616,
-        0.263888888888886
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.208398133748053,
-        0.522550544323482,
-        0.698289269051321,
-        0.365474339035767
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 95,
-        "emergency_clears": 0,
-        "healer_pulses": 2,
-        "insertions": 49,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 50,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 49,
-        "swaps": 29
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 64.3000000000006,
-      "entering_counts": [
-        15,
-        8,
-        9,
-        9
-      ],
-      "fired_counts": [
-        12,
-        11,
-        13,
-        13
-      ],
-      "fresh_counts": [
-        34,
-        33,
-        33,
-        31
-      ],
-      "fresh_generated": 131,
-      "left_clipped_mean": [
-        0.0886469673405901,
-        0.0,
-        0.17729393468118,
-        0.0264385692068427
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0186625194401242,
-        0.342146189735612,
-        0.423017107309484,
-        0.216174183514772
-      ],
-      "magazine_draw_count": 51,
-      "magazine_generated_counts": [
-        13,
-        12,
-        13,
-        13
-      ],
-      "match_counts": [
-        12,
-        12,
-        13,
-        13
-      ],
-      "match_opportunity_absent_longest_s": [
-        10.2,
-        9.09999999999998,
-        11.2,
-        10.7
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.189735614307929,
-        0.281493001555207,
-        0.379471228615861,
-        0.149300155520994
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "threat_priority",
-      "right_clipped_mean": [
-        0.0233281493001553,
-        0.0124416796267495,
-        0.0139968895800932,
-        0.0139968895800932
-      ],
-      "run_length_counts": [
-        12,
-        12,
-        10,
-        6,
-        3,
-        2,
-        2
-      ],
-      "score": 6200,
-      "seed": 28003,
-      "seed_tuple": {
-        "attack": 66563190,
-        "chain": 221755774,
-        "magazine": 172246482,
-        "snake": 52561702,
-        "source": 28003,
-        "spawn": 99998756
-      },
-      "series": "policy_baseline",
-      "spawn_type_counts": [
-        18,
-        8,
-        2,
-        4
-      ],
-      "spawned": 32,
-      "speed": 102.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          0.1,
-          1.8,
-          0.0,
-          6.49999999999999
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0233281493001553,
-        0.0171073094867805,
-        0.0202177293934679,
-        0.0217729393468116
-      ],
-      "visible_absent_longest_s": [
-        3.7,
-        3.5,
-        5.0,
-        3.9
-      ],
-      "visible_adjacent_pair_mean": [
-        0.881804043545871,
-        0.712286158631407,
-        0.292379471228614,
-        0.587869362363915
-      ],
-      "visible_mean": [
-        3.32814930015551,
-        3.1679626749611,
-        4.03888024883355,
-        3.03110419906685
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.208398133748053,
-        0.244167962674958,
-        0.0964230171073085,
-        0.178849144634524
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.453507340946164,
-        0.530179445350732,
-        0.402936378466555,
-        0.419249592169655
+        0.251420454545453,
+        0.741477272727276,
+        0.274147727272726,
+        0.454545454545455
       ],
       "counts": {
         "breaches": 0,
         "damage_hits": 91,
         "emergency_clears": 0,
         "healer_pulses": 0,
-        "insertions": 48,
+        "insertions": 49,
         "kills": 32,
         "knockdowns": 0,
-        "matches": 48,
-        "nonmatched_insertions": 0,
+        "matches": 50,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 11,
+        "original_target_contacts": 38,
+        "original_targets_gone": 1,
         "revivals": 0,
-        "shot_misses": 0,
-        "shots": 49,
-        "swaps": 27
+        "shot_arrivals": 52,
+        "shot_misses": 3,
+        "shots": 52,
+        "swaps": 31
       },
       "duration_requested": 120.0,
-      "duration_simulated": 61.3000000000006,
+      "duration_simulated": 70.4000000000003,
       "entering_counts": [
         10,
         10,
-        10,
-        9
+        14,
+        10
       ],
       "fired_counts": [
         13,
-        12,
-        12,
-        12
+        13,
+        13,
+        13
       ],
       "fresh_counts": [
+        31,
         29,
-        26,
-        34,
-        34
+        38,
+        38
       ],
-      "fresh_generated": 123,
+      "fresh_generated": 136,
+      "launch_opportunity_fraction": [
+        0.0198863636363636,
+        0.0198863636363636,
+        0.018465909090909,
+        0.0213068181818181
+      ],
       "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
+        0.275568181818181,
+        0.285511363636362,
+        0.921874999999997,
+        0.207386363636362
       ],
       "live_enemies": 0,
       "loaded_fraction": [
-        0.190864600326262,
-        0.344208809135397,
-        0.218597063621531,
-        0.2463295269168
+        0.103693181818181,
+        0.610795454545457,
+        0.159090909090908,
+        0.126420454545454
       ],
-      "magazine_draw_count": 51,
+      "magazine_draw_count": 54,
       "magazine_generated_counts": [
         13,
-        12,
-        13,
+        14,
+        14,
         13
       ],
       "match_counts": [
         12,
+        13,
         12,
-        12,
-        12
+        13
       ],
       "match_opportunity_absent_longest_s": [
-        10.1,
-        14.0,
-        8.89999999999998,
-        13.2
+        8.19999999999999,
+        15.9,
+        7.99999999999999,
+        12.5
       ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
       "neutralized": 32,
       "next_fraction": [
-        0.278955954322998,
-        0.336052202283847,
-        0.205546492659051,
-        0.179445350734092
+        0.157670454545454,
+        0.352272727272727,
+        0.143465909090908,
+        0.346590909090909
       ],
       "off_left_final": 0,
       "off_right_final": 0,
       "outcome": "victory",
       "policy": "basic_matcher",
       "right_clipped_mean": [
-        0.0163132137030993,
-        0.0163132137030993,
-        0.0163132137030993,
-        0.0146818923327894
+        0.0142045454545454,
+        0.0142045454545454,
+        0.0198863636363636,
+        0.0142045454545454
       ],
       "run_length_counts": [
         5,
         18,
-        3,
-        6,
         4,
+        7,
+        5,
         4,
         1
       ],
-      "score": 6300,
+      "score": 6550,
       "seed": 28101,
       "seed_tuple": {
         "attack": 66796136,
@@ -67428,8 +67636,8 @@
       "spawn_type_counts": [
         19,
         9,
-        1,
-        3
+        2,
+        2
       ],
       "spawned": 32,
       "speed": 102.0,
@@ -67466,8 +67674,8 @@
         ],
         "20": [
           0.0,
-          5.8,
-          1.9,
+          0.7,
+          9.69999999999998,
           0.0
         ],
         "5": [
@@ -67478,34 +67686,34 @@
         ]
       },
       "usable_response_fraction": [
-        0.0228384991843391,
-        0.0212071778140292,
-        0.0195758564437192,
-        0.0228384991843391
+        0.0198863636363636,
+        0.0198863636363636,
+        0.018465909090909,
+        0.0213068181818181
       ],
       "visible_absent_longest_s": [
-        0.0,
-        6.79999999999999,
-        8.29999999999999,
-        3.3
+        7.49999999999999,
+        6.99999999999999,
+        3.2,
+        3.5
       ],
       "visible_adjacent_pair_mean": [
-        0.944535073409451,
-        0.311582381729197,
-        0.928221859706354,
-        0.965742251223486
+        1.39062499999999,
+        0.142045454545454,
+        2.98153409090908,
+        0.928977272727268
       ],
       "visible_mean": [
-        3.44208809135395,
-        2.46655791190863,
-        1.43882544861336,
-        2.742251223491
+        3.02272727272726,
+        2.22585227272727,
+        4.97301136363634,
+        2.61221590909088
       ],
       "visible_preexisting_group3_fraction": [
-        0.0946166394779762,
-        0.0391517128874385,
-        0.208809135399671,
-        0.324632952691677
+        0.176136363636363,
+        0.0497159090909089,
+        0.649147727272727,
+        0.210227272727271
       ],
       "weights": [
         20,
@@ -67520,106 +67728,119 @@
     },
     {
       "ammo_available_fraction": [
-        0.0856610800744871,
-        0.836126629422718,
-        0.152700186219738,
-        0.519553072625696
+        0.174652241112826,
+        0.179289026275114,
+        0.255023183925809,
+        0.975270479134467
       ],
       "counts": {
         "breaches": 0,
         "damage_hits": 96,
         "emergency_clears": 0,
         "healer_pulses": 2,
-        "insertions": 34,
+        "insertions": 43,
         "kills": 32,
         "knockdowns": 0,
-        "matches": 34,
-        "nonmatched_insertions": 0,
+        "matches": 45,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 14,
+        "original_target_contacts": 29,
+        "original_targets_gone": 0,
         "revivals": 0,
-        "shot_misses": 0,
-        "shots": 34,
-        "swaps": 17
+        "shot_arrivals": 52,
+        "shot_misses": 9,
+        "shots": 53,
+        "swaps": 35
       },
       "duration_requested": 120.0,
-      "duration_simulated": 53.7000000000005,
+      "duration_simulated": 64.7000000000006,
       "entering_counts": [
-        11,
+        15,
         7,
-        10,
-        9
-      ],
-      "fired_counts": [
-        8,
-        9,
-        9,
+        12,
         8
       ],
-      "fresh_counts": [
-        30,
-        19,
-        29,
-        24
+      "fired_counts": [
+        14,
+        13,
+        14,
+        12
       ],
-      "fresh_generated": 102,
+      "fresh_counts": [
+        39,
+        22,
+        34,
+        28
+      ],
+      "fresh_generated": 123,
+      "launch_opportunity_fraction": [
+        0.0216383307573414,
+        0.0231839258114372,
+        0.024729520865533,
+        0.0200927357032456
+      ],
       "left_clipped_mean": [
-        3.06145251396645,
-        1.16573556797019,
-        1.96275605214151,
-        1.2532588454376
+        0.0757341576506948,
+        0.329211746522408,
+        0.0,
+        0.00927357032457488
       ],
       "live_enemies": 0,
       "loaded_fraction": [
-        0.00186219739292363,
-        0.525139664804467,
-        0.0223463687150836,
-        0.450651769087521
+        0.0309119010819163,
+        0.0123647604327665,
+        0.0788253477588864,
+        0.87789799072643
       ],
-      "magazine_draw_count": 36,
+      "magazine_draw_count": 55,
       "magazine_generated_counts": [
-        9,
-        9,
-        9,
-        9
+        14,
+        14,
+        14,
+        13
       ],
       "match_counts": [
+        11,
         8,
-        9,
-        9,
-        8
+        14,
+        12
       ],
       "match_opportunity_absent_longest_s": [
-        3.3,
-        31.0000000000002,
-        3.6,
-        10.5
+        8.49999999999999,
+        6.99999999999999,
+        8.49999999999999,
+        10.4
       ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
       "neutralized": 32,
       "next_fraction": [
-        0.0837988826815635,
-        0.709497206703909,
-        0.130353817504654,
-        0.076350093109869
+        0.14374034003091,
+        0.166924265842347,
+        0.176197836166922,
+        0.513137557959813
       ],
-      "off_left_final": 1,
+      "off_left_final": 0,
       "off_right_final": 0,
       "outcome": "victory",
       "policy": "basic_matcher",
       "right_clipped_mean": [
-        0.02048417132216,
-        0.0130353817504654,
-        0.0186219739292363,
-        0.0167597765363127
+        0.024729520865533,
+        0.0108191653786707,
+        0.0185471406491498,
+        0.0123647604327665
       ],
       "run_length_counts": [
-        8,
-        6,
         9,
-        7,
-        3,
+        6,
+        11,
+        9,
+        4,
         1,
         1
       ],
-      "score": 4800,
+      "score": 6150,
       "seed": 28102,
       "seed_tuple": {
         "attack": 66798513,
@@ -67645,18 +67866,18 @@
         4
       ],
       "starvation_reasons_s": {
-        "ammo": 7.99999999999999,
+        "ammo": 0.0,
         "chain": 0.0,
-        "timing": 0.6
+        "timing": 0.0
       },
       "starved_threat_longest_s": [
-        6.99999999999999,
+        0.0,
         0.0,
         0.0,
         0.0
       ],
       "starved_threat_time_s": [
-        8.59999999999999,
+        0.0,
         0.0,
         0.0,
         0.0
@@ -67664,53 +67885,53 @@
       "step": 0.1,
       "threat_time_s": {
         "10": [
-          8.79999999999998,
+          0.0,
           0.0,
           0.0,
           0.0
         ],
         "20": [
-          18.8,
-          7.39999999999999,
-          6.39999999999999,
-          2.1
+          4.0,
+          3.0,
+          0.8,
+          4.4
         ],
         "5": [
-          3.8,
+          0.0,
           0.0,
           0.0,
           0.0
         ]
       },
       "usable_response_fraction": [
-        0.0148975791433891,
-        0.02048417132216,
-        0.0223463687150836,
-        0.0186219739292363
+        0.0216383307573414,
+        0.0231839258114372,
+        0.024729520865533,
+        0.0200927357032456
       ],
       "visible_absent_longest_s": [
-        0.0,
-        9.39999999999998,
-        3.1,
-        3.7
+        0.1,
+        6.29999999999999,
+        7.79999999999999,
+        9.79999999999998
       ],
       "visible_adjacent_pair_mean": [
-        4.27560521415266,
-        0.0949720670391052,
-        3.59776536312845,
-        1.6070763500931
+        1.97217928902626,
+        2.37712519319935,
+        1.27975270479133,
+        0.125193199381761
       ],
       "visible_mean": [
-        6.36312849162006,
-        2.04283054003722,
-        5.40595903165732,
-        3.28119180633144
+        4.05100463678513,
+        4.72333848531681,
+        2.02163833075732,
+        1.21174652241111
       ],
       "visible_preexisting_group3_fraction": [
-        1.28491620111731,
-        0.0186219739292363,
-        1.16014897579143,
-        0.279329608938544
+        0.513137557959812,
+        0.772797527047909,
+        0.429675425038636,
+        0.0309119010819163
       ],
       "weights": [
         20,
@@ -67725,106 +67946,119 @@
     },
     {
       "ammo_available_fraction": [
-        0.389298892988927,
-        0.616236162361622,
-        0.326568265682653,
-        0.498154981549813
+        0.169096209912535,
+        0.48396501457726,
+        0.349854227405247,
+        0.661807580174929
       ],
       "counts": {
         "breaches": 0,
-        "damage_hits": 82,
+        "damage_hits": 88,
         "emergency_clears": 0,
         "healer_pulses": 0,
-        "insertions": 47,
+        "insertions": 49,
         "kills": 32,
         "knockdowns": 0,
-        "matches": 48,
-        "nonmatched_insertions": 0,
+        "matches": 51,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 11,
+        "original_target_contacts": 38,
+        "original_targets_gone": 1,
         "revivals": 0,
-        "shot_misses": 0,
-        "shots": 48,
-        "swaps": 26
+        "shot_arrivals": 61,
+        "shot_misses": 12,
+        "shots": 61,
+        "swaps": 40
       },
       "duration_requested": 120.0,
-      "duration_simulated": 54.2000000000005,
+      "duration_simulated": 68.6000000000004,
       "entering_counts": [
-        10,
-        4,
-        7,
+        9,
+        8,
+        9,
         10
       ],
       "fired_counts": [
-        13,
-        12,
-        11,
-        12
+        16,
+        16,
+        14,
+        15
       ],
       "fresh_counts": [
-        28,
-        25,
-        29,
-        29
+        32,
+        33,
+        34,
+        35
       ],
-      "fresh_generated": 111,
+      "fresh_generated": 134,
+      "launch_opportunity_fraction": [
+        0.0247813411078716,
+        0.0247813411078716,
+        0.020408163265306,
+        0.0233236151603497
+      ],
       "left_clipped_mean": [
-        0.0,
+        0.00583090379008743,
         0.0,
         0.0,
         0.0
       ],
       "live_enemies": 0,
       "loaded_fraction": [
-        0.105166051660516,
-        0.328413284132838,
-        0.195571955719555,
-        0.370848708487082
+        0.00583090379008743,
+        0.320699708454809,
+        0.123906705539358,
+        0.549562682215744
       ],
-      "magazine_draw_count": 50,
+      "magazine_draw_count": 63,
       "magazine_generated_counts": [
-        13,
-        12,
-        12,
-        13
+        16,
+        16,
+        16,
+        15
       ],
       "match_counts": [
-        12,
-        12,
-        12,
-        12
+        7,
+        16,
+        13,
+        15
       ],
       "match_opportunity_absent_longest_s": [
-        8.39999999999999,
-        11.2,
-        7.69999999999999,
-        9.29999999999998
+        6.89999999999999,
+        9.49999999999998,
+        8.49999999999999,
+        11.5
       ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
       "neutralized": 32,
       "next_fraction": [
-        0.28413284132841,
-        0.426199261992617,
-        0.145756457564574,
-        0.14391143911439
+        0.163265306122448,
+        0.326530612244897,
+        0.231778425655975,
+        0.278425655976675
       ],
       "off_left_final": 0,
       "off_right_final": 0,
       "outcome": "victory",
       "policy": "basic_matcher",
       "right_clipped_mean": [
-        0.0184501845018448,
-        0.00738007380073794,
-        0.0129151291512914,
-        0.0184501845018448
+        0.0131195335276967,
+        0.0116618075801749,
+        0.0145772594752186,
+        0.0160349854227404
       ],
       "run_length_counts": [
         3,
-        17,
-        12,
-        6,
+        20,
+        16,
+        7,
         3,
         0,
         0
       ],
-      "score": 5850,
+      "score": 6550,
       "seed": 28101,
       "seed_tuple": {
         "attack": 66796136,
@@ -67836,8 +68070,8 @@
       },
       "series": "speed_weights",
       "spawn_type_counts": [
-        21,
-        6,
+        19,
+        8,
         2,
         3
       ],
@@ -67875,10 +68109,10 @@
           0.0
         ],
         "20": [
-          0.0,
-          1.8,
           4.6,
-          4.4
+          3.1,
+          8.79999999999998,
+          0.0
         ],
         "5": [
           0.0,
@@ -67888,34 +68122,34 @@
         ]
       },
       "usable_response_fraction": [
-        0.0258302583025828,
-        0.0239852398523983,
-        0.0221402214022138,
-        0.0239852398523983
+        0.0247813411078716,
+        0.0247813411078716,
+        0.020408163265306,
+        0.0233236151603497
       ],
       "visible_absent_longest_s": [
-        5.2,
-        5.0,
-        7.09999999999999,
-        5.4
+        6.19999999999999,
+        5.3,
+        7.79999999999999,
+        2.8
       ],
       "visible_adjacent_pair_mean": [
-        0.579335793357929,
-        0.400369003690034,
-        0.39483394833948,
-        1.15682656826567
+        3.45772594752184,
+        0.428571428571426,
+        0.543731778425654,
+        0.427113702623905
       ],
       "visible_mean": [
-        1.29335793357932,
-        1.33394833948339,
-        1.21402214022139,
-        1.82656826568265
+        5.53498542274048,
+        1.35568513119533,
+        1.22594752186588,
+        1.59329446064138
       ],
       "visible_preexisting_group3_fraction": [
-        0.202952029520293,
-        0.0738007380073794,
-        0.0977859778597776,
-        0.30073800738007
+        0.639941690962099,
+        0.0860058309037895,
+        0.155976676384838,
+        0.134110787172011
       ],
       "weights": [
         12,
@@ -67930,47 +68164,711 @@
     },
     {
       "ammo_available_fraction": [
-        0.132530120481926,
-        0.690189328743544,
-        0.664371772805506,
-        0.378657487091219
+        0.329133858267714,
+        0.0881889763779518,
+        0.735433070866141,
+        0.422047244094486
       ],
       "counts": {
         "breaches": 0,
-        "damage_hits": 94,
+        "damage_hits": 95,
         "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 47,
+        "healer_pulses": 1,
+        "insertions": 43,
         "kills": 32,
         "knockdowns": 0,
-        "matches": 48,
-        "nonmatched_insertions": 0,
+        "matches": 44,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 11,
+        "original_target_contacts": 32,
+        "original_targets_gone": 0,
         "revivals": 0,
-        "shot_misses": 0,
-        "shots": 47,
-        "swaps": 27
+        "shot_arrivals": 51,
+        "shot_misses": 8,
+        "shots": 51,
+        "swaps": 30
       },
       "duration_requested": 120.0,
-      "duration_simulated": 58.1000000000006,
+      "duration_simulated": 63.5000000000006,
       "entering_counts": [
-        11,
-        11,
-        10,
-        8
+        6,
+        13,
+        8,
+        11
       ],
       "fired_counts": [
         12,
+        13,
+        13,
+        13
+      ],
+      "fresh_counts": [
+        33,
+        27,
+        32,
+        30
+      ],
+      "fresh_generated": 122,
+      "launch_opportunity_fraction": [
+        0.0188976377952754,
+        0.022047244094488,
+        0.022047244094488,
+        0.0236220472440943
+      ],
+      "left_clipped_mean": [
+        0.672440944881883,
+        0.633070866141727,
+        0.327559055118106,
+        0.170078740157478
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.12283464566929,
+        0.00629921259842513,
+        0.530708661417321,
+        0.340157480314958
+      ],
+      "magazine_draw_count": 53,
+      "magazine_generated_counts": [
+        13,
+        13,
+        14,
+        13
+      ],
+      "match_counts": [
         12,
+        6,
+        13,
+        13
+      ],
+      "match_opportunity_absent_longest_s": [
+        6.79999999999999,
+        0.0,
+        10.3,
+        5.99999999999999
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999985,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.223622047244092,
+        0.0818897637795267,
+        0.488188976377951,
+        0.206299212598423
+      ],
+      "off_left_final": 6,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.0094488188976377,
+        0.0204724409448817,
+        0.0141732283464566,
+        0.0173228346456691
+      ],
+      "run_length_counts": [
+        2,
         11,
+        28,
+        1,
+        1,
+        0,
+        1
+      ],
+      "score": 5250,
+      "seed": 28102,
+      "seed_tuple": {
+        "attack": 66798513,
+        "chain": 222539755,
+        "magazine": 172855431,
+        "snake": 52747525,
+        "source": 28102,
+        "spawn": 100352285
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        17,
+        10,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 102.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          4.5,
+          4.1,
+          0.8,
+          2.2
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0188976377952754,
+        0.022047244094488,
+        0.022047244094488,
+        0.0236220472440943
+      ],
+      "visible_absent_longest_s": [
+        0.0,
+        0.0,
+        2.4,
+        3.7
+      ],
+      "visible_adjacent_pair_mean": [
+        0.532283464566924,
+        4.42834645669289,
+        0.130708661417321,
+        0.781102362204721
+      ],
+      "visible_mean": [
+        3.7070866141732,
+        8.023622047244,
+        2.65984251968503,
+        2.94645669291336
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.146456692913384,
+        1.20629921259842,
+        0.0283464566929131,
+        0.198425196850391
+      ],
+      "weights": [
+        12,
+        30,
+        40,
+        10,
+        5,
+        2,
+        1
+      ],
+      "weights_label": "experimental"
+    },
+    {
+      "ammo_available_fraction": [
+        0.363302752293575,
+        0.829357798165137,
+        0.088073394495412,
+        0.45504587155963
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 85,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 44,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 44,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 9,
+        "original_target_contacts": 35,
+        "original_targets_gone": 1,
+        "revivals": 0,
+        "shot_arrivals": 49,
+        "shot_misses": 5,
+        "shots": 49,
+        "swaps": 26
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 54.5000000000005,
+      "entering_counts": [
+        4,
+        5,
+        11,
+        6
+      ],
+      "fired_counts": [
+        13,
+        12,
+        12,
         12
       ],
       "fresh_counts": [
-        32,
-        25,
-        29,
-        30
+        27,
+        26,
+        34,
+        34
       ],
-      "fresh_generated": 116,
+      "fresh_generated": 121,
+      "launch_opportunity_fraction": [
+        0.0293577981651373,
+        0.0238532110091741,
+        0.022018348623853,
+        0.0256880733944952
+      ],
+      "left_clipped_mean": [
+        0.388990825688071,
+        0.409174311926602,
+        2.33944954128438,
+        0.328440366972474
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.15229357798165,
+        0.682568807339448,
+        0.00183486238532108,
+        0.163302752293576
+      ],
+      "magazine_draw_count": 51,
+      "magazine_generated_counts": [
+        13,
+        12,
+        13,
+        13
+      ],
+      "match_counts": [
+        12,
+        12,
+        8,
+        12
+      ],
+      "match_opportunity_absent_longest_s": [
+        6.69999999999999,
+        13.7,
+        2.9,
+        11.1
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.22018348623853,
+        0.379816513761465,
+        0.0862385321100909,
+        0.313761467889905
+      ],
+      "off_left_final": 0,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.00733944954128434,
+        0.00917431192660542,
+        0.0201834862385319,
+        0.0110091743119265
+      ],
+      "run_length_counts": [
+        5,
+        18,
+        3,
+        5,
+        4,
+        4,
+        1
+      ],
+      "score": 6100,
+      "seed": 28101,
+      "seed_tuple": {
+        "attack": 66796136,
+        "chain": 222531836,
+        "magazine": 172849280,
+        "snake": 52745648,
+        "source": 28101,
+        "spawn": 100348714
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        20,
+        7,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 120.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          0.8,
+          3.9,
+          0.0
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0293577981651373,
+        0.0238532110091741,
+        0.022018348623853,
+        0.0256880733944952
+      ],
+      "visible_absent_longest_s": [
+        6.09999999999999,
+        5.6,
+        2.4,
+        2.8
+      ],
+      "visible_adjacent_pair_mean": [
+        1.26972477064219,
+        0.106422018348623,
+        5.14495412844034,
+        1.09174311926604
+      ],
+      "visible_mean": [
+        2.794495412844,
+        1.7137614678899,
+        6.93577981651372,
+        2.52844036697245
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.10091743119266,
+        0.0128440366972476,
+        0.882568807339446,
+        0.249541284403667
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.145802650957289,
+        0.198821796759939,
+        0.316642120765831,
+        0.892488954344628
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 97,
+        "emergency_clears": 0,
+        "healer_pulses": 1,
+        "insertions": 50,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 48,
+        "nonmatched_insertions": 6,
+        "off_target_insertions": 19,
+        "original_target_contacts": 31,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 59,
+        "shot_misses": 9,
+        "shots": 60,
+        "swaps": 33
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 67.9000000000004,
+      "entering_counts": [
+        19,
+        3,
+        9,
+        9
+      ],
+      "fired_counts": [
+        15,
+        16,
+        15,
+        14
+      ],
+      "fresh_counts": [
+        45,
+        30,
+        41,
+        31
+      ],
+      "fresh_generated": 147,
+      "launch_opportunity_fraction": [
+        0.0235640648011781,
+        0.027982326951399,
+        0.027982326951399,
+        0.0235640648011781
+      ],
+      "left_clipped_mean": [
+        0.848306332842411,
+        0.698085419734903,
+        0.207658321060381,
+        0.0751104565537551
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.0191458026509572,
+        0.0559646539027979,
+        0.0898379970544913,
+        0.835051546391755
+      ],
+      "magazine_draw_count": 62,
+      "magazine_generated_counts": [
+        15,
+        16,
+        15,
+        16
+      ],
+      "match_counts": [
+        12,
+        8,
+        14,
+        14
+      ],
+      "match_opportunity_absent_longest_s": [
+        7.09999999999999,
+        5.7,
+        7.39999999999999,
+        10.8
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.126656848306332,
+        0.142857142857142,
+        0.226804123711338,
+        0.503681885125184
+      ],
+      "off_left_final": 17,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.027982326951399,
+        0.00441826215022089,
+        0.0132547864506627,
+        0.0132547864506627
+      ],
+      "run_length_counts": [
+        11,
+        11,
+        13,
+        11,
+        4,
+        1,
+        1
+      ],
+      "score": 6200,
+      "seed": 28102,
+      "seed_tuple": {
+        "attack": 66798513,
+        "chain": 222539755,
+        "magazine": 172855431,
+        "snake": 52747525,
+        "source": 28102,
+        "spawn": 100352285
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        17,
+        10,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 120.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          3.9,
+          1.8,
+          0.8,
+          2.2
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0235640648011781,
+        0.027982326951399,
+        0.027982326951399,
+        0.0235640648011781
+      ],
+      "visible_absent_longest_s": [
+        0.0,
+        0.0,
+        2.5,
+        8.39999999999999
+      ],
+      "visible_adjacent_pair_mean": [
+        3.8483063328424,
+        2.69072164948452,
+        1.6362297496318,
+        0.147275405007363
+      ],
+      "visible_mean": [
+        6.79970544918992,
+        5.64212076583205,
+        3.3505154639175,
+        1.47717231222385
+      ],
+      "visible_preexisting_group3_fraction": [
+        1.10751104565536,
+        0.833578792341678,
+        0.52282768777614,
+        0.0382916053019144
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.394097222222219,
+        0.55034722222222,
+        0.14236111111111,
+        0.666666666666665
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 82,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 52,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 54,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 13,
+        "original_target_contacts": 39,
+        "original_targets_gone": 1,
+        "revivals": 0,
+        "shot_arrivals": 55,
+        "shot_misses": 3,
+        "shots": 56,
+        "swaps": 29
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 57.6000000000005,
+      "entering_counts": [
+        2,
+        10,
+        5,
+        8
+      ],
+      "fired_counts": [
+        14,
+        14,
+        14,
+        14
+      ],
+      "fresh_counts": [
+        31,
+        30,
+        34,
+        35
+      ],
+      "fresh_generated": 130,
+      "launch_opportunity_fraction": [
+        0.0260416666666664,
+        0.0295138888888886,
+        0.0243055555555553,
+        0.0260416666666664
+      ],
       "left_clipped_mean": [
         0.0,
         0.0,
@@ -67979,51 +68877,2016 @@
       ],
       "live_enemies": 0,
       "loaded_fraction": [
-        0.0258175559380376,
-        0.168674698795179,
-        0.550774526678139,
-        0.254733218588637
+        0.135416666666665,
+        0.315972222222219,
+        0.0312499999999997,
+        0.517361111111109
       ],
-      "magazine_draw_count": 49,
+      "magazine_draw_count": 58,
       "magazine_generated_counts": [
-        12,
-        13,
-        12,
-        12
+        15,
+        14,
+        14,
+        15
       ],
       "match_counts": [
-        12,
-        12,
-        12,
-        12
+        13,
+        13,
+        13,
+        15
       ],
       "match_opportunity_absent_longest_s": [
-        3.3,
-        10.3,
-        7.39999999999999,
-        8.39999999999999
+        8.19999999999999,
+        9.79999999999998,
+        6.89999999999999,
+        9.99999999999998
       ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
       "neutralized": 32,
       "next_fraction": [
-        0.106712564543889,
-        0.564543889845093,
-        0.204819277108431,
-        0.12392426850258
+        0.258680555555552,
+        0.335069444444441,
+        0.11111111111111,
+        0.295138888888886
       ],
       "off_left_final": 0,
       "off_right_final": 0,
       "outcome": "victory",
       "policy": "basic_matcher",
       "right_clipped_mean": [
-        0.0189328743545609,
-        0.0189328743545609,
-        0.0172117039586917,
-        0.0154905335628226
+        0.00347222222222219,
+        0.0173611111111109,
+        0.00868055555555547,
+        0.0138888888888888
+      ],
+      "run_length_counts": [
+        3,
+        20,
+        15,
+        7,
+        3,
+        0,
+        0
+      ],
+      "score": 6350,
+      "seed": 28101,
+      "seed_tuple": {
+        "attack": 66796136,
+        "chain": 222531836,
+        "magazine": 172849280,
+        "snake": 52745648,
+        "source": 28101,
+        "spawn": 100348714
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        21,
+        6,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 120.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 1.9,
+        "chain": 0.8,
+        "timing": 0.7
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.3,
+        1.9,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.5,
+        2.9,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.7,
+          3.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          2.0,
+          6.89999999999999,
+          7.59999999999999
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0260416666666664,
+        0.0295138888888886,
+        0.0243055555555553,
+        0.0260416666666664
+      ],
+      "visible_absent_longest_s": [
+        5.3,
+        4.5,
+        6.29999999999999,
+        5.6
+      ],
+      "visible_adjacent_pair_mean": [
+        0.215277777777775,
+        0.82638888888888,
+        0.697916666666663,
+        0.520833333333328
+      ],
+      "visible_mean": [
+        2.09722222222221,
+        1.97569444444443,
+        2.0347222222222,
+        1.12499999999999
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.0312499999999997,
+        0.192708333333331,
+        0.163194444444443,
+        0.197916666666664
+      ],
+      "weights": [
+        12,
+        30,
+        40,
+        10,
+        5,
+        2,
+        1
+      ],
+      "weights_label": "experimental"
+    },
+    {
+      "ammo_available_fraction": [
+        0.179047619047617,
+        0.106666666666666,
+        0.758095238095237,
+        0.464761904761902
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 94,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 42,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 42,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 11,
+        "original_target_contacts": 31,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 51,
+        "shot_misses": 9,
+        "shots": 51,
+        "swaps": 30
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 52.5000000000005,
+      "entering_counts": [
+        9,
+        6,
+        6,
+        4
+      ],
+      "fired_counts": [
+        13,
+        13,
+        12,
+        13
+      ],
+      "fresh_counts": [
+        32,
+        25,
+        29,
+        30
+      ],
+      "fresh_generated": 116,
+      "launch_opportunity_fraction": [
+        0.0247619047619045,
+        0.0266666666666664,
+        0.0247619047619045,
+        0.0304761904761902
+      ],
+      "left_clipped_mean": [
+        0.512380952380949,
+        1.25714285714285,
+        0.289523809523807,
+        0.144761904761903
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.0266666666666664,
+        0.00761904761904755,
+        0.599999999999998,
+        0.365714285714282
+      ],
+      "magazine_draw_count": 53,
+      "magazine_generated_counts": [
+        13,
+        13,
+        14,
+        13
+      ],
+      "match_counts": [
+        12,
+        5,
+        12,
+        13
+      ],
+      "match_opportunity_absent_longest_s": [
+        5.99999999999999,
+        0.0,
+        8.99999999999998,
+        6.29999999999999
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.152380952380951,
+        0.0990476190476181,
+        0.519999999999998,
+        0.228571428571426
+      ],
+      "off_left_final": 5,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.017142857142857,
+        0.0114285714285713,
+        0.0114285714285713,
+        0.00761904761904755
       ],
       "run_length_counts": [
         2,
         11,
         26,
+        1,
+        1,
+        0,
+        1
+      ],
+      "score": 5050,
+      "seed": 28102,
+      "seed_tuple": {
+        "attack": 66798513,
+        "chain": 222539755,
+        "magazine": 172855431,
+        "snake": 52747525,
+        "source": 28102,
+        "spawn": 100352285
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        17,
+        10,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 120.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          5.5,
+          3.8,
+          0.8,
+          2.2
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0247619047619045,
+        0.0266666666666664,
+        0.0247619047619045,
+        0.0304761904761902
+      ],
+      "visible_absent_longest_s": [
+        0.0,
+        0.0,
+        2.1,
+        3.1
+      ],
+      "visible_adjacent_pair_mean": [
+        1.04190476190475,
+        4.28952380952379,
+        0.163809523809522,
+        0.681904761904757
+      ],
+      "visible_mean": [
+        4.02285714285711,
+        7.89142857142847,
+        2.43619047619046,
+        2.78476190476189
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.354285714285711,
+        1.16,
+        0.034285714285714,
+        0.139047619047618
+      ],
+      "weights": [
+        12,
+        30,
+        40,
+        10,
+        5,
+        2,
+        1
+      ],
+      "weights_label": "experimental"
+    },
+    {
+      "ammo_available_fraction": [
+        0.342391304347823,
+        0.73550724637681,
+        0.14855072463768,
+        0.52173913043478
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 88,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 51,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 52,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 13,
+        "original_target_contacts": 38,
+        "original_targets_gone": 1,
+        "revivals": 0,
+        "shot_arrivals": 56,
+        "shot_misses": 5,
+        "shots": 56,
+        "swaps": 32
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 55.2000000000005,
+      "entering_counts": [
+        4,
+        11,
+        12,
+        13
+      ],
+      "fired_counts": [
+        14,
+        14,
+        14,
+        14
+      ],
+      "fresh_counts": [
+        31,
+        30,
+        39,
+        39
+      ],
+      "fresh_generated": 139,
+      "launch_opportunity_fraction": [
+        0.0289855072463765,
+        0.027173913043478,
+        0.0253623188405795,
+        0.0289855072463765
+      ],
+      "left_clipped_mean": [
+        0.351449275362316,
+        0.364130434782606,
+        2.12137681159418,
+        0.291666666666663
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.128623188405796,
+        0.59782608695652,
+        0.00181159420289853,
+        0.271739130434779
+      ],
+      "magazine_draw_count": 58,
+      "magazine_generated_counts": [
+        15,
+        14,
+        14,
+        15
+      ],
+      "match_counts": [
+        13,
+        14,
+        11,
+        14
+      ],
+      "match_opportunity_absent_longest_s": [
+        5.99999999999999,
+        11.8,
+        3.4,
+        9.69999999999998
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999956,
+      "neutralized": 32,
+      "next_fraction": [
+        0.221014492753621,
+        0.33333333333333,
+        0.146739130434781,
+        0.298913043478257
+      ],
+      "off_left_final": 0,
+      "off_right_final": 1,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.00724637681159414,
+        0.0217391304347824,
+        0.0217391304347824,
+        0.0235507246376809
+      ],
+      "run_length_counts": [
+        7,
+        18,
+        4,
+        7,
+        5,
+        4,
+        1
+      ],
+      "score": 7050,
+      "seed": 28101,
+      "seed_tuple": {
+        "attack": 66796136,
+        "chain": 222531836,
+        "magazine": 172849280,
+        "snake": 52745648,
+        "source": 28101,
+        "spawn": 100348714
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        19,
+        8,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 140.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          2.3,
+          6.09999999999999,
+          1.6
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0289855072463765,
+        0.027173913043478,
+        0.0253623188405795,
+        0.0289855072463765
+      ],
+      "visible_absent_longest_s": [
+        5.4,
+        5.0,
+        2.2,
+        2.3
+      ],
+      "visible_adjacent_pair_mean": [
+        1.38949275362317,
+        0.182971014492752,
+        4.42934782608692,
+        1.00905797101448
+      ],
+      "visible_mean": [
+        2.9547101449275,
+        1.90579710144927,
+        6.302536231884,
+        2.57246376811591
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.181159420289853,
+        0.0416666666666663,
+        0.755434782608691,
+        0.228260869565215
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.254208754208751,
+        0.134680134680133,
+        0.264309764309761,
+        0.920875420875421
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 94,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 45,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 48,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 15,
+        "original_target_contacts": 30,
+        "original_targets_gone": 2,
+        "revivals": 0,
+        "shot_arrivals": 60,
+        "shot_misses": 15,
+        "shots": 60,
+        "swaps": 31
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 59.4000000000006,
+      "entering_counts": [
+        10,
+        11,
+        10,
+        12
+      ],
+      "fired_counts": [
+        15,
+        16,
+        15,
+        14
+      ],
+      "fresh_counts": [
+        45,
+        30,
+        41,
+        31
+      ],
+      "fresh_generated": 147,
+      "launch_opportunity_fraction": [
+        0.0286195286195284,
+        0.0336700336700334,
+        0.0319865319865317,
+        0.0269360269360267
+      ],
+      "left_clipped_mean": [
+        0.085858585858585,
+        0.634680134680129,
+        0.0437710437710434,
+        0.0218855218855217
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.08080808080808,
+        0.0269360269360267,
+        0.0740740740740734,
+        0.818181818181817
+      ],
+      "magazine_draw_count": 62,
+      "magazine_generated_counts": [
+        15,
+        16,
+        15,
+        16
+      ],
+      "match_counts": [
+        15,
+        5,
+        14,
+        14
+      ],
+      "match_opportunity_absent_longest_s": [
+        6.19999999999999,
+        1.0,
+        3.8,
+        9.19999999999998
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.173400673400671,
+        0.107744107744107,
+        0.190235690235688,
+        0.528619528619526
+      ],
+      "off_left_final": 7,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.0168350168350167,
+        0.0185185185185183,
+        0.0168350168350167,
+        0.02020202020202
+      ],
+      "run_length_counts": [
+        11,
+        11,
+        13,
+        11,
+        4,
+        1,
+        1
+      ],
+      "score": 6400,
+      "seed": 28102,
+      "seed_tuple": {
+        "attack": 66798513,
+        "chain": 222539755,
+        "magazine": 172855431,
+        "snake": 52747525,
+        "source": 28102,
+        "spawn": 100352285
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        17,
+        10,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 140.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          0.7,
+          0.8,
+          2.2
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0286195286195284,
+        0.0336700336700334,
+        0.0319865319865317,
+        0.0269360269360267
+      ],
+      "visible_absent_longest_s": [
+        5.8,
+        0.0,
+        2.1,
+        7.39999999999999
+      ],
+      "visible_adjacent_pair_mean": [
+        0.961279461279455,
+        4.00168350168345,
+        1.87878787878786,
+        0.166666666666665
+      ],
+      "visible_mean": [
+        2.47306397306395,
+        7.00336700336696,
+        3.56902356902352,
+        1.4124579124579
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.321548821548818,
+        1.54377104377103,
+        0.619528619528615,
+        0.0420875420875417
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.397286821705423,
+        0.546511627906974,
+        0.151162790697673,
+        0.668604651162789
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 91,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 53,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 55,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 13,
+        "original_target_contacts": 40,
+        "original_targets_gone": 1,
+        "revivals": 0,
+        "shot_arrivals": 56,
+        "shot_misses": 3,
+        "shots": 56,
+        "swaps": 29
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 51.6000000000005,
+      "entering_counts": [
+        7,
+        12,
+        6,
+        8
+      ],
+      "fired_counts": [
+        14,
+        14,
+        14,
+        14
+      ],
+      "fresh_counts": [
+        32,
+        30,
+        34,
+        35
+      ],
+      "fresh_generated": 131,
+      "launch_opportunity_fraction": [
+        0.0290697674418602,
+        0.0329457364341082,
+        0.0271317829457362,
+        0.0290697674418602
+      ],
+      "left_clipped_mean": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.133720930232557,
+        0.312015503875965,
+        0.0329457364341082,
+        0.521317829457362
+      ],
+      "magazine_draw_count": 58,
+      "magazine_generated_counts": [
+        15,
+        14,
+        14,
+        15
+      ],
+      "match_counts": [
+        14,
+        13,
+        13,
+        15
+      ],
+      "match_opportunity_absent_longest_s": [
+        7.29999999999999,
+        8.79999999999998,
+        6.29999999999999,
+        8.79999999999998
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.263565891472865,
+        0.327519379844958,
+        0.118217054263565,
+        0.290697674418601
+      ],
+      "off_left_final": 0,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.0135658914728681,
+        0.0232558139534882,
+        0.0116279069767441,
+        0.0155038759689921
+      ],
+      "run_length_counts": [
+        3,
+        20,
+        15,
+        7,
+        3,
+        0,
+        0
+      ],
+      "score": 6450,
+      "seed": 28101,
+      "seed_tuple": {
+        "attack": 66796136,
+        "chain": 222531836,
+        "magazine": 172849280,
+        "snake": 52745648,
+        "source": 28101,
+        "spawn": 100348714
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        19,
+        9,
+        2,
+        2
+      ],
+      "spawned": 32,
+      "speed": 140.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          0.1,
+          0.0,
+          0.0
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0290697674418602,
+        0.0329457364341082,
+        0.0271317829457362,
+        0.0290697674418602
+      ],
+      "visible_absent_longest_s": [
+        4.4,
+        3.8,
+        5.8,
+        4.9
+      ],
+      "visible_adjacent_pair_mean": [
+        0.228682170542633,
+        0.870155038759682,
+        0.709302325581392,
+        0.5406976744186
+      ],
+      "visible_mean": [
+        2.15891472868216,
+        2.04457364341084,
+        2.06976744186045,
+        1.15891472868216
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.0310077519379842,
+        0.207364341085269,
+        0.164728682170541,
+        0.201550387596897
+      ],
+      "weights": [
+        12,
+        30,
+        40,
+        10,
+        5,
+        2,
+        1
+      ],
+      "weights_label": "experimental"
+    },
+    {
+      "ammo_available_fraction": [
+        0.199999999999998,
+        0.136363636363635,
+        0.724999999999998,
+        0.499999999999997
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 94,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 43,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 46,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 11,
+        "original_target_contacts": 32,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 51,
+        "shot_misses": 8,
+        "shots": 51,
+        "swaps": 28
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 44.0000000000004,
+      "entering_counts": [
+        4,
+        14,
+        6,
+        7
+      ],
+      "fired_counts": [
+        13,
+        13,
+        12,
+        13
+      ],
+      "fresh_counts": [
+        32,
+        24,
+        27,
+        27
+      ],
+      "fresh_generated": 110,
+      "launch_opportunity_fraction": [
+        0.0318181818181816,
+        0.0340909090909088,
+        0.0295454545454543,
+        0.0363636363636361
+      ],
+      "left_clipped_mean": [
+        0.465909090909087,
+        1.06363636363636,
+        0.274999999999998,
+        0.136363636363635
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.0386363636363633,
+        0.018181818181818,
+        0.554545454545452,
+        0.38863636363636
+      ],
+      "magazine_draw_count": 53,
+      "magazine_generated_counts": [
+        13,
+        13,
+        14,
+        13
+      ],
+      "match_counts": [
+        13,
+        8,
+        12,
+        13
+      ],
+      "match_opportunity_absent_longest_s": [
+        5.2,
+        0.2,
+        7.89999999999999,
+        4.5
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.161363636363635,
+        0.118181818181817,
+        0.472727272727269,
+        0.24772727272727
+      ],
+      "off_left_final": 0,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.00909090909090902,
+        0.0318181818181816,
+        0.0136363636363635,
+        0.0159090909090908
+      ],
+      "run_length_counts": [
+        2,
+        11,
+        24,
+        1,
+        1,
+        0,
+        1
+      ],
+      "score": 5500,
+      "seed": 28102,
+      "seed_tuple": {
+        "attack": 66798513,
+        "chain": 222539755,
+        "magazine": 172855431,
+        "snake": 52747525,
+        "source": 28102,
+        "spawn": 100352285
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        17,
+        10,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 140.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          5.4,
+          6.09999999999999,
+          0.8,
+          2.2
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0318181818181816,
+        0.0340909090909088,
+        0.0295454545454543,
+        0.0363636363636361
+      ],
+      "visible_absent_longest_s": [
+        0.0,
+        0.0,
+        1.9,
+        2.5
+      ],
+      "visible_adjacent_pair_mean": [
+        0.979545454545446,
+        3.97727272727269,
+        0.179545454545453,
+        0.752272727272721
+      ],
+      "visible_mean": [
+        3.89545454545451,
+        7.20454545454541,
+        2.38181818181817,
+        2.73863636363634
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.236363636363634,
+        1.05227272727273,
+        0.0386363636363633,
+        0.161363636363635
+      ],
+      "weights": [
+        12,
+        30,
+        40,
+        10,
+        5,
+        2,
+        1
+      ],
+      "weights_label": "experimental"
+    },
+    {
+      "ammo_available_fraction": [
+        0.444206008583688,
+        0.54291845493562,
+        0.444206008583688,
+        0.326180257510726
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 85,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 48,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 50,
+        "nonmatched_insertions": 1,
+        "off_target_insertions": 13,
+        "original_target_contacts": 35,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 53,
+        "shot_misses": 5,
+        "shots": 53,
+        "swaps": 32
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 46.6000000000004,
+      "entering_counts": [
+        7,
+        2,
+        6,
+        8
+      ],
+      "fired_counts": [
+        13,
+        14,
+        13,
+        13
+      ],
+      "fresh_counts": [
+        31,
+        29,
+        38,
+        38
+      ],
+      "fresh_generated": 136,
+      "launch_opportunity_fraction": [
+        0.0300429184549354,
+        0.0321888412017165,
+        0.0278969957081543,
+        0.0321888412017165
+      ],
+      "left_clipped_mean": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.27467811158798,
+        0.306866952789696,
+        0.291845493562229,
+        0.126609442060085
+      ],
+      "magazine_draw_count": 55,
+      "magazine_generated_counts": [
+        13,
+        14,
+        14,
+        14
+      ],
+      "match_counts": [
+        13,
+        13,
+        13,
+        11
+      ],
+      "match_opportunity_absent_longest_s": [
+        7.19999999999999,
+        10.2,
+        6.29999999999999,
+        7.19999999999999
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999989,
+      "minimum_shot_interval": 0.399999999999977,
+      "neutralized": 32,
+      "next_fraction": [
+        0.251072961373388,
+        0.358369098712443,
+        0.182403433476393,
+        0.208154506437766
+      ],
+      "off_left_final": 0,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.0150214592274677,
+        0.0042918454935622,
+        0.0150214592274677,
+        0.0193133047210299
+      ],
+      "run_length_counts": [
+        5,
+        18,
+        4,
+        7,
+        5,
+        4,
+        1
+      ],
+      "score": 6700,
+      "seed": 28101,
+      "seed_tuple": {
+        "attack": 66796136,
+        "chain": 222531836,
+        "magazine": 172849280,
+        "snake": 52745648,
+        "source": 28101,
+        "spawn": 100348714
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        20,
+        7,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 160.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          0.0,
+          1.6,
+          0.0
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0300429184549354,
+        0.0321888412017165,
+        0.0278969957081543,
+        0.0321888412017165
+      ],
+      "visible_absent_longest_s": [
+        6.79999999999999,
+        4.4,
+        2.0,
+        1.8
+      ],
+      "visible_adjacent_pair_mean": [
+        0.950643776824026,
+        0.482832618025746,
+        0.785407725321883,
+        1.22961373390557
+      ],
+      "visible_mean": [
+        2.60085836909869,
+        2.55579399141628,
+        2.05793991416306,
+        3.6545064377682
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.0987124463519305,
+        0.085836909871244,
+        0.171673819742488,
+        0.309012875536478
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.238859180035648,
+        0.147950089126558,
+        0.245989304812831,
+        0.92156862745098
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 94,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 50,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 50,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 16,
+        "original_target_contacts": 34,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 63,
+        "shot_misses": 13,
+        "shots": 63,
+        "swaps": 33
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 56.1000000000005,
+      "entering_counts": [
+        12,
+        6,
+        9,
+        9
+      ],
+      "fired_counts": [
+        16,
+        16,
+        16,
+        15
+      ],
+      "fresh_counts": [
+        52,
+        31,
+        42,
+        35
+      ],
+      "fresh_generated": 160,
+      "launch_opportunity_fraction": [
+        0.0338680926916218,
+        0.0338680926916218,
+        0.0374331550802136,
+        0.0320855614973259
+      ],
+      "left_clipped_mean": [
+        0.219251336898393,
+        1.52762923351157,
+        0.429590017825308,
+        0.213903743315506
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.0695187165775395,
+        0.0285204991087341,
+        0.0606060606060601,
+        0.841354723707664
+      ],
+      "magazine_draw_count": 65,
+      "magazine_generated_counts": [
+        16,
+        17,
+        16,
+        16
+      ],
+      "match_counts": [
+        16,
+        5,
+        14,
+        15
+      ],
+      "match_opportunity_absent_longest_s": [
+        5.3,
+        1.1,
+        3.2,
+        8.09999999999999
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999964,
+      "minimum_shot_interval": 0.399999999999952,
+      "neutralized": 32,
+      "next_fraction": [
+        0.169340463458109,
+        0.119429590017824,
+        0.185383244206771,
+        0.525846702317288
+      ],
+      "off_left_final": 18,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.0213903743315506,
+        0.0106951871657753,
+        0.016042780748663,
+        0.016042780748663
+      ],
+      "run_length_counts": [
+        14,
+        11,
+        16,
+        11,
+        4,
+        1,
+        1
+      ],
+      "score": 6800,
+      "seed": 28102,
+      "seed_tuple": {
+        "attack": 66798513,
+        "chain": 222539755,
+        "magazine": 172855431,
+        "snake": 52747525,
+        "source": 28102,
+        "spawn": 100352285
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        17,
+        10,
+        2,
+        3
+      ],
+      "spawned": 32,
+      "speed": 160.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          0.8,
+          0.8,
+          2.2
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0338680926916218,
+        0.0338680926916218,
+        0.0374331550802136,
+        0.0320855614973259
+      ],
+      "visible_absent_longest_s": [
+        0.0,
+        0.0,
+        1.8,
+        2.2
+      ],
+      "visible_adjacent_pair_mean": [
+        1.22994652406416,
+        4.21390374331546,
+        2.1639928698752,
+        0.162210338680925
+      ],
+      "visible_mean": [
+        3.32442067736182,
+        7.76470588235287,
+        4.15864527629229,
+        1.95365418894829
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.417112299465237,
+        1.39750445632797,
+        0.604278074866307,
+        0.0124777183600712
+      ],
+      "weights": [
+        20,
+        30,
+        18,
+        13,
+        9,
+        6,
+        4
+      ],
+      "weights_label": "baseline"
+    },
+    {
+      "ammo_available_fraction": [
+        0.343339587242023,
+        0.833020637898686,
+        0.485928705440898,
+        0.163227016885552
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 91,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 54,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 55,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 14,
+        "original_target_contacts": 40,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 64,
+        "shot_misses": 10,
+        "shots": 65,
+        "swaps": 35
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 53.3000000000005,
+      "entering_counts": [
+        6,
+        5,
+        10,
+        6
+      ],
+      "fired_counts": [
+        16,
+        16,
+        16,
+        17
+      ],
+      "fresh_counts": [
+        40,
+        35,
+        39,
+        40
+      ],
+      "fresh_generated": 154,
+      "launch_opportunity_fraction": [
+        0.0337711069418384,
+        0.0318949343339584,
+        0.0300187617260785,
+        0.0393996247654781
+      ],
+      "left_clipped_mean": [
+        0.0318949343339584,
+        0.110694183864914,
+        0.0,
+        0.431519699812379
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.18761726078799,
+        0.484052532833018,
+        0.290806754221385,
+        0.0375234521575982
+      ],
+      "magazine_draw_count": 67,
+      "magazine_generated_counts": [
+        16,
+        17,
+        17,
+        17
+      ],
+      "match_counts": [
+        16,
+        15,
+        15,
+        9
+      ],
+      "match_opportunity_absent_longest_s": [
+        5.9,
+        7.79999999999999,
+        5.2,
+        1.5
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.19999999999995,
+      "minimum_shot_interval": 0.399999999999956,
+      "neutralized": 32,
+      "next_fraction": [
+        0.18761726078799,
+        0.484052532833018,
+        0.19512195121951,
+        0.133208255159473
+      ],
+      "off_left_final": 0,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.0112570356472794,
+        0.0112570356472794,
+        0.0187617260787991,
+        0.0112570356472794
+      ],
+      "run_length_counts": [
+        3,
+        23,
+        19,
+        7,
+        4,
+        0,
+        0
+      ],
+      "score": 7450,
+      "seed": 28101,
+      "seed_tuple": {
+        "attack": 66796136,
+        "chain": 222531836,
+        "magazine": 172849280,
+        "snake": 52745648,
+        "source": 28101,
+        "spawn": 100348714
+      },
+      "series": "speed_weights",
+      "spawn_type_counts": [
+        19,
+        9,
+        2,
+        2
+      ],
+      "spawned": 32,
+      "speed": 160.0,
+      "starting_preset_counts": [
+        3,
+        3,
+        2,
+        4
+      ],
+      "starvation_reasons_s": {
+        "ammo": 0.0,
+        "chain": 0.0,
+        "timing": 0.0
+      },
+      "starved_threat_longest_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "starved_threat_time_s": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "step": 0.1,
+      "threat_time_s": {
+        "10": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "20": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "5": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "usable_response_fraction": [
+        0.0337711069418384,
+        0.0318949343339584,
+        0.0300187617260785,
+        0.0393996247654781
+      ],
+      "visible_absent_longest_s": [
+        5.4,
+        3.3,
+        4.2,
+        1.1
+      ],
+      "visible_adjacent_pair_mean": [
+        0.645403377110689,
+        0.0900562851782356,
+        0.664165103189488,
+        5.45403377110689
+      ],
+      "visible_mean": [
+        2.87242026266415,
+        2.02063789868667,
+        1.84427767354595,
+        8.7317073170731
+      ],
+      "visible_preexisting_group3_fraction": [
+        0.168855534709191,
+        0.0187617260787991,
+        0.127579737335834,
+        1.90994371482175
+      ],
+      "weights": [
+        12,
+        30,
+        40,
+        10,
+        5,
+        2,
+        1
+      ],
+      "weights_label": "experimental"
+    },
+    {
+      "ammo_available_fraction": [
+        0.224839400428263,
+        0.141327623126337,
+        0.762312633832975,
+        0.430406852248391
+      ],
+      "counts": {
+        "breaches": 0,
+        "damage_hits": 94,
+        "emergency_clears": 0,
+        "healer_pulses": 0,
+        "insertions": 49,
+        "kills": 32,
+        "knockdowns": 0,
+        "matches": 48,
+        "nonmatched_insertions": 2,
+        "off_target_insertions": 11,
+        "original_target_contacts": 38,
+        "original_targets_gone": 0,
+        "revivals": 0,
+        "shot_arrivals": 59,
+        "shot_misses": 10,
+        "shots": 59,
+        "swaps": 35
+      },
+      "duration_requested": 120.0,
+      "duration_simulated": 46.7000000000004,
+      "entering_counts": [
+        6,
+        5,
+        7,
+        2
+      ],
+      "fired_counts": [
+        14,
+        15,
+        15,
+        15
+      ],
+      "fresh_counts": [
+        36,
+        31,
+        35,
+        32
+      ],
+      "fresh_generated": 134,
+      "launch_opportunity_fraction": [
+        0.0299785867237685,
+        0.0342612419700211,
+        0.0342612419700211,
+        0.0385438972162738
+      ],
+      "left_clipped_mean": [
+        0.327623126338326,
+        1.91434689507493,
+        0.233404710920768,
+        0.158458244111348
+      ],
+      "live_enemies": 0,
+      "loaded_fraction": [
+        0.0620985010706633,
+        0.00856531049250528,
+        0.616702355460383,
+        0.312633832976442
+      ],
+      "magazine_draw_count": 61,
+      "magazine_generated_counts": [
+        15,
+        16,
+        15,
+        15
+      ],
+      "match_counts": [
+        14,
+        6,
+        14,
+        14
+      ],
+      "match_opportunity_absent_longest_s": [
+        4.6,
+        0.0,
+        6.89999999999999,
+        4.0
+      ],
+      "maximum_flight_time": 0.20000000000001,
+      "minimum_flight_time": 0.199999999999982,
+      "minimum_shot_interval": 0.39999999999997,
+      "neutralized": 32,
+      "next_fraction": [
+        0.175588865096358,
+        0.132762312633832,
+        0.47751605995717,
+        0.214132762312632
+      ],
+      "off_left_final": 6,
+      "off_right_final": 0,
+      "outcome": "victory",
+      "policy": "basic_matcher",
+      "right_clipped_mean": [
+        0.0128479657387579,
+        0.0107066381156316,
+        0.0149892933618842,
+        0.00428265524625264
+      ],
+      "run_length_counts": [
+        3,
+        16,
+        28,
         1,
         1,
         0,
@@ -68047,212 +70910,7 @@
         3
       ],
       "spawned": 32,
-      "speed": 102.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.4,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.4,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.4,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.4,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          8.39999999999999,
-          2.9,
-          0.8,
-          2.1
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0206540447504301,
-        0.0223752151462993,
-        0.0223752151462993,
-        0.0223752151462993
-      ],
-      "visible_absent_longest_s": [
-        1.7,
-        9.69999999999998,
-        2.7,
-        3.7
-      ],
-      "visible_adjacent_pair_mean": [
-        2.39759036144575,
-        0.115318416523235,
-        0.328743545611012,
-        0.705679862306365
-      ],
-      "visible_mean": [
-        3.80034423407915,
-        0.884681583476759,
-        2.33907056798622,
-        2.2444061962134
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.870912220309809,
-        0.0258175559380376,
-        0.0946643717728045,
-        0.158347676419964
-      ],
-      "weights": [
-        12,
-        30,
-        40,
-        10,
-        5,
-        2,
-        1
-      ],
-      "weights_label": "experimental"
-    },
-    {
-      "ammo_available_fraction": [
-        0.507782101167313,
-        0.445525291828791,
-        0.348249027237351,
-        0.535019455252916
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 88,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 47,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 50,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 47,
-        "swaps": 27
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 51.4000000000005,
-      "entering_counts": [
-        5,
-        11,
-        7,
-        8
-      ],
-      "fired_counts": [
-        12,
-        12,
-        12,
-        11
-      ],
-      "fresh_counts": [
-        27,
-        26,
-        34,
-        34
-      ],
-      "fresh_generated": 121,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.266536964980542,
-        0.239299610894939,
-        0.134241245136185,
-        0.359922178988323
-      ],
-      "magazine_draw_count": 49,
-      "magazine_generated_counts": [
-        13,
-        12,
-        12,
-        12
-      ],
-      "match_counts": [
-        13,
-        13,
-        12,
-        12
-      ],
-      "match_opportunity_absent_longest_s": [
-        8.69999999999999,
-        7.69999999999999,
-        6.19999999999999,
-        11.1
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.256809338521398,
-        0.250972762645912,
-        0.214007782101165,
-        0.278210116731514
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.00972762645914388,
-        0.0214007782101165,
-        0.0136186770428014,
-        0.0155642023346302
-      ],
-      "run_length_counts": [
-        5,
-        18,
-        3,
-        5,
-        4,
-        4,
-        1
-      ],
-      "score": 6450,
-      "seed": 28101,
-      "seed_tuple": {
-        "attack": 66796136,
-        "chain": 222531836,
-        "magazine": 172849280,
-        "snake": 52745648,
-        "source": 28101,
-        "spawn": 100348714
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        19,
-        8,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 120.0,
+      "speed": 160.0,
       "starting_preset_counts": [
         3,
         3,
@@ -68285,625 +70943,10 @@
           0.0
         ],
         "20": [
-          0.0,
-          4.2,
-          5.2,
-          0.1
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0252918287937741,
-        0.0252918287937741,
-        0.0233463035019453,
-        0.0233463035019453
-      ],
-      "visible_absent_longest_s": [
-        0.4,
-        5.7,
-        5.8,
-        2.6
-      ],
-      "visible_adjacent_pair_mean": [
-        0.324902723735406,
-        0.400778210116727,
-        1.1420233463035,
-        0.791828793774314
-      ],
-      "visible_mean": [
-        1.8871595330739,
-        1.43385214007781,
-        1.71984435797664,
-        1.9747081712062
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.0564202334630345,
-        0.0583657587548633,
-        0.250972762645912,
-        0.194552529182877
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.0895833333333326,
-        0.818749999999999,
-        0.174999999999998,
-        0.527083333333331
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 98,
-        "emergency_clears": 0,
-        "healer_pulses": 2,
-        "insertions": 36,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 36,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 37,
-        "swaps": 18
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 48.0000000000004,
-      "entering_counts": [
-        11,
-        5,
-        6,
-        9
-      ],
-      "fired_counts": [
-        9,
-        9,
-        10,
-        9
-      ],
-      "fresh_counts": [
-        32,
-        19,
-        30,
-        24
-      ],
-      "fresh_generated": 105,
-      "left_clipped_mean": [
-        3.12083333333331,
-        1.17708333333332,
-        2.00416666666665,
-        1.28124999999999
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.00208333333333332,
-        0.512499999999997,
-        0.0333333333333331,
-        0.45208333333333
-      ],
-      "magazine_draw_count": 39,
-      "magazine_generated_counts": [
-        9,
-        10,
-        10,
-        10
-      ],
-      "match_counts": [
-        9,
-        9,
-        10,
-        8
-      ],
-      "match_opportunity_absent_longest_s": [
-        2.8,
-        26.3000000000001,
-        3.0,
-        8.89999999999998
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.0874999999999993,
-        0.687499999999998,
-        0.141666666666665,
-        0.0833333333333326
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0229166666666665,
-        0.0104166666666666,
-        0.0124999999999999,
-        0.0187499999999998
-      ],
-      "run_length_counts": [
-        8,
-        6,
-        9,
-        8,
-        3,
-        1,
-        1
-      ],
-      "score": 5200,
-      "seed": 28102,
-      "seed_tuple": {
-        "attack": 66798513,
-        "chain": 222539755,
-        "magazine": 172855431,
-        "snake": 52747525,
-        "source": 28102,
-        "spawn": 100352285
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        17,
-        10,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 120.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 2.1,
-        "chain": 0.0,
-        "timing": 0.6
-      },
-      "starved_threat_longest_s": [
-        1.5,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        2.7,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          2.9,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          12.9,
-          1.3,
-          0.8,
-          2.1
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0187499999999998,
-        0.0208333333333332,
-        0.0291666666666664,
-        0.0229166666666665
-      ],
-      "visible_absent_longest_s": [
-        0.0,
-        7.89999999999999,
-        2.5,
-        3.1
-      ],
-      "visible_adjacent_pair_mean": [
-        4.1333333333333,
-        0.106249999999999,
-        3.61041666666663,
-        1.56666666666665
-      ],
-      "visible_mean": [
-        6.17708333333328,
-        2.08541666666665,
-        5.42708333333328,
-        3.29791666666664
-      ],
-      "visible_preexisting_group3_fraction": [
-        1.23541666666666,
-        0.0208333333333332,
-        1.17916666666666,
-        0.281249999999997
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.360655737704915,
-        0.551912568306009,
-        0.417122040072857,
-        0.500910746812384
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 91,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 54,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 55,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 55,
-        "swaps": 30
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 54.9000000000005,
-      "entering_counts": [
-        7,
-        14,
-        4,
-        4
-      ],
-      "fired_counts": [
-        14,
-        14,
-        13,
-        14
-      ],
-      "fresh_counts": [
-        31,
-        30,
-        34,
-        35
-      ],
-      "fresh_generated": 130,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0947176684881594,
-        0.284153005464478,
-        0.276867030965388,
-        0.344262295081964
-      ],
-      "magazine_draw_count": 57,
-      "magazine_generated_counts": [
-        14,
-        14,
-        14,
-        15
-      ],
-      "match_counts": [
-        13,
-        14,
-        14,
-        14
-      ],
-      "match_opportunity_absent_longest_s": [
-        7.59999999999999,
-        9.79999999999998,
-        6.89999999999999,
-        8.09999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.265938069216755,
-        0.384335154826955,
-        0.176684881602912,
-        0.173041894353368
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0127504553734061,
-        0.0255009107468122,
-        0.00728597449908919,
-        0.00728597449908919
-      ],
-      "run_length_counts": [
-        3,
-        20,
-        15,
-        7,
-        3,
-        0,
-        0
-      ],
-      "score": 6700,
-      "seed": 28101,
-      "seed_tuple": {
-        "attack": 66796136,
-        "chain": 222531836,
-        "magazine": 172849280,
-        "snake": 52745648,
-        "source": 28101,
-        "spawn": 100348714
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        19,
-        9,
-        2,
-        2
-      ],
-      "spawned": 32,
-      "speed": 120.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          0.6,
-          3.3,
-          0.0,
-          0.0
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0273224043715844,
-        0.0273224043715844,
-        0.0255009107468122,
-        0.0273224043715844
-      ],
-      "visible_absent_longest_s": [
-        4.5,
-        4.3,
-        6.39999999999999,
-        4.6
-      ],
-      "visible_adjacent_pair_mean": [
-        0.519125683060105,
-        0.393442622950816,
-        0.371584699453549,
-        1.06375227686702
-      ],
-      "visible_mean": [
-        1.30601092896173,
-        1.42622950819671,
-        1.33879781420764,
-        1.74863387978141
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.178506375227685,
-        0.114754098360655,
-        0.0892531876138425,
-        0.265938069216755
-      ],
-      "weights": [
-        12,
-        30,
-        40,
-        10,
-        5,
-        2,
-        1
-      ],
-      "weights_label": "experimental"
-    },
-    {
-      "ammo_available_fraction": [
-        0.152830188679244,
-        0.658490566037734,
-        0.679245283018866,
-        0.362264150943393
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 94,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 49,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 50,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 49,
-        "swaps": 28
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 53.0000000000005,
-      "entering_counts": [
-        11,
-        5,
-        2,
-        5
-      ],
-      "fired_counts": [
-        12,
-        13,
-        12,
-        12
-      ],
-      "fresh_counts": [
-        33,
-        27,
-        32,
-        30
-      ],
-      "fresh_generated": 122,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0245283018867922,
-        0.164150943396225,
-        0.573584905660375,
-        0.237735849056601
-      ],
-      "magazine_draw_count": 51,
-      "magazine_generated_counts": [
-        13,
-        13,
-        13,
-        12
-      ],
-      "match_counts": [
-        12,
-        13,
-        13,
-        12
-      ],
-      "match_opportunity_absent_longest_s": [
-        5.4,
-        8.69999999999999,
-        6.29999999999999,
-        7.19999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.128301886792451,
-        0.535849056603771,
-        0.211320754716979,
-        0.124528301886791
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0207547169811319,
-        0.00943396226415086,
-        0.00377358490566034,
-        0.00943396226415086
-      ],
-      "run_length_counts": [
-        2,
-        11,
-        28,
-        1,
-        1,
-        0,
-        1
-      ],
-      "score": 6100,
-      "seed": 28102,
-      "seed_tuple": {
-        "attack": 66798513,
-        "chain": 222539755,
-        "magazine": 172855431,
-        "snake": 52747525,
-        "source": 28102,
-        "spawn": 100352285
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        17,
-        10,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 120.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          4.2,
           2.1,
+          5.2,
           0.8,
-          2.1
+          2.2
         ],
         "5": [
           0.0,
@@ -68913,1674 +70956,34 @@
         ]
       },
       "usable_response_fraction": [
-        0.0226415094339621,
-        0.0264150943396224,
-        0.0264150943396224,
-        0.0245283018867922
-      ],
-      "visible_absent_longest_s": [
-        1.6,
-        8.19999999999999,
-        2.2,
-        3.1
-      ],
-      "visible_adjacent_pair_mean": [
-        2.12452830188677,
-        0.137735849056602,
-        0.343396226415091,
-        0.705660377358487
-      ],
-      "visible_mean": [
-        3.5207547169811,
-        1.00377358490565,
-        2.46226415094338,
-        2.33018867924526
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.673584905660371,
-        0.0301886792452827,
-        0.099999999999999,
-        0.166037735849055
-      ],
-      "weights": [
-        12,
-        30,
-        40,
-        10,
-        5,
-        2,
-        1
-      ],
-      "weights_label": "experimental"
-    },
-    {
-      "ammo_available_fraction": [
-        0.419732441471569,
-        0.453177257525081,
-        0.361204013377924,
-        0.571906354515048
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 85,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 57,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 61,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 1,
-        "shots": 58,
-        "swaps": 32
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 59.8000000000006,
-      "entering_counts": [
-        11,
-        11,
-        15,
-        14
-      ],
-      "fired_counts": [
-        15,
-        14,
-        14,
-        15
-      ],
-      "fresh_counts": [
-        41,
-        32,
-        41,
-        43
-      ],
-      "fresh_generated": 157,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.209030100334446,
-        0.198996655518392,
-        0.168896321070232,
-        0.42307692307692
-      ],
-      "magazine_draw_count": 60,
-      "magazine_generated_counts": [
-        15,
-        15,
-        15,
-        15
-      ],
-      "match_counts": [
-        16,
-        15,
-        14,
-        16
-      ],
-      "match_opportunity_absent_longest_s": [
-        7.59999999999999,
-        6.99999999999999,
-        5.5,
-        9.69999999999998
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.22240802675585,
-        0.285953177257522,
-        0.19230769230769,
-        0.299331103678927
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0183946488294313,
-        0.0183946488294313,
-        0.0250836120401335,
-        0.023411371237458
-      ],
-      "run_length_counts": [
-        7,
-        23,
-        5,
-        7,
-        5,
-        5,
-        1
-      ],
-      "score": 7750,
-      "seed": 28101,
-      "seed_tuple": {
-        "attack": 66796136,
-        "chain": 222531836,
-        "magazine": 172849280,
-        "snake": 52745648,
-        "source": 28101,
-        "spawn": 100348714
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        20,
-        7,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 140.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          0.0,
-          0.0,
-          8.29999999999999,
-          5.3
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0284280936454847,
-        0.0267558528428091,
-        0.023411371237458,
-        0.0267558528428091
-      ],
-      "visible_absent_longest_s": [
-        0.4,
-        4.8,
-        5.1,
-        5.5
-      ],
-      "visible_adjacent_pair_mean": [
-        0.602006688963206,
-        0.456521739130429,
-        0.981605351170562,
-        0.663879598662203
-      ],
-      "visible_mean": [
-        2.09866220735784,
-        1.46321070234112,
-        1.85117056856186,
-        1.78762541806017
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.085284280936454,
-        0.110367892976587,
-        0.22240802675585,
-        0.153846153846152
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.0879629629629623,
-        0.812499999999999,
-        0.182870370370369,
-        0.546296296296294
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 95,
-        "emergency_clears": 0,
-        "healer_pulses": 1,
-        "insertions": 37,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 37,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 37,
-        "swaps": 17
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 43.2000000000003,
-      "entering_counts": [
-        8,
-        5,
-        11,
-        8
-      ],
-      "fired_counts": [
-        9,
-        9,
-        10,
-        9
-      ],
-      "fresh_counts": [
-        35,
-        19,
-        30,
-        25
-      ],
-      "fresh_generated": 109,
-      "left_clipped_mean": [
-        3.11574074074072,
-        1.18055555555555,
-        2.01388888888887,
-        1.28703703703703
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0023148148148148,
-        0.52083333333333,
-        0.0370370370370368,
-        0.439814814814811
-      ],
-      "magazine_draw_count": 39,
-      "magazine_generated_counts": [
-        9,
-        10,
-        10,
-        10
-      ],
-      "match_counts": [
-        9,
-        9,
-        10,
-        9
-      ],
-      "match_opportunity_absent_longest_s": [
-        2.3,
-        22.7000000000001,
-        2.5,
-        7.69999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.0856481481481475,
-        0.652777777777776,
-        0.145833333333332,
-        0.11574074074074
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0185185185185184,
-        0.011574074074074,
-        0.0254629629629628,
-        0.0185185185185184
-      ],
-      "run_length_counts": [
-        9,
-        6,
-        9,
-        8,
-        4,
-        1,
-        1
-      ],
-      "score": 5300,
-      "seed": 28102,
-      "seed_tuple": {
-        "attack": 66798513,
-        "chain": 222539755,
-        "magazine": 172855431,
-        "snake": 52747525,
-        "source": 28102,
-        "spawn": 100352285
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        17,
-        10,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 140.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          7.79999999999999,
-          1.0,
-          0.8,
-          2.1
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0208333333333332,
-        0.023148148148148,
-        0.0324074074074072,
-        0.0277777777777776
+        0.0299785867237685,
+        0.0342612419700211,
+        0.0342612419700211,
+        0.0385438972162738
       ],
       "visible_absent_longest_s": [
         0.0,
-        6.49999999999999,
-        2.1,
-        2.6
-      ],
-      "visible_adjacent_pair_mean": [
-        4.09490740740737,
-        0.120370370370369,
-        3.59953703703701,
-        1.56018518518518
-      ],
-      "visible_mean": [
-        6.13888888888884,
-        2.13888888888887,
-        5.41666666666662,
-        3.33333333333331
-      ],
-      "visible_preexisting_group3_fraction": [
-        1.22916666666666,
-        0.023148148148148,
-        1.18749999999999,
-        0.289351851851849
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.365503080082132,
-        0.535934291581106,
-        0.422997946611906,
-        0.50513347022587
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 85,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 54,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 55,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 54,
-        "swaps": 29
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 48.7000000000004,
-      "entering_counts": [
-        9,
-        10,
-        7,
-        13
-      ],
-      "fired_counts": [
-        13,
-        14,
-        13,
-        14
-      ],
-      "fresh_counts": [
-        30,
-        30,
-        34,
-        35
-      ],
-      "fresh_generated": 129,
-      "left_clipped_mean": [
         0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0985626283367548,
-        0.275154004106773,
-        0.279260780287471,
-        0.34702258726899
-      ],
-      "magazine_draw_count": 56,
-      "magazine_generated_counts": [
-        14,
-        14,
-        14,
-        14
-      ],
-      "match_counts": [
-        13,
-        14,
-        14,
-        14
-      ],
-      "match_opportunity_absent_longest_s": [
-        6.79999999999999,
-        8.59999999999999,
-        6.19999999999999,
-        7.09999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.266940451745377,
-        0.373716632443528,
-        0.180698151950717,
-        0.178644763860368
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0184804928131415,
-        0.0205338809034906,
-        0.0143737166324434,
-        0.0266940451745378
-      ],
-      "run_length_counts": [
-        3,
-        20,
-        15,
-        7,
-        3,
-        0,
-        0
-      ],
-      "score": 6600,
-      "seed": 28101,
-      "seed_tuple": {
-        "attack": 66796136,
-        "chain": 222531836,
-        "magazine": 172849280,
-        "snake": 52745648,
-        "source": 28101,
-        "spawn": 100348714
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        20,
-        7,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 140.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          0.0,
-          1.7,
-          1.1,
-          0.0
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0287474332648868,
-        0.0308008213552359,
-        0.0287474332648868,
-        0.0308008213552359
-      ],
-      "visible_absent_longest_s": [
-        3.8,
-        3.6,
-        5.8,
-        3.9
-      ],
-      "visible_adjacent_pair_mean": [
-        0.531827515400407,
-        0.640657084188907,
-        0.383983572895274,
-        1.088295687885
-      ],
-      "visible_mean": [
-        1.3223819301848,
-        1.68172484599588,
-        1.36139630390143,
-        1.77823408624229
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.180698151950717,
-        0.154004106776179,
-        0.0903490759753586,
-        0.266940451745377
-      ],
-      "weights": [
-        12,
-        30,
-        40,
-        10,
-        5,
-        2,
-        1
-      ],
-      "weights_label": "experimental"
-    },
-    {
-      "ammo_available_fraction": [
-        0.154867256637167,
-        0.714601769911503,
-        0.590707964601767,
-        0.411504424778758
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 94,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 49,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 50,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 49,
-        "swaps": 27
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 45.2000000000004,
-      "entering_counts": [
-        10,
-        9,
-        10,
-        8
-      ],
-      "fired_counts": [
-        12,
-        13,
-        12,
-        12
-      ],
-      "fresh_counts": [
-        32,
-        27,
-        29,
-        30
-      ],
-      "fresh_generated": 118,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0265486725663715,
-        0.25663716814159,
-        0.457964601769908,
-        0.258849557522121
-      ],
-      "magazine_draw_count": 51,
-      "magazine_generated_counts": [
-        13,
-        13,
-        13,
-        12
-      ],
-      "match_counts": [
-        12,
-        13,
-        13,
-        12
-      ],
-      "match_opportunity_absent_longest_s": [
-        4.5,
-        7.59999999999999,
-        5.6,
-        6.09999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.128318584070795,
-        0.499999999999997,
-        0.219026548672564,
-        0.152654867256636
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0221238938053096,
-        0.0199115044247786,
-        0.0221238938053096,
-        0.0176991150442476
-      ],
-      "run_length_counts": [
-        2,
-        11,
-        26,
-        1,
-        1,
-        0,
-        1
-      ],
-      "score": 6000,
-      "seed": 28102,
-      "seed_tuple": {
-        "attack": 66798513,
-        "chain": 222539755,
-        "magazine": 172855431,
-        "snake": 52747525,
-        "source": 28102,
-        "spawn": 100352285
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        17,
-        10,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 140.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          4.1,
-          3.6,
-          0.8,
-          2.1
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0265486725663715,
-        0.0309734513274334,
-        0.0331858407079643,
-        0.0287610619469024
-      ],
-      "visible_absent_longest_s": [
-        1.2,
-        7.09999999999999,
-        2.0,
-        2.6
-      ],
-      "visible_adjacent_pair_mean": [
-        2.17477876106193,
-        0.16150442477876,
-        0.382743362831855,
-        0.785398230088491
-      ],
-      "visible_mean": [
-        3.6526548672566,
-        1.05088495575221,
-        2.34734513274334,
-        2.38274336283183
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.681415929203534,
-        0.0398230088495572,
-        0.099557522123893,
-        0.192477876106193
-      ],
-      "weights": [
-        12,
-        30,
-        40,
-        10,
-        5,
-        2,
-        1
-      ],
-      "weights_label": "experimental"
-    },
-    {
-      "ammo_available_fraction": [
-        0.435483870967739,
-        0.421370967741932,
-        0.366935483870964,
-        0.572580645161288
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 82,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 54,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 60,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 2,
-        "shots": 56,
-        "swaps": 31
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 49.6000000000004,
-      "entering_counts": [
-        6,
-        5,
-        8,
-        8
-      ],
-      "fired_counts": [
-        14,
-        14,
-        14,
-        14
-      ],
-      "fresh_counts": [
-        36,
-        32,
-        41,
-        41
-      ],
-      "fresh_generated": 150,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.221774193548385,
-        0.193548387096772,
-        0.17540322580645,
-        0.409274193548384
-      ],
-      "magazine_draw_count": 58,
-      "magazine_generated_counts": [
-        15,
-        14,
-        14,
-        15
-      ],
-      "match_counts": [
-        16,
-        15,
-        14,
-        15
-      ],
-      "match_opportunity_absent_longest_s": [
-        6.59999999999999,
-        5.9,
-        4.7,
-        8.39999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.223790322580643,
-        0.260080645161287,
-        0.191532258064514,
-        0.324596774193545
-      ],
-      "off_left_final": 0,
-      "off_right_final": 1,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0141129032258063,
-        0.0100806451612902,
-        0.0161290322580644,
-        0.0181451612903224
-      ],
-      "run_length_counts": [
-        7,
-        22,
-        4,
-        7,
-        5,
-        5,
-        1
-      ],
-      "score": 7600,
-      "seed": 28101,
-      "seed_tuple": {
-        "attack": 66796136,
-        "chain": 222531836,
-        "magazine": 172849280,
-        "snake": 52745648,
-        "source": 28101,
-        "spawn": 100348714
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        21,
-        6,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 160.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          0.0,
-          0.7,
-          5.0,
-          0.0
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0322580645161288,
-        0.0322580645161288,
-        0.0282258064516127,
-        0.0302419354838707
-      ],
-      "visible_absent_longest_s": [
-        0.4,
-        4.3,
-        4.4,
-        4.8
-      ],
-      "visible_adjacent_pair_mean": [
-        0.518145161290319,
-        0.512096774193543,
-        1.09677419354838,
-        0.637096774193544
-      ],
-      "visible_mean": [
-        2.05645161290321,
-        1.55443548387095,
-        1.92741935483869,
-        1.69354838709676
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.0524193548387092,
-        0.124999999999999,
-        0.247983870967739,
-        0.169354838709676
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.108280254777069,
-        0.766454352441612,
-        0.1656050955414,
-        0.62632696390658
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 95,
-        "emergency_clears": 0,
-        "healer_pulses": 1,
-        "insertions": 45,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 46,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 45,
-        "swaps": 23
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 47.1000000000004,
-      "entering_counts": [
-        13,
-        6,
-        6,
-        6
-      ],
-      "fired_counts": [
-        12,
-        12,
-        11,
-        10
-      ],
-      "fresh_counts": [
-        42,
-        28,
-        38,
-        29
-      ],
-      "fresh_generated": 137,
-      "left_clipped_mean": [
-        2.52866242038214,
-        1.00424628450105,
-        1.75159235668788,
-        1.11464968152866
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0106157112526538,
-        0.509554140127386,
-        0.0254777070063692,
-        0.454352441613585
-      ],
-      "magazine_draw_count": 47,
-      "magazine_generated_counts": [
-        12,
-        12,
-        11,
-        12
-      ],
-      "match_counts": [
-        12,
-        12,
-        12,
-        10
-      ],
-      "match_opportunity_absent_longest_s": [
-        2.0,
-        19.8,
-        5.0,
-        7.09999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.0976645435244153,
-        0.545647558386409,
-        0.140127388535031,
-        0.216560509554138
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0276008492569,
-        0.0127388535031846,
-        0.0127388535031846,
-        0.0127388535031846
-      ],
-      "run_length_counts": [
-        10,
-        8,
-        13,
-        10,
-        4,
-        1,
-        1
-      ],
-      "score": 6750,
-      "seed": 28102,
-      "seed_tuple": {
-        "attack": 66798513,
-        "chain": 222539755,
-        "magazine": 172855431,
-        "snake": 52747525,
-        "source": 28102,
-        "spawn": 100352285
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        17,
-        10,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 160.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          3.6,
-          1.1,
-          0.8,
-          2.1
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0276008492569,
-        0.0276008492569,
-        0.0297239915074307,
-        0.0276008492569
-      ],
-      "visible_absent_longest_s": [
-        0.0,
-        5.7,
-        4.6,
+        1.7,
         2.2
       ],
       "visible_adjacent_pair_mean": [
-        4.68577494692138,
-        0.176220806794054,
-        2.88322717622078,
-        1.29299363057324
+        0.665952890792285,
+        5.48608137044962,
+        0.190578158458242,
+        0.734475374732328
       ],
       "visible_mean": [
-        6.92569002123137,
-        2.33545647558385,
-        4.44161358811036,
-        3.47346072186835
+        2.98715203426121,
+        8.91434689507488,
+        2.36402569593146,
+        3.07922912205565
       ],
       "visible_preexisting_group3_fraction": [
-        1.38428874734607,
-        0.0297239915074307,
-        0.908704883227169,
-        0.25053078556263
-      ],
-      "weights": [
-        20,
-        30,
-        18,
-        13,
-        9,
-        6,
-        4
-      ],
-      "weights_label": "baseline"
-    },
-    {
-      "ammo_available_fraction": [
-        0.396788990825684,
-        0.499999999999997,
-        0.57110091743119,
-        0.481651376146786
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 82,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 56,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 57,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 56,
-        "swaps": 23
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 43.6000000000003,
-      "entering_counts": [
-        3,
-        7,
-        3,
-        4
-      ],
-      "fired_counts": [
-        14,
-        14,
-        14,
-        14
-      ],
-      "fresh_counts": [
-        32,
-        33,
-        34,
-        35
-      ],
-      "fresh_generated": 134,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.165137614678898,
-        0.245412844036695,
-        0.298165137614676,
-        0.291284403669722
-      ],
-      "magazine_draw_count": 58,
-      "magazine_generated_counts": [
-        15,
-        14,
-        14,
-        15
-      ],
-      "match_counts": [
-        14,
-        15,
-        14,
-        14
-      ],
-      "match_opportunity_absent_longest_s": [
-        5.6,
-        5.7,
-        4.8,
-        6.19999999999999
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.231651376146787,
-        0.2545871559633,
-        0.293577981651373,
-        0.22018348623853
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.00688073394495407,
-        0.0160550458715595,
-        0.00688073394495407,
-        0.0114678899082568
-      ],
-      "run_length_counts": [
-        3,
-        20,
-        16,
-        7,
-        3,
-        0,
-        0
-      ],
-      "score": 6850,
-      "seed": 28101,
-      "seed_tuple": {
-        "attack": 66796136,
-        "chain": 222531836,
-        "magazine": 172849280,
-        "snake": 52745648,
-        "source": 28101,
-        "spawn": 100348714
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        21,
-        6,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 160.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          0.0,
-          0.0,
-          1.2,
-          0.0
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0389908256880731,
-        0.0344036697247704,
-        0.0366972477064217,
-        0.0389908256880731
-      ],
-      "visible_absent_longest_s": [
-        0.0,
-        3.2,
-        3.9,
-        1.1
-      ],
-      "visible_adjacent_pair_mean": [
-        1.0183486238532,
-        0.277522935779814,
-        0.548165137614676,
-        0.905963302752287
-      ],
-      "visible_mean": [
-        2.92431192660547,
-        1.42660550458715,
-        1.98165137614677,
-        2.99082568807337
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.330275229357795,
-        0.0206422018348622,
-        0.110091743119265,
-        0.302752293577979
-      ],
-      "weights": [
-        12,
-        30,
-        40,
-        10,
-        5,
-        2,
-        1
-      ],
-      "weights_label": "experimental"
-    },
-    {
-      "ammo_available_fraction": [
-        0.268888888888886,
-        0.804444444444443,
-        0.357777777777774,
-        0.462222222222219
-      ],
-      "counts": {
-        "breaches": 0,
-        "damage_hits": 94,
-        "emergency_clears": 0,
-        "healer_pulses": 0,
-        "insertions": 57,
-        "kills": 32,
-        "knockdowns": 0,
-        "matches": 57,
-        "nonmatched_insertions": 0,
-        "revivals": 0,
-        "shot_misses": 0,
-        "shots": 57,
-        "swaps": 25
-      },
-      "duration_requested": 120.0,
-      "duration_simulated": 45.0000000000004,
-      "entering_counts": [
-        6,
-        3,
-        3,
-        4
-      ],
-      "fired_counts": [
-        14,
-        14,
-        15,
-        14
-      ],
-      "fresh_counts": [
-        39,
-        31,
-        36,
-        35
-      ],
-      "fresh_generated": 141,
-      "left_clipped_mean": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "live_enemies": 0,
-      "loaded_fraction": [
-        0.0777777777777772,
-        0.542222222222219,
-        0.122222222222221,
-        0.257777777777775
-      ],
-      "magazine_draw_count": 59,
-      "magazine_generated_counts": [
-        14,
-        15,
-        15,
-        15
-      ],
-      "match_counts": [
-        14,
-        14,
-        15,
-        14
-      ],
-      "match_opportunity_absent_longest_s": [
-        4.2,
-        6.09999999999999,
-        4.7,
-        5.8
-      ],
-      "neutralized": 32,
-      "next_fraction": [
-        0.191111111111109,
-        0.346666666666663,
-        0.244444444444442,
-        0.217777777777776
-      ],
-      "off_left_final": 0,
-      "off_right_final": 0,
-      "outcome": "victory",
-      "policy": "basic_matcher",
-      "right_clipped_mean": [
-        0.0133333333333332,
-        0.00666666666666661,
-        0.00666666666666661,
-        0.011111111111111
-      ],
-      "run_length_counts": [
-        4,
-        17,
-        29,
-        1,
-        1,
-        0,
-        1
-      ],
-      "score": 7100,
-      "seed": 28102,
-      "seed_tuple": {
-        "attack": 66798513,
-        "chain": 222539755,
-        "magazine": 172855431,
-        "snake": 52747525,
-        "source": 28102,
-        "spawn": 100352285
-      },
-      "series": "speed_weights",
-      "spawn_type_counts": [
-        17,
-        10,
-        2,
-        3
-      ],
-      "spawned": 32,
-      "speed": 160.0,
-      "starting_preset_counts": [
-        3,
-        3,
-        2,
-        4
-      ],
-      "starvation_reasons_s": {
-        "ammo": 0.0,
-        "chain": 0.0,
-        "timing": 0.0
-      },
-      "starved_threat_longest_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "starved_threat_time_s": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ],
-      "step": 0.1,
-      "threat_time_s": {
-        "10": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ],
-        "20": [
-          0.3,
-          2.0,
-          0.8,
-          2.1
-        ],
-        "5": [
-          0.0,
-          0.0,
-          0.0,
-          0.0
-        ]
-      },
-      "usable_response_fraction": [
-        0.0333333333333331,
-        0.0333333333333331,
-        0.0377777777777775,
-        0.0377777777777775
-      ],
-      "visible_absent_longest_s": [
-        0.0,
-        5.8,
-        3.0,
-        2.8
-      ],
-      "visible_adjacent_pair_mean": [
-        0.84666666666666,
-        0.146666666666665,
-        0.591111111111107,
-        0.542222222222217
-      ],
-      "visible_mean": [
-        2.75777777777776,
-        1.35777777777776,
-        1.62444444444443,
-        1.60888888888888
-      ],
-      "visible_preexisting_group3_fraction": [
-        0.355555555555552,
-        0.0311111111111109,
-        0.173333333333332,
-        0.139999999999999
+        0.211991434689505,
+        1.96359743040684,
+        0.0385438972162738,
+        0.160599571734474
       ],
       "weights": [
         12,
@@ -70594,6 +70997,6 @@
       "weights_label": "experimental"
     }
   ],
-  "schema_version": 1,
-  "task": "LBS-P028A"
+  "schema_version": 2,
+  "task": "LBS-P028AR"
 }

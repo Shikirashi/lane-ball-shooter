@@ -1,4 +1,47 @@
-# Codex Handoff — LBS-P028A deterministic balancing laboratory
+# Codex Handoff — LBS-P028AR fixed-X balancing correction
+
+**Status:** COMPLETE
+
+**Branch:** `master`
+
+## Correction delivered
+
+- Replaced the analysis bot's target-UID homing with one immutable chain-local `shot_x`, captured when the shot is fired and retained for its complete 0.20-second flight. The target UID is now diagnostic only and cannot change collision, insertion, matching, or damage.
+- Added exact within-step arrival sequencing. The chain advances to the projectile's impact boundary, the real `ChainModel.try_insert_shot()` resolves against geometry at that instant, and any remainder of the outer simulation step advances afterward. Settling is scheduled from the exact impact time rather than the start of a coarse step.
+- Kept the bot deliberately naïve and documented: it aims one pixel left of the selected ball's current launch-time X, with no predictive lead or future-state access. Shots can now miss, hit a different ball that crosses the fixed axis, or insert without forming a match. Only actual `match_completed` events reach `MatchProgression` and combat.
+- Added arrival, insertion, miss, nonmatching insertion, original-target contact, off-target insertion, minimum flight-time and minimum shot-interval metrics. Renamed the interpretation to a **launch opportunity** proxy while retaining the old JSON field for schema compatibility.
+- Expanded `p028a_balance_lab_test.gd` with a 240 px/s moving-target fixture that misses at its immutable X but would have hit under the old homing behavior; a removed diagnostic UID/current-ball collision case; equivalent coarse/fine-step timing; exact 0.20-second flight; and 0.4-second cooldown checks.
+- Regenerated all four tracked analysis artifacts with schema v2 and revised README/report conclusions. Production speed 102 px/s, run weights `[20,30,18,13,9,6,4]`, colors, HP 3/6/3/3, spawning, controls and gameplay are unchanged.
+
+## Corrected experiment and findings
+
+Command: `./scripts/analyze_balance.sh --seeds 500 --seed-start 28001 --duration 120 --step 0.1 --output analysis/reports/p028a`
+
+- Godot `4.7.2.stable.official.ed1daf0bf`; paired generator seeds 28001–28500; 300 fresh balls each = 150,000 per run-weight set; 25 physical/combat scenarios; runtime 8.03 seconds.
+- Generator-only figures are unchanged: GREEN was 37,876 / 150,000 (**25.251%**); GREEN run-color share was **24.987%**; length 7 was **4.00% of runs / 9.43% of emitted balls**.
+- The three baseline 102 px/s `basic_matcher` seeds produced 148 arrivals, 128 insertions (**86.5% hit rate**), 20 genuine misses and six nonmatching insertions. Of those insertions, 93 contacted the originally selected ball and 35 legitimately contacted a different ball at the fixed axis. All 3/3 cases still won, so this exact, instantaneous bot remains too strong to establish human difficulty.
+- The paired two-seed baseline speed probe measured: 102 px/s — 88.5% hit, 12 misses, GREEN pair drought 11.45 s; 120 — 87.0%, 14, 10.95 s; 140 — 82.8%, 20, 9.45 s; 160 — 84.5%, 18, 7.65 s. Faster feed can expose pairs sooner while reducing fixed-X accuracy; no live speed increase is recommended without phone playtesting.
+- The exploratory run weights at 102 px/s measured 82.1% hit and an 8.75-second GREEN pair drought versus baseline 88.5% / 11.45 seconds, but each comparison cell has only two seeds. P028AR supersedes the prior combat/speed conclusions, not the unchanged generator distribution.
+
+## Verification
+
+- `godot --headless --path . --script res://tests/p028a_balance_lab_test.gd`: **PASS, 38 checks**.
+- `./scripts/analyze_balance.sh --smoke`: **PASS**, three bounded cases with real fixed-X misses/off-target insertions.
+- Full 500-seed/25-scenario command above: **PASS**. An independent second full run produced byte-identical CSVs and identical JSON after normalizing timestamp, runtime and output path.
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 29 suites**; P011 remains 16,485 checks / 2,400 operations.
+- Web release validation: **PASS**, exact nine-file runtime set; PCK SHA-256 remains `95bd5ebffb7e52dc739bc03645d79ec16823b431f8a45a34a3aaae3f0718a901`.
+- `git diff --check`: **PASS**.
+
+## Limitations and preservation
+
+- The harness uses authentic production models and collision, but the bot selects exact geometry instantly, has no finger error, perception/reaction delay, touch occlusion, predictive lead, multi-shot planning or strategic emergency timing. Adjacent pairs are potential launch opportunities, not guaranteed hits or matches. Two seeds per speed/weight cell describe sensitivity, not population tails.
+- Godot could not write its optional `user://logs` file in this restricted CLI environment; test and analysis processes still exited successfully and produced complete results.
+- Existing user modifications to `project.godot`, `scenes/main.tscn`, and unrelated generated UID files remain uncommitted and untouched.
+- P028B and every unrelated task remain unimplemented. No build, release, deployment or production-balance changes were made.
+
+---
+
+# Previous handoff — LBS-P028A deterministic balancing laboratory
 
 **Status:** COMPLETE
 

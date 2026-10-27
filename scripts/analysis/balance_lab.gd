@@ -177,7 +177,8 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 		lane.set_process(false)
 
 	var counts := {
-		"shots": 0, "shot_misses": 0, "insertions": 0, "nonmatched_insertions": 0,
+		"shots": 0, "shot_arrivals": 0, "shot_misses": 0, "insertions": 0, "nonmatched_insertions": 0,
+		"original_target_contacts": 0, "original_targets_gone": 0, "off_target_insertions": 0,
 		"swaps": 0, "matches": 0, "damage_hits": 0, "kills": 0,
 		"healer_pulses": 0, "emergency_clears": 0, "knockdowns": 0, "revivals": 0, "breaches": 0,
 	}
@@ -220,31 +221,32 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 	var cooldown := 0.0
 	var elapsed := 0.0
 	var processed_matches := 0
+	var last_shot_time := -INF
+	var minimum_shot_interval := INF
+	var minimum_flight_time := INF
+	var maximum_flight_time := 0.0
 	while elapsed < duration - 0.000001 and not battlefield.game_over and not battlefield.victory:
 		var dt := minf(step, duration - elapsed)
 		cooldown = maxf(0.0, cooldown - dt)
-		if not pending_shot.is_empty():
-			pending_shot.remaining = float(pending_shot.remaining) - dt
-			if float(pending_shot.remaining) <= 0.000001:
-				var target_index := chain._ball_index_by_uid(int(pending_shot.target_uid))
-				var inserted := false
-				if target_index >= 0:
-					var target: Dictionary = chain.balls[target_index]
-					var impact := float(target.display_x) - 1.0
-					inserted = chain.try_insert_shot(int(pending_shot.identity), impact)
-				if inserted:
-					counts.insertions += 1
-					insertion_checks.append({"remaining": ChainModel.INSERT_SETTLE_TIME + 0.001, "match_count": chain.event_log.size()})
-				else:
-					counts.shot_misses += 1
-				pending_shot.clear()
-
-		chain.advance(dt)
-		for check in insertion_checks:
-			check.remaining = float(check.remaining) - dt
+		var shot_event := advance_chain_with_fixed_shot(chain, pending_shot, dt)
+		if bool(shot_event.arrived):
+			counts.shot_arrivals += 1
+			minimum_flight_time = minf(minimum_flight_time, float(shot_event.flight_time))
+			maximum_flight_time = maxf(maximum_flight_time, float(shot_event.flight_time))
+			if bool(shot_event.target_gone):
+				counts.original_targets_gone += 1
+			elif bool(shot_event.original_target_contact):
+				counts.original_target_contacts += 1
+			if bool(shot_event.inserted):
+				counts.insertions += 1
+				if not bool(shot_event.original_target_contact):
+					counts.off_target_insertions += 1
+				insertion_checks.append({"settle_at": float(shot_event.impact_time) + ChainModel.INSERT_SETTLE_TIME + 0.001, "match_count": int(shot_event.match_count_before)})
+			else:
+				counts.shot_misses += 1
 		var pending_checks: Array[Dictionary] = []
 		for check in insertion_checks:
-			if float(check.remaining) <= 0.0:
+			if chain.simulation_time + 0.000001 >= float(check.settle_at):
 				if chain.event_log.size() <= int(check.match_count):
 					counts.nonmatched_insertions += 1
 			else:
@@ -313,10 +315,10 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 			var threatened := float(ttd[identity]) <= 10.0
 			var has_pair := not opportunities[identity].is_empty()
 			var has_ammo := magazine.loaded_identity == identity or magazine.next_identity == identity
-			var usable := has_pair and has_ammo and cooldown <= 0.000001 and pending_shot.is_empty()
-			if usable:
+			var launch_opportunity := has_pair and has_ammo and cooldown <= 0.000001 and pending_shot.is_empty()
+			if launch_opportunity:
 				usable_integral[identity] += dt
-			if threatened and not usable:
+			if threatened and not launch_opportunity:
 				starved_time[identity] += dt
 				starved_current[identity] += dt
 				starved_longest[identity] = maxf(starved_longest[identity], starved_current[identity])
@@ -349,7 +351,16 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 				var fired := magazine.consume_loaded()
 				fired_counts[fired] += 1
 				counts.shots += 1
-				pending_shot = {"identity": fired, "target_uid": int(action.target_uid), "remaining": SHOT_FLIGHT_TIME}
+				if last_shot_time > -INF:
+					minimum_shot_interval = minf(minimum_shot_interval, chain.simulation_time - last_shot_time)
+				last_shot_time = chain.simulation_time
+				pending_shot = {
+					"identity": fired,
+					"target_uid": int(action.target_uid),
+					"shot_x": clampf(float(action.aim_x), 0.0, chain.lane_width),
+					"remaining": SHOT_FLIGHT_TIME,
+					"launched_at": chain.simulation_time,
+				}
 				cooldown = SHOT_COOLDOWN
 		elapsed += dt
 
@@ -363,6 +374,9 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 		"duration_requested": duration,
 		"duration_simulated": elapsed,
 		"step": step,
+		"minimum_shot_interval": 0.0 if is_inf(minimum_shot_interval) else minimum_shot_interval,
+		"minimum_flight_time": 0.0 if is_inf(minimum_flight_time) else minimum_flight_time,
+		"maximum_flight_time": maximum_flight_time,
 		"outcome": outcome,
 		"starting_preset_counts": _counts(ChainModel.SEED_PATTERN),
 		"fresh_counts": chain.fresh_identity_counts.duplicate(),
@@ -378,6 +392,7 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 		"ammo_available_fraction": _divide_floats(ammo_integral, maxf(elapsed, 0.000001)),
 		"loaded_fraction": _divide_floats(loaded_integral, maxf(elapsed, 0.000001)),
 		"next_fraction": _divide_floats(next_integral, maxf(elapsed, 0.000001)),
+		"launch_opportunity_fraction": _divide_floats(usable_integral, maxf(elapsed, 0.000001)),
 		"usable_response_fraction": _divide_floats(usable_integral, maxf(elapsed, 0.000001)),
 		"entering_counts": entering_counts,
 		"off_left_final": chain.offscreen_left_count(),
@@ -399,6 +414,50 @@ static func run_scenario(tree: SceneTree, seed_value: int, duration: float, step
 	}
 	battlefield.queue_free()
 	await tree.process_frame
+	return result
+
+static func advance_chain_with_fixed_shot(chain: ChainModel, pending_shot: Dictionary, delta: float) -> Dictionary:
+	var result := {
+		"arrived": false,
+		"inserted": false,
+		"shot_x": float(pending_shot.get("shot_x", NAN)),
+		"target_gone": false,
+		"original_target_contact": false,
+		"target_drift": NAN,
+		"impact_time": -1.0,
+		"flight_time": 0.0,
+		"match_count_before": chain.event_log.size(),
+	}
+	var step := maxf(delta, 0.0)
+	if pending_shot.is_empty():
+		chain.advance(step)
+		return result
+	var remaining := maxf(float(pending_shot.get("remaining", SHOT_FLIGHT_TIME)), 0.0)
+	if remaining > step + 0.000001:
+		chain.advance(step)
+		pending_shot.remaining = remaining - step
+		return result
+	var before_impact := minf(remaining, step)
+	chain.advance(before_impact)
+	var shot_x := float(pending_shot.shot_x)
+	var target_index := chain._ball_index_by_uid(int(pending_shot.get("target_uid", -1)))
+	result.arrived = true
+	result.shot_x = shot_x
+	result.impact_time = chain.simulation_time
+	result.flight_time = chain.simulation_time - float(pending_shot.get("launched_at", chain.simulation_time - SHOT_FLIGHT_TIME))
+	result.match_count_before = chain.event_log.size()
+	result.target_gone = target_index < 0
+	if target_index >= 0:
+		var target: Dictionary = chain.balls[target_index]
+		result.target_drift = float(target.display_x) - shot_x
+		result.original_target_contact = absf(float(result.target_drift)) <= chain.radius + ChainModel.DEFAULT_SHOT_RADIUS
+	# Collision is exclusively the immutable launch axis against current chain
+	# geometry. target_uid is diagnostics-only and never influences this call.
+	result.inserted = chain.try_insert_shot(int(pending_shot.identity), shot_x)
+	pending_shot.clear()
+	var after_impact := maxf(0.0, step - before_impact)
+	if after_impact > 0.000001:
+		chain.advance(after_impact)
 	return result
 
 static func match_opportunities(chain: ChainModel) -> Array[Array]:
@@ -455,6 +514,7 @@ static func choose_action(policy: String, magazine: MagazineState, opportunities
 		candidates.append({
 			"identity": identity,
 			"target_uid": int(opportunities[identity][0].target_uid),
+			"aim_x": float(opportunities[identity][0].left_x) - 1.0,
 			"swap": identity != magazine.loaded_identity,
 			"urgency": float(time_to_danger[identity]),
 		})
