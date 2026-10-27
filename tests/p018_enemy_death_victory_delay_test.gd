@@ -134,6 +134,18 @@ func _test_delayed_victory_freeze_restart_and_defeat() -> void:
 	var overlay: GameOverOverlay = main.get("_game_over_overlay")
 	var shooter: ShooterView = main.get("_shooter_view")
 	var sfx: SfxManager = main.get("_sfx")
+	var settings: ControlSettingsView = main.get("_settings_view")
+	# Regression: the terminal dimmer MUST be above positive-z sprites, charge
+	# shards, projectile visuals, and the gear/settings layer. Otherwise the
+	# actor art stays fully bright and live projectiles cover the Restart button.
+	_check(not overlay.z_as_relative and overlay.z_index > settings.z_index, "terminal overlay has its own layer above the settings UI")
+	var green_lane: LaneActor = battlefield.lanes[TeamData.Identity.GREEN]
+	var green_crystal := green_lane.get("_charge_crystal") as Node2D
+	var projectile_probe: Dictionary = green_lane.call("_create_projectile_visual", -987654, {"wide": false})
+	var projectile_root := projectile_probe.root as Node2D
+	_check(overlay.z_index > green_crystal.z_index and overlay.z_index > projectile_root.z_index, "terminal overlay draws above actual charge crystals and projectile nodes")
+	projectile_root.queue_free()
+	green_lane.get("_projectile_visuals").erase(-987654)
 	var wins := {"count": 0}
 	battlefield.encounter_cleared.connect(func() -> void: wins.count += 1)
 	var final_lane := _complete_one_per_lane_encounter(main)
@@ -151,6 +163,7 @@ func _test_delayed_victory_freeze_restart_and_defeat() -> void:
 	_check(not overlay.visible and absf(float(main.get("_victory_delay_remaining")) - 0.1) < 0.001, "t=2.9 keeps WAVE CLEARED hidden")
 	main.call("_process", 0.1)
 	_check(overlay.visible and overlay.victory and not bool(main.get("_victory_pending")), "t=3.0 reveals WAVE CLEARED exactly once")
+	_check(overlay.mouse_filter == Control.MOUSE_FILTER_STOP and (overlay.get_node("RestartButton") as Button).visible, "victory modal captures clicks and exposes an unobstructed Restart button")
 	_check(overlay.final_score == main.get("_progression").score and not sfx.gameplay_enabled, "delayed overlay preserves final score and safely closes gameplay audio")
 	battlefield.call("_evaluate_terminal_state")
 	_check(int(wins.count) == 1, "reentrant terminal evaluation cannot duplicate victory")
@@ -165,6 +178,7 @@ func _test_delayed_victory_freeze_restart_and_defeat() -> void:
 
 	main.call("_on_game_over_requested", TeamData.Identity.RED)
 	_check(overlay.visible and not overlay.victory and not bool(main.get("_victory_pending")), "GAME OVER remains immediate and never starts victory delay")
+	_check(overlay.z_index > settings.z_index, "defeat uses the same topmost modal layer as victory")
 	main.queue_free()
 	await process_frame
 
