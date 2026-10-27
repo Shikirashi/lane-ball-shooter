@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **P028A/P028AR completed and technically reviewed** (`6564001` / `78b535b`); **P028B-EXP simulation-only ACTIVE** in `.ai/TASK.md`, P028B shipping / P029–P032 NOT ACTIVE; Android physical QA pending.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **P028A/P028AR completed and technically reviewed** (`6564001` / `78b535b`); **P028B-EXP and P028B-EXPR COMPLETE** (`ca73b4b` / `0f15616`), no active Codex task; P028B shipping / P029–P032 NOT ACTIVE; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
@@ -269,3 +269,11 @@ Benchmark over paired real-game scenarios with authentic models and useful urgen
 ## 21. P028B-EXPR experiment-fidelity correction (ACTIVE, 2026-10-27)
 
 Initial experimental run `ca73b4b` delivered a Godot simulation-only adaptive color selector, 500 paired synthetic seeds and 144 combat scenarios; local 30 regression suites reportedly PASS. But review found an unwanted randomizing confound: the code checks urgency among **all four lanes**, and when a threatened color is exhausted from the current run bag, it still consumes a bias RNG roll and reshuffles remaining **unthreatened** legal colors. The `urgent_exhausted` synthetic case exhibits ~46% such interventions despite no eligible color. **P028B-EXPR is the only active Codex task**: ensure no-eligible-threat returns unchanged baseline choice/no bias RNG, separately track active threat vs eligible threat and exhausted bag, add failing-before-fix tests, regenerate/reinterpret all report artifacts under original seeds. Until then the claimed moderate improvements are provisional. No adaptive generation, speeds, shorter runs, levels or APK changes are approved for shipped gameplay.
+
+## 22. P028B-EXPR reviewed and complete (2026-10-27)
+
+P028B-EXPR `0f15616` removed the ineligible-world-threat confound; when no legal bag color is endangered, exactly the baseline choice is used without additional RNG. Repeated 500 synthetic seed / 144 actual-model trials, all 30 local suites (574 targeted assertions) and GitHub test/build/publication `40580387509` PASS. Report `analysis/reports/p028b_exp/REPORT.md`; archive `.ai/TASKS/LBS-P028B-EXPR.md`.
+
+**Results:** 50,599 no-eligible `urgent_exhausted` synthetic selections, zero unnecessary interventions in each adaptive arm. Mild candidate offers limited summed mean-starvation improvement (-0.27s basic / -1.53s delayed) with some per-color losses (BLUE +0.43s basic, YELLOW +0.05s delayed). Moderate loses +0.65s aggregate under basic; strong loses +0.58s basic / +0.49s delayed. The bots still win every active-play seed; there is no support to ship any adaptive arm without human feedback.
+
+**No Codex task active:** Future mild live A/B, refined run weights, levels and mascot require distinct user approval. Shipped four-color bag, 102 px/s speed, run weights [20,30,18,13,9,6,4], HP 3/6/3/3, control modes and Android v0.1.0 identity unchanged.
