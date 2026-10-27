@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 NOW ACTIVE** for mobile/desktop controls + halftime HP and red hit feedback (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 NOW ACTIVE** for mobile/desktop controls + halved enemy HP and red hit feedback (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
