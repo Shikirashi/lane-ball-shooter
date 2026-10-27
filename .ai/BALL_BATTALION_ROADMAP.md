@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 implemented as `294ddae`, but focused P033R shader correction ACTIVE** after review (unhit sprites accidentally darkened); original scope mobile/desktop controls + halved enemy HP and red hit feedback (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **no active Codex task** (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
@@ -232,8 +232,12 @@ The user approves **P033** after liking the P034C crystal visual result but find
 
 ## 14. P033R — damage-shader review correction (ACTIVE, 2026-10-27)
 
-P033 was pushed as `294ddae` with Android Classic/Side controls, raised horizontal magazine, 3/6/3/3 HP, and strong red hit shader. Source and real P033 screenshot review detected **a shader defect**: in Godot 4 CanvasItem fragment code, `COLOR` already includes `TEXTURE`, so `texture(TEXTURE, UV) * COLOR` incorrectly squares color and alpha of undamaged enemy sprites. Correct the shader to use already-textured `COLOR`, maintain vivid per-hit red and lethal flash, and add real-rendered pixel comparison tests and refreshed screenshots. **This narrow P033R is the only active Codex work.** P028A remains proposed; do not alter controls, HP, game data, branding or releases in P033R.
+P033 was pushed as `294ddae` with Android Classic/Side controls, raised horizontal magazine, 3/6/3/3 HP, and strong red hit shader. Source and real P033 screenshot review detected **a shader defect**: in Godot 4 CanvasItem fragment code, `COLOR` already includes `TEXTURE`, so `texture(TEXTURE, UV) * COLOR` incorrectly squares color and alpha of undamaged enemy sprites. Correct the shader to use already-textured `COLOR`, maintain vivid per-hit red and lethal flash, and add real-rendered pixel comparison tests and refreshed screenshots. **P033R delivered as `f08ee3d`, reviewed PASS; no active Codex task.** P028A remains proposed; do not alter controls, HP, game data, branding or releases in P033R.
 
 ## 15. P033R visual approach revised (ACTIVE, 2026-10-27)
 
 User chose **shader-free solid-red silhouette overlay** in place of the earlier proposed red-color shader correction. Generate derivative 2D red mask textures from the exact alpha of all four existing enemy PNGs; add an aligned red `Sprite2D` overlay to live enemy actors; show it on real damage, fade over 0.16s, support lethal corpse animation, Snake transfers, and preserve unhit original image unchanged. Remove P033's flawed shader entirely and verify alpha/brightness through actual Godot rendering and per-pixel mask tests. Only this P033R is active in `.ai/TASK.md`; the prior P033R shader-fix instructions and historical P033 shader decisions are superseded. All controls and enemy HP 3/6/3/3 stay as delivered; P028A remains inactive.
+
+## 16. P033R accepted and P028A next proposed (2026-10-27)
+
+P033R's four exact-alpha red silhouette sprites were implemented as `f08ee3d` with shader removal, 0.16s hit/death feedback, original colors, and Godot-rendered before/after previews. Review found no blocker; Codex reports 28 full suites PASS. **No active task.** P028A deterministic balancing laboratory remains proposed and awaits authorization, while native Android touch/visual QA is pending. Scope history archived in `.ai/TASKS/LBS-P033R.md`.
