@@ -79,3 +79,9 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 - **NO ACTIVE TASK:** P034B 2D runtime migration was pushed as `b802096` and verified by code/screenshot review and GitHub Web CI run `40548949659` (all tests, publishing and browser startup SUCCESS). Archived task: `.ai/TASKS/LBS-P034B.md`. User's hands-on visual feedback still pending. This supersedes the earlier "P034B ACTIVE" and legacy 3D-only sections above.
 - Only re-activate from a new explicit user request through `.ai/TASK.md`; P033 controls and P028 balancing are proposals. Native Android v0.1.0 release predates P034B and was not updated. Never modify its protected signing files without a separately authorized release task.
+
+## Latest active scope — P034C (2026-10-27)
+
+- **ONLY ACTIVE CODEX TASK:** `LBS-P034C`, specified in `.ai/TASK.md`. Earlier no-active/P034B-active status paragraphs here are historical.
+- Remove original 3D baked yellow ChargeOrb, genuinely rebake transparent defender PNGs with existing GPU/CLI pipeline; add independent colored faceted 2D charge crystals behind live defenders, shatter/fade once on authoritative emergency discharge, never restore on revival, restore on run restart. Never dim whole defender when spent. Retain all combat semantics.
+- New actual-Godot-rendered gameplay screenshot evidence REQUIRED for SSH review. Preserve existing P034A/P034B assets, tests and live all-2D runtime. `P033` controls, `P028` balancing, branding, Android version/release and other work NOT ACTIVE. No self-advancement.
