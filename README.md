@@ -21,7 +21,7 @@ godot --path .
 
 The project uses GDScript and the Compatibility renderer. Live gameplay uses Godot 2D drawing plus transparent sprites baked from the project's original procedural character models; there are no external assets or add-ons.
 
-## P034A sprite bake and P034B live 2D battlefield
+## P034A–P034C sprite bake and live 2D battlefield
 
 The live battlefield is entirely `Control`/`Node2D`/`Sprite2D`; ordinary startup creates no `SubViewport`, `Camera3D`, `WorldEnvironment` or 3D character/projectile node. It uses the eight authentic transparent 512×512 RGBA masters baked in P034A from the original procedural meshes and materials: four enemy types and the red, blue, yellow and green defenders. The original factory and baker remain available only to regenerate those source-faithful assets.
 
@@ -32,6 +32,8 @@ Run the baker from a real graphical rendering environment with Godot 4.7.2 Compa
 ```
 
 It waits for completed rendered frames from a transparent 4×-MSAA `SubViewport`, then writes the individual PNGs, grounded pivot/alpha-bound metadata, and the checkerboard review sheet at `assets/sprites/baked/contact_sheet.png`. The wrapper deliberately refuses an environment with neither `DISPLAY` nor `WAYLAND_DISPLAY`; Godot's dummy headless renderer is not a valid capture result. On a CI machine, provide a safe offscreen OpenGL display such as an already-installed Xvfb service.
+
+P034C removes the old yellow `ChargeOrb` from the procedural defender source and genuinely rebakes all four defender masters without it. The live battlefield adds a separate faceted diamond crystal behind each defender, tinted to that lane's team color. Its authoritative one-use emergency discharge hides the intact crystal and emits seven short-lived spinning/fading shards; revival does not restore it, while a run restart does. The defender sprite remains at its original full color in both `CHARGE` and `SPENT` states.
 
 Launch the isolated, pure-2D squash/stretch study with:
 
@@ -48,6 +50,14 @@ Generate the required real-renderer gameplay review captures with:
 ```
 
 This CLI-only command requires an existing `DISPLAY` or `WAYLAND_DISPLAY`, runs Godot 4.7.2 with the Compatibility renderer, waits for completed rendered frames, and writes `assets/previews/p034b_gameplay_1280x720.png` plus `assets/previews/p034b_gameplay_1600x720.png`. Both committed captures show the real `main.tscn` runtime with deterministic enemies/effects—not a mockup. The normal game itself contains no capture viewport.
+
+Regenerate the P034C intact/spent and mid-shatter review evidence with:
+
+```sh
+./scripts/capture_p034c_crystals.sh
+```
+
+It writes `assets/previews/p034c_crystal_states_1280x720.png` and `assets/previews/p034c_crystal_shatter_1600x720.png` from real deterministic gameplay state. Its `SubViewport` is capture-only and is never created by ordinary gameplay.
 
 Native desktop and Android builds enter gameplay immediately. The Web export instead boots to a dark `LANE BALL SHOOTER` menu without constructing the gameplay scene or advancing its simulation. `START GAME` opens the exact prompt `Play in fullscreen?`: `YES` requests browser fullscreen directly from that button press and then starts the game, while `NO` starts in the page canvas without requesting fullscreen. A browser may deny fullscreen; gameplay still starts normally. Escape/browser fullscreen exit uses the normal responsive resize path. For desktop-only menu preview, run `godot --path . -- --web-menu-preview`.
 
@@ -271,6 +281,7 @@ godot --headless --path . --script res://tests/p023_enemy_speed_victory_copy_tes
 godot --headless --path . --script res://tests/p022_hp_penetrating_attacks_test.gd
 godot --headless --path . --script res://tests/p034a_sprite_baking_test.gd
 godot --headless --path . --script res://tests/p034b_live_2d_battlefield_test.gd
+godot --headless --path . --script res://tests/p034c_charge_crystal_test.gd
 # Or run every suite in sorted order:
 ./scripts/ci/run_regression_tests.sh
 ```
@@ -284,7 +295,7 @@ For a manual end-to-end smoke test:
 5. On touch hardware, press/drag anywhere across the full playfield and release: exactly one ball should fire. A HUD swap tap must only swap. Starting outside the playfield, canceling a gesture, or releasing after RESTART must not fire.
 6. Identify all four enemies: gray hopping 6-HP Hopper with exactly two orange horns, wide orange 12-HP sliding Heavy, tall fast yellow 6-HP Sickle Snake, and small stationary 6-HP green Healyzard at the rear. Damage a Hopper and confirm its horns remain; no type should show HP bars, and no non-Hopper should hop or have horns. Hit a Snake nonfatally: it should stop for 0.5 seconds, then visibly cross to one adjacent non-full lane over about 0.3 seconds before resuming. Confirm only one Snake remains globally and replacement still waits 15 seconds after death.
 7. Watch a Healyzard for 15 seconds. Its soft circular yellow glow should appear behind the green body with transparent edges, expand and fade in under one second, while every wounded non-Healyzard in that lane gains exactly one HP. Other healers and enemies in other lanes must not heal.
-8. Let an enemy touch a defender: it falls and the one-time emergency discharge clears that lane. Make two separate matches of that defender's color to revive it; neither revival match launches an attack, while the next does. Confirm a lane stops spawning after its eighth total enemy.
+8. Confirm every defender starts with a small diamond crystal matching its team color behind its rear-left side. Let an enemy touch a defender: it falls, the one-time emergency discharge clears that lane, and only that crystal shatters into several fading pieces. The defender itself must remain fully colored. Make two separate matches of that defender's color to revive it; neither revival match launches an attack and the spent crystal must not return, while the next match attacks normally. Restart must restore all four intact crystals. Confirm a lane stops spawning after its eighth total enemy.
 9. Verify tier 1 stops on the first enemy, tier 2 penetrates every enemy it passes in one lane, and tier 3 visibly crosses exactly two adjacent lanes. Each hit must remove only 1 HP and each enemy may be hit once per projectile; a full-health 12-HP Heavy must survive tier 3. Then defeat enemies with projectiles and the emergency discharge. Each removed body should produce a small explosion/sparks, fall sideways until nearly horizontal, fade completely in about one second and play one distinct death pop/crunch; no standing ghost should remain.
 10. Clear all 32 scheduled enemies. Confirm chain/combat/input freeze on the final death while WAVE CLEARED stays hidden for three seconds and the last VFX/SFX finish; then confirm the final score and tappable RESTART control appear. Restart and confirm the HUD returns to 00/32 with one weighted initial enemy in each lane. In a separate run, let an enemy breach and confirm GAME OVER remains immediate.
 11. Listen for distinct shoot, successful-insert, swap, match, active-attack, knockdown, revival and enemy-death cues. A miss must have shoot but no insert sound; revival 1/2 has no jingle. Press M to confirm mute. Check that fast cascades and multi-kill death sounds remain comfortable.

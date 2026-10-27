@@ -10,6 +10,8 @@ const STATE_EFFECT_DURATION := 0.45
 const DEATH_EFFECT_DURATION := 1.0
 const DEATH_FALL_DURATION := 0.5
 const HEALING_AURA_DURATION := 0.85
+const CHARGE_SHATTER_DURATION := 0.52
+const CHARGE_SHARD_COUNT := 7
 const MASTER_SIZE := Vector2(512.0, 512.0)
 const ASSET_DIR := "res://assets/sprites/baked"
 const ENEMY_ASSETS := ["enemy_hopper", "enemy_heavy", "enemy_sickle_snake", "enemy_healyzard"]
@@ -27,7 +29,11 @@ var _baseline_y := 72.0
 var _actor_scale := 0.24
 var _defender_root: Node2D
 var _defender_sprite: Sprite2D
-var _spent_charge_cover: Polygon2D
+var _charge_crystal: Node2D
+var _charge_crystal_radius := 12.0
+var _charge_shards: Array[Dictionary] = []
+var _charge_shattered := false
+var _charge_shatter_count := 0
 var _status_label: Label
 var _enemy_visuals := {}
 var _projectile_visuals := {}
@@ -75,6 +81,7 @@ func _process(delta: float) -> void:
 	_update_defender_feedback(delta)
 	_update_death_effects(delta)
 	_update_state_effects(delta)
+	_update_charge_shards(delta)
 	_sync_visuals()
 	_update_status_visual()
 	queue_redraw()
@@ -85,8 +92,11 @@ func configure_layout(layout_size: Vector2, side_margin_ratio := ResponsiveLayou
 	_side_margin_ratio = clampf(side_margin_ratio, 0.04, 0.07)
 	_baseline_y = size.y * 0.82
 	_actor_scale = clampf(size.y / 380.0, 0.14, 0.42)
+	_charge_crystal_radius = clampf(size.y * 0.115, 8.0, 18.0)
 	if is_instance_valid(_defender_root):
 		_update_defender_feedback(0.0)
+	if is_instance_valid(_charge_crystal):
+		_configure_charge_crystal()
 	if is_instance_valid(_status_label):
 		_status_label.position = Vector2(world_x_to_local(-4.8), maxf(1.0, size.y * 0.02))
 		_status_label.size = Vector2(maxf(190.0, size.x * 0.28), maxf(22.0, size.y * 0.25))
@@ -154,6 +164,9 @@ func reset_run(spawn_initial := true) -> void:
 	_death_effects.clear()
 	_death_uids.clear()
 	_state_effects.clear()
+	_clear_charge_shards()
+	_charge_shattered = false
+	_charge_shatter_count = 0
 	_attack_feedback = 0.0
 	_revive_feedback = 0.0
 	_visual_time = 0.0
@@ -192,19 +205,138 @@ func _build_defender() -> void:
 	_defender_sprite = _make_actor_sprite(DEFENDER_ASSETS[team_identity])
 	_defender_sprite.name = "DefenderSprite_%s" % TeamData.display_name(team_identity)
 	_defender_root.add_child(_defender_sprite)
-	_spent_charge_cover = _ellipse_polygon(Vector2(31.0, 31.0), Color(0.12, 0.135, 0.17, 0.99), 24)
-	_spent_charge_cover.name = "SpentChargeCover"
-	# Kept as an optional authored-orb mask. The shipped spent state dims the
-	# complete baked defender as well, so the yellow orb cannot read as charged
-	# after rotations such as knockdown.
-	_spent_charge_cover.position = Vector2(-130.0, -197.0)
-	_spent_charge_cover.z_index = 3
-	_defender_root.add_child(_spent_charge_cover)
+	_build_charge_crystal()
 	_status_label = Label.new()
 	_status_label.name = "LaneStatus"
 	_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status_label.modulate = TeamData.color(team_identity).lightened(0.2)
 	add_child(_status_label)
+
+
+func _build_charge_crystal() -> void:
+	_charge_crystal = Node2D.new()
+	_charge_crystal.name = "ChargeCrystal_%s" % TeamData.display_name(team_identity)
+	_charge_crystal.z_index = 1
+	add_child(_charge_crystal)
+	_configure_charge_crystal()
+
+
+func _configure_charge_crystal() -> void:
+	if not is_instance_valid(_charge_crystal):
+		return
+	for child in _charge_crystal.get_children():
+		child.free()
+	var radius := _charge_crystal_radius
+	var team_color := TeamData.color(team_identity)
+	var glow := Polygon2D.new()
+	glow.name = "CrystalGlow"
+	glow.polygon = PackedVector2Array([
+		Vector2(0.0, -radius * 1.36), Vector2(radius * 1.05, 0.0),
+		Vector2(0.0, radius * 1.5), Vector2(-radius * 1.05, 0.0),
+	])
+	glow.color = Color(team_color.lightened(0.34), 0.22)
+	glow.z_index = -1
+	_charge_crystal.add_child(glow)
+	var left_facet := Polygon2D.new()
+	left_facet.name = "CrystalFacetDark"
+	left_facet.polygon = PackedVector2Array([Vector2(0.0, -radius), Vector2(0.0, radius * 1.12), Vector2(-radius * 0.72, 0.0)])
+	left_facet.color = team_color.darkened(0.16)
+	_charge_crystal.add_child(left_facet)
+	var right_facet := Polygon2D.new()
+	right_facet.name = "CrystalFacetBright"
+	right_facet.polygon = PackedVector2Array([Vector2(0.0, -radius), Vector2(radius * 0.72, 0.0), Vector2(0.0, radius * 1.12)])
+	right_facet.color = team_color.lightened(0.22)
+	_charge_crystal.add_child(right_facet)
+	var highlight := Polygon2D.new()
+	highlight.name = "CrystalHighlight"
+	highlight.polygon = PackedVector2Array([Vector2(0.0, -radius * 0.78), Vector2(radius * 0.37, -radius * 0.02), Vector2(0.0, radius * 0.18)])
+	highlight.color = Color(1.0, 1.0, 1.0, 0.45)
+	_charge_crystal.add_child(highlight)
+	var outline := Line2D.new()
+	outline.name = "CrystalOutline"
+	outline.points = PackedVector2Array([
+		Vector2(0.0, -radius), Vector2(radius * 0.72, 0.0),
+		Vector2(0.0, radius * 1.12), Vector2(-radius * 0.72, 0.0), Vector2(0.0, -radius),
+	])
+	outline.width = maxf(1.0, radius * 0.11)
+	outline.default_color = team_color.lightened(0.48)
+	_charge_crystal.add_child(outline)
+	_charge_crystal.position = _charge_crystal_position()
+	_sync_charge_crystal_visibility()
+
+
+func _charge_crystal_position() -> Vector2:
+	return Vector2(
+		world_x_to_local(LaneCombatModel.DEFENDER_X) - size.y * 0.34,
+		_baseline_y - size.y * 0.36
+	)
+
+
+func _sync_charge_crystal_visibility() -> void:
+	if is_instance_valid(_charge_crystal):
+		_charge_crystal.visible = combat_model != null and combat_model.emergency_available and not _charge_shattered
+
+
+func _shatter_charge_crystal() -> void:
+	if _charge_shattered or not is_instance_valid(_charge_crystal):
+		return
+	_charge_shattered = true
+	_charge_shatter_count += 1
+	_charge_crystal.visible = false
+	var origin := _charge_crystal.position
+	var team_color := TeamData.color(team_identity)
+	for shard_index in range(CHARGE_SHARD_COUNT):
+		var angle := -PI * 0.87 + (PI * 1.74 * float(shard_index) / float(CHARGE_SHARD_COUNT - 1))
+		var shard := Polygon2D.new()
+		shard.name = "ChargeShard_%d" % shard_index
+		var shard_size := _charge_crystal_radius * (0.34 + 0.05 * float(shard_index % 3))
+		shard.polygon = PackedVector2Array([
+			Vector2(0.0, -shard_size),
+			Vector2(shard_size * 0.66, shard_size * 0.52),
+			Vector2(-shard_size * 0.46, shard_size * 0.72),
+		])
+		shard.color = team_color.lightened(0.08 + 0.07 * float(shard_index % 2))
+		shard.position = origin
+		shard.rotation = angle * 0.24
+		shard.z_index = 1
+		add_child(shard)
+		_charge_shards.append({
+			"node": shard,
+			"age": 0.0,
+			"velocity": Vector2(cos(angle) * size.y * (0.42 + shard_index * 0.035), sin(angle) * size.y * 0.5 - size.y * 0.18),
+			"angular_speed": (-1.0 if shard_index % 2 == 0 else 1.0) * (5.0 + shard_index * 0.55),
+		})
+
+
+func _update_charge_shards(delta: float) -> void:
+	for index in range(_charge_shards.size() - 1, -1, -1):
+		var shard_state: Dictionary = _charge_shards[index]
+		var shard := shard_state.node as Polygon2D
+		if not is_instance_valid(shard):
+			_charge_shards.remove_at(index)
+			continue
+		shard_state.age = float(shard_state.age) + delta
+		var velocity: Vector2 = shard_state.velocity
+		velocity.y += size.y * 1.45 * delta
+		shard_state.velocity = velocity
+		shard.position += velocity * delta
+		shard.rotation += float(shard_state.angular_speed) * delta
+		var ratio := clampf(float(shard_state.age) / CHARGE_SHATTER_DURATION, 0.0, 1.0)
+		shard.modulate.a = 1.0 - ratio
+		shard.scale = Vector2.ONE * lerpf(1.0, 0.62, ratio)
+		if ratio >= 1.0:
+			shard.queue_free()
+			_charge_shards.remove_at(index)
+		else:
+			_charge_shards[index] = shard_state
+
+
+func _clear_charge_shards() -> void:
+	for shard_state in _charge_shards:
+		var shard := shard_state.get("node") as Node
+		if is_instance_valid(shard):
+			shard.queue_free()
+	_charge_shards.clear()
 
 
 func _sync_visuals() -> void:
@@ -433,6 +565,7 @@ func _update_defender_feedback(delta: float) -> void:
 func _update_status_visual() -> void:
 	if _status_label == null:
 		return
+	_sync_charge_crystal_visibility()
 	var state_name := "ACTIVE" if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else "DOWN %d/%d" % [combat_model.revival_progress, combat_model.revival_required]
 	var charge_name := "CHARGE" if combat_model.emergency_available else "SPENT"
 	var status_key := "%s|%s" % [state_name, charge_name]
@@ -441,8 +574,7 @@ func _update_status_visual() -> void:
 	_last_status_key = status_key
 	_status_label.text = "%s  %s  %s" % [TeamData.symbol_name(team_identity), state_name, charge_name]
 	_status_label.modulate = TeamData.color(team_identity).lightened(0.25) if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else Color(0.72, 0.75, 0.82)
-	_spent_charge_cover.visible = false
-	_defender_sprite.self_modulate = Color.WHITE if combat_model.emergency_available else Color(0.42, 0.46, 0.52, 0.72)
+	_defender_sprite.self_modulate = Color.WHITE
 
 
 func _on_enemy_neutralized_detail(enemy: Dictionary, cause: StringName, impact_x: float) -> void:
@@ -509,6 +641,7 @@ func _on_defender_knocked_down(_identity: int) -> void:
 
 
 func _on_emergency_discharged(_identity: int, _cleared_count: int) -> void:
+	_shatter_charge_crystal()
 	_state_effects.append({"age": 0.0, "kind": "discharge", "world_x": LaneCombatModel.DEFENDER_X})
 	_update_status_visual()
 	queue_redraw()

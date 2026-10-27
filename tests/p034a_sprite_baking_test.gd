@@ -96,6 +96,8 @@ func _test_source_factory() -> void:
 	_check((heavy.root as Node3D).find_children("HopperHorn", "MeshInstance3D", true, false).is_empty(), "Heavy remains hornless")
 	_check((snake.root as Node3D).find_children("HopperHorn", "MeshInstance3D", true, false).is_empty(), "Sickle Snake remains hornless")
 	_check(is_equal_approx((healer.root as Node3D).scale.x, 0.7), "Healyzard retains source 0.7 scale")
+	var defender := ActorVisualFactory.create_defender_visual(parent, TeamData.Identity.RED)
+	_check(not defender.has("charge_orb") and (defender.root as Node3D).find_children("ChargeOrb", "MeshInstance3D", true, false).is_empty(), "defender source contains no legacy baked ChargeOrb")
 	parent.queue_free()
 	await process_frame
 

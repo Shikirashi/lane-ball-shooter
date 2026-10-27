@@ -2,9 +2,9 @@
 	"actors": {
 		"defender_blue": {
 			"alpha_bounds": [
-				95,
+				158,
 				117,
-				362,
+				299,
 				303
 			],
 			"path": "res://assets/sprites/baked/defender_blue.png",
@@ -15,9 +15,9 @@
 		},
 		"defender_green": {
 			"alpha_bounds": [
-				95,
+				158,
 				117,
-				362,
+				299,
 				303
 			],
 			"path": "res://assets/sprites/baked/defender_green.png",
@@ -28,9 +28,9 @@
 		},
 		"defender_red": {
 			"alpha_bounds": [
-				95,
+				158,
 				117,
-				362,
+				299,
 				303
 			],
 			"path": "res://assets/sprites/baked/defender_red.png",
@@ -41,9 +41,9 @@
 		},
 		"defender_yellow": {
 			"alpha_bounds": [
-				95,
+				158,
 				117,
-				362,
+				299,
 				303
 			],
 			"path": "res://assets/sprites/baked/defender_yellow.png",

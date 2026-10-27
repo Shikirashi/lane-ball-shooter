@@ -36,11 +36,7 @@ static func create_defender_visual(parent: Node3D, identity: int) -> Dictionary:
 	muzzle_flash.position = Vector3(0.92, 0.64, 0.0)
 	muzzle_flash.visible = false
 	root.add_child(muzzle_flash)
-	var charge_orb := PrimitiveFactory.sphere(0.13, 0.26, Color(1.0, 0.74, 0.18))
-	charge_orb.name = "ChargeOrb"
-	charge_orb.position = Vector3(-0.58, 0.82, 0.0)
-	root.add_child(charge_orb)
-	return {"root": root, "muzzle_flash": muzzle_flash, "charge_orb": charge_orb}
+	return {"root": root, "muzzle_flash": muzzle_flash}
 
 
 static func create_enemy_visual(parent: Node3D, uid: int, enemy_type: int, include_shadow := true) -> Dictionary:
