@@ -131,3 +131,9 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 - **NO ACTIVE CODEX TASK.** Initial audit `6564001` corrected by `78b535b`, with fixed-X projectile/collision timing, reproducible generator/scenario analysis and reviewed tests/source PASS; archive `.ai/TASKS/LBS-P028AR.md`. The preceding P028AR ACTIVE section above is historical. CI `40571348733` completed SUCCESS including test/build and portfolio publication.
 - P028B is **not authorized**. No changes to 102px/s production feed, 1–7 run weights, color RNG, HP 3/6/3/3, spawn director, input, 2D VFX or Android release. Await an explicit user decision in `.ai/TASK.md` before more Codex work.
+
+## Current sole ACTIVE task — P028B-EXP threat-aware color simulation (2026-10-27)
+
+- **Only ACTIVE Codex task is `LBS-P028B-EXP`** in `.ai/TASK.md`; historical 'NO ACTIVE' and P028A/AR-active passages above are superseded. User explicitly asked to TEST adaptive run color choices, not deploy them.
+- Implement simulation-only bag-respecting `baseline` vs mild/moderate/strong next-color selection weighted by **current live** defender time-to-danger. Preserve every color once per 4-run bag, unchanged run lengths and shipping production baseline RNG/sequence; don't use future spawn info, unlimited rescue colors or unconditional GREEN weighting. Capture paired-seed fairness and actual threatened-lane usable-response/match outcomes, include actual weak bot/danger scenarios and a no-threat ablation.
+- Use P028AR **fixed-X**, true 0.20s shot flight, authoritative chain/encounter physics, full tests plus repeatable reports in `analysis/reports/p028b_exp/`. Do not mutate production defaults (feed 102px/s, weights [20,30,18,13,9,6,4], enemy HP 3/6/3/3), player controls, assets, live UI, package/version, signed Android release or Web publish workflow. **P028B-SHIP and P029–P032 NOT ACTIVE.** Commit tested simulation/handoff, push, STOP; no automatic task advance.
