@@ -1,0 +1,127 @@
+{
+	"actors": {
+		"defender_blue": {
+			"alpha_bounds": [
+				95,
+				117,
+				362,
+				303
+			],
+			"path": "res://assets/sprites/baked/defender_blue.png",
+			"pivot": [
+				256,
+				420
+			]
+		},
+		"defender_green": {
+			"alpha_bounds": [
+				95,
+				117,
+				362,
+				303
+			],
+			"path": "res://assets/sprites/baked/defender_green.png",
+			"pivot": [
+				256,
+				420
+			]
+		},
+		"defender_red": {
+			"alpha_bounds": [
+				95,
+				117,
+				362,
+				303
+			],
+			"path": "res://assets/sprites/baked/defender_red.png",
+			"pivot": [
+				256,
+				420
+			]
+		},
+		"defender_yellow": {
+			"alpha_bounds": [
+				95,
+				117,
+				362,
+				303
+			],
+			"path": "res://assets/sprites/baked/defender_yellow.png",
+			"pivot": [
+				256,
+				420
+			]
+		},
+		"enemy_healyzard": {
+			"alpha_bounds": [
+				187,
+				166,
+				138,
+				169
+			],
+			"path": "res://assets/sprites/baked/enemy_healyzard.png",
+			"pivot": [
+				256,
+				335
+			]
+		},
+		"enemy_heavy": {
+			"alpha_bounds": [
+				128,
+				85,
+				256,
+				269
+			],
+			"path": "res://assets/sprites/baked/enemy_heavy.png",
+			"pivot": [
+				256,
+				354
+			]
+		},
+		"enemy_hopper": {
+			"alpha_bounds": [
+				158,
+				102,
+				196,
+				242
+			],
+			"path": "res://assets/sprites/baked/enemy_hopper.png",
+			"pivot": [
+				256,
+				344
+			]
+		},
+		"enemy_sickle_snake": {
+			"alpha_bounds": [
+				172,
+				55,
+				168,
+				283
+			],
+			"path": "res://assets/sprites/baked/enemy_sickle_snake.png",
+			"pivot": [
+				256,
+				338
+			]
+		}
+	},
+	"camera": {
+		"position": [
+			0.0,
+			4.80000019073486,
+			5.40000009536743
+		],
+		"projection": "orthogonal",
+		"size": 2.25,
+		"target": [
+			0.0,
+			0.620000004768372,
+			0.0
+		]
+	},
+	"format_version": 1,
+	"master_size": [
+		512,
+		512
+	]
+}

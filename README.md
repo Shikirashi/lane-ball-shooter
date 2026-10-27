@@ -21,6 +21,26 @@ godot --path .
 
 The project uses GDScript and the Compatibility renderer. All visuals are created with Godot drawing APIs and primitive 3D meshes; there are no external assets or add-ons.
 
+## P034A sprite-baking visual proof
+
+The current playable game still uses its original 3D battlefield. A separate review-only pipeline now renders those same procedural actor meshes and materials into eight transparent 512×512 RGBA masters: four enemy types and the red, blue, yellow and green defenders. `scripts/world/actor_visual_factory.gd` is shared by the live `LaneActor` and the baker, so the captures do not maintain a second approximation of the character geometry.
+
+Run the baker from a real graphical rendering environment with Godot 4.7.2 Compatibility rendering:
+
+```sh
+./scripts/bake_actor_sprites.sh
+```
+
+It waits for completed rendered frames from a transparent 4×-MSAA `SubViewport`, then writes the individual PNGs, grounded pivot/alpha-bound metadata, and the checkerboard review sheet at `assets/sprites/baked/contact_sheet.png`. The wrapper deliberately refuses an environment with neither `DISPLAY` nor `WAYLAND_DISPLAY`; Godot's dummy headless renderer is not a valid capture result. On a CI machine, provide a safe offscreen OpenGL display such as an already-installed Xvfb service.
+
+Launch the isolated, pure-2D squash/stretch study with:
+
+```sh
+godot --path . res://scenes/previews/p034a_sprite_preview.tscn
+```
+
+The preview uses only `Node2D`, `Sprite2D`, labels and 2D drawing at runtime. It is not referenced by `boot.tscn` or `main.tscn`, and no live gameplay, input, balance, export identity or camera behavior is changed by P034A.
+
 Native desktop and Android builds enter gameplay immediately. The Web export instead boots to a dark `LANE BALL SHOOTER` menu without constructing the gameplay scene or advancing its simulation. `START GAME` opens the exact prompt `Play in fullscreen?`: `YES` requests browser fullscreen directly from that button press and then starts the game, while `NO` starts in the page canvas without requesting fullscreen. A browser may deny fullscreen; gameplay still starts normally. Escape/browser fullscreen exit uses the normal responsive resize path. For desktop-only menu preview, run `godot --path . -- --web-menu-preview`.
 
 Controls:

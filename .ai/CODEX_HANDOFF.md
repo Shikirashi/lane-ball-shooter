@@ -1,51 +1,44 @@
-# Codex Handoff — LBS-P027 Android APK release and portfolio card
+# Codex Handoff — LBS-P034A 3D-to-2D sprite baking
 
-**Status:** COMPLETE; PHYSICAL-DEVICE QA PENDING
+**Status:** COMPLETE
 
 **Branch:** `master`
 
-## Published release
+## Implementation
 
-- GitHub Release: [android-v0.1.0](https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.1.0)
-- Direct asset: [lane-ball-shooter-android.apk](https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.1.0/lane-ball-shooter-android.apk)
-- Source commit: `0e77dbdeadcab4fce4f4b3bf054d721ef479c5bf`
-- Package/version: `com.shikirashi.laneballshooter`, `0.1.0`, version code `1`
-- ABI: `arm64-v8a` only
-- Minimum/target SDK: 24 / 36
-- APK size: 26,807,776 bytes
-- APK SHA-256: `cf390a1abbbbe3e8e937710e46a32aede297ddf43c0c41507d29549e8450ea26`
-- Certificate SHA-256: `796f2c679d962a8195ebf1a38d959002829561dfd26d2dae86e52ccdec7224fc`
+- Added `ActorVisualFactory`, now shared by the live `LaneActor` and the capture tool. Enemy and defender primitive meshes, dimensions, materials, names, Hopper horns, Healyzard scale/aura setup, launcher and charge orb remain sourced from one implementation; gameplay behavior is unchanged.
+- Added the CLI baker `tools/bake_actor_sprites.gd` plus `scripts/bake_actor_sprites.sh`. It uses a transparent 512×512 `SubViewport`, the live battlefield's orthographic viewing direction, ambient/directional lighting, Compatibility OpenGL, 4× MSAA, and waits for `RenderingServer.frame_post_draw`. No screenshot scraping, chroma key, external art or dummy headless capture is used.
+- Baked eight normal/resting RGBA masters under `assets/sprites/baked/`: `enemy_hopper.png`, `enemy_heavy.png`, `enemy_sickle_snake.png`, `enemy_healyzard.png`, and `defender_red/blue/yellow/green.png`.
+- Added `pivots.json` with each silhouette's alpha bounds and grounded pivot. Floors and shadows are deliberately excluded from the individual actors.
+- Added `contact_sheet.png` (1088×544 checkerboard; enemies top row, defenders bottom row).
+- Added isolated `scenes/previews/p034a_sprite_preview.tscn`. It uses only 2D drawing, labels and eight `Sprite2D` nodes, with Hopper hop/spring, Heavy squash, Snake wiggle, Healyzard pulse and defender recoil/knockdown-style loops. It is not referenced by normal boot/main gameplay or exports.
+- Added `tests/p034a_sprite_baking_test.gd` with 107 deterministic asset/alpha/pivot/source-factory/preview-wiring checks and documented commands in README.
 
-The APK was exported from a fresh isolated clone of exact source commit `0e77dbd`, not the dirty developer checkout. Godot 4.7.2 used the existing backed-up JKS and protected environment; no signing key was generated or replaced. The release uses APK signature schemes v2 and v3, one 4096-bit RSA signer, is non-debuggable, requests no runtime permissions reported by `aapt`, is zip-aligned, has only the two expected ARM64 native libraries, and declares landscape activity orientation. Downloading the public versioned asset reproduced the exact hash, size and signing certificate.
+## Rendering and verification
 
-No Android device was connected. Installation, native startup, landscape controls, audio, restart and performance checks are accurately marked pending rather than claimed.
+- Engine: Godot `4.7.2.stable.official.ed1daf0bf`.
+- Capture renderer: OpenGL 4.6 Compatibility on AMD Radeon RX 6700 XT (Mesa 26.2.5), using existing X display `:0` noninteractively.
+- `./scripts/bake_actor_sprites.sh`: **PASS**, eight RGBA PNGs plus metadata/contact sheet.
+- Immediate second bake on the same engine/GPU: **byte-identical PASS** for every PNG and `pivots.json`. This determinism is scoped to this renderer/toolchain; other GPUs/drivers can legitimately rasterize edge samples differently.
+- `godot --path . --audio-driver Dummy --rendering-method gl_compatibility res://scenes/previews/p034a_sprite_preview.tscn -- --p034a-smoke`: **PASS**, real renderer, clean one-second startup/animation exit.
+- `./scripts/ci/run_regression_tests.sh`: **all 24 suites passed** (P001–P023 plus P034A), including P011's 16,485-check stress suite.
+- P034A checks confirm every master is 512×512 RGBA, has transparent corners and over 150,000 fully transparent pixels, nonempty colored/opaque actor pixels, multisampled partial-alpha edges, no meaningful RGB fringe in zero-alpha pixels, valid grounded metadata, and loads into `Sprite2D`.
+- P019/P020 source-model and ability suites pass after the visual-factory extraction. The playable game's start scene, cameras, input, combat, balance, Web/Android identity and runtime 3D battlefield remain unchanged.
 
-## Source changes
+## Review
 
-- `3a2d212` fixes the Chrome profile cleanup race in `scripts/ci/verify_browser_startup.mjs`: it waits for Chrome exit, applies bounded TERM/KILL fallback, then retries safe removal. Secure context, exact title, one nonzero canvas and loader-removal assertions are unchanged.
-- `0e77dbd` enables ETC2/ASTC imports required by Godot Android export. Only this new setting was staged; pre-existing user changes in `project.godot` remain uncommitted.
-- Godot's user-local Java SDK setting now points at the existing Temurin 17 toolchain; Android SDK remains `/home/shiki/Android/Sdk`.
-- README records the immutable APK URL, hashes, source/version/device support and upgrade/signing limitations.
+```sh
+./scripts/bake_actor_sprites.sh
+godot --path . res://scenes/previews/p034a_sprite_preview.tscn
+```
 
-## Portfolio publication
+Review `assets/sprites/baked/contact_sheet.png` directly for silhouettes/materials and run the preview for relative scale, grounded pivots and illustrative 2D motion.
 
-- Portfolio commit: `94c5e77a19ee3c9cf1411bb2f08d763ce8ffc15b` on `Shikirashi/Shikirashi.github.io/master`.
-- Pages run: [40246539248](https://github.com/Shikirashi/Shikirashi.github.io/actions/runs/40246539248), successful.
-- Added exactly one `item mobile col-sm-6 col-md-4 col-lg-4 mb-4` card inside the existing grid.
-- Card uses the immutable versioned APK URL, accessible label/alt text, a visible `DOWNLOAD APK` badge, hover styling and keyboard `:focus-visible` treatment.
-- `assets/img/laneBallShooter.png` is a 900×506 crop of an actual current gameplay frame captured from the public Godot game with headless Chrome. Public and committed image SHA-256 values match: `ed59c954aa79d053cf9a452057e62c32f82b95835bdd53dafd632c8f3dde2ba7`.
-- All previous cards and nested Web runtime files were preserved. A concurrent P024 nested-Web deployment was rebased underneath the card commit rather than overwritten.
+## Limitations / future scope
 
-## Validation
+- P034A bakes only the requested standing/resting masters. Ground shadows, Healyzard glow, hit flashes, projectile/attack frames, muzzle flash, death explosion/fall/fade, full defender knockdown/revival states and additional animation frames remain live 3D effects; they require explicit treatment if P034B is later approved.
+- The preview's squash/stretch is an isolated motion study, not a gameplay renderer or final animation timing decision.
+- A real display/GPU or safe offscreen OpenGL display is required to rebake; the wrapper intentionally rejects a display-less dummy-headless environment.
+- Pre-existing user edits to `project.godot`, `scenes/main.tscn`, and unrelated generated `.uid` files were preserved and excluded from this task's commit.
 
-- Full local P001–P023 suite: **all 23 passed**, including P011's 16,485-check deterministic stress test.
-- Release build and `scripts/verify_android_release.sh`: **PASS**.
-- `apksigner verify --verbose --print-certs`: **PASS**, v2/v3, expected certificate.
-- `aapt dump badging/xmltree`: expected package/version, SDK 24/36, ARM64-only, landscape, no debuggable flag or listed runtime permissions.
-- Public asset download: HTTP attachment, expected APK MIME, exact 26,807,776-byte size/hash/signature.
-- Browser verifier local live-HTTPS run: strict assertions **PASS** and no new temporary Chrome profile remained.
-- P024 hosted run [40246262499](https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40246262499): **SUCCESS**, confirming the cleanup-race repair in CI.
-- Portfolio Pages run `40246539248`: **SUCCESS**; public card markup and byte-identical thumbnail verified over HTTPS.
-- Physical Android test: **PENDING — no connected device**.
-
-The backed-up release key and credentials remain outside Git. Existing `project.godot`, `scenes/main.tscn` and `.uid` working files remain preserved. Stop after P027; do not advance the mailbox.
+Stop after P034A. P034B, P033, P028 and other roadmap tasks were not implemented or activated.
