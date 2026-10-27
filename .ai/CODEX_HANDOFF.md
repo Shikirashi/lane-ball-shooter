@@ -1,4 +1,45 @@
-# Codex Handoff — LBS-P033R solid-red hit silhouettes
+# Codex Handoff — LBS-P028A deterministic balancing laboratory
+
+**Status:** COMPLETE
+
+**Branch:** `master`
+
+## Delivered
+
+- Added `BalanceLab`, a non-rendering Godot harness over the real `ChainModel`, `MagazineState`, `MatchProgression`, headless `Battlefield` director and `LaneCombatModel`. It explicitly advances the production models, queues a 0.20-second shot flight, enforces the 0.4-second cooldown, uses actual visible collision geometry/`try_insert_shot()`, and sends only real `match_completed` results into combat.
+- Added `./scripts/analyze_balance.sh` with `--smoke`, `--seeds`, `--seed-start`, `--duration`, `--step`, `--output`, `--policy` and `--scenario`. Named policies are `observe_only`, `basic_matcher` and `threat_priority`; none changes feeder choices or grants free matches/damage.
+- Added a validated per-instance run-weight seam to `ChainModel`. Ordinary instances duplicate the unchanged production `[20,30,18,13,9,6,4]`; the lab alone can inject `[12,30,40,10,5,2,1]`. A regression proves baseline injection returns the exact original RNG sequence. Production speed remains 102 px/s and all colors, HP 3/6/3/3, spawns, controls and other balance remain unchanged.
+- Metrics distinguish the fixed starter, fresh generator/run colors, rolling windows/droughts, visible/off-left/off-right physical state, entering balls, adjacent pairs vs passive 3+ groups, loaded/next/generated/fired ammo, real insertion/match results, threat timing/reasons, spawn types, hits/kills/heals/emergency/knockdown/revival/breach, and finite outcomes.
+- Committed `analysis/reports/p028a/REPORT.md`, `baseline.json`, `scenario_summary.csv` and `comparison.csv`. JSON schema version 1 includes bounded summaries for every generator seed and every scenario, not per-frame dumps. `analysis/.gdignore` prevents Godot importing report data.
+
+## Executed experiment and findings
+
+Command: `./scripts/analyze_balance.sh --seeds 500 --seed-start 28001 --duration 120 --step 0.1 --output analysis/reports/p028a`
+
+- Godot `4.7.2.stable.official.ed1daf0bf`; paired seeds 28001–28500; 300 fresh balls each = 150,000 per run-weight set; 25 real physical/combat scenarios; final runtime 7.13 s.
+- GREEN was 37,876 / 150,000 = **25.251%**, and direct GREEN run-color share was **24.987%**. All colors had a 20-ball p50 drought; GREEN p95 was 26 and worst 30 versus RED 33, BLUE 32 and YELLOW 37. There is no generator-level GREEN disadvantage in this sweep.
+- Baseline length 7 was **4.00% of selected runs but 9.43% of actually emitted balls**. Experimental weights reduced length-7 to 0.92% of runs / 2.33% of balls and reduced per-color p50 drought from 20 to 18.
+- In paired basic-matcher speed probes, GREEN adjacent-pair drought fell from 11.85 s at 102 to 10.00 s at 120 and 8.70 s at 140; all paired cases won, but visible GREEN occupancy fell. The experimental distribution at 102 reached 8.85 s on only two seeds. Recommendation: phone A/B 120/140 and the new run weights before any P028B shipping decision; retain 160 only as a sensitivity bound.
+- Baseline policy scenarios did not show GREEN as the starved lane. The worked playable-policy worst trace was seed 28001, RED, 7.30 s unavailable, attributed mainly to chain geometry. Bot victories do not prove human difficulty is solved.
+
+## Verification
+
+- `./scripts/analyze_balance.sh --smoke`: PASS, three ≤30 s cases.
+- Full command above: PASS. A second independent full run produced byte-identical CSVs and identical JSON after normalizing timestamp/runtime/output path.
+- `godot --headless --path . --script res://tests/p028a_balance_lab_test.gd`: PASS, 29 checks (determinism/diversity/schema/conservation, known sequences, geometry, danger timing, real scenarios, no fake actions and untouched defaults).
+- `./scripts/ci/run_regression_tests.sh`: PASS, all 29 suites; P011 remains 16,485 checks / 2,400 operations.
+- Existing ignored `exports/web` had three editor-created PNG `.import` sidecars, so its strict exact-nine check correctly rejected that local directory. Copying only its nine runtime assets to `/tmp/p028a-web-nine` and running `./scripts/ci/validate_web_release.sh /tmp/p028a-web-nine`: PASS; unchanged PCK SHA-256 `95bd5ebffb7e52dc739bc03645d79ec16823b431f8a45a34a3aaae3f0718a901`. No Web rebuild or deployment was needed.
+- `git diff --check`: PASS.
+
+## Limitations / next decision
+
+- The bot uses adjacent-pair heuristics, not multi-shot planning, human perception, touch error, emergency strategy or device readability. Hopper danger uses authoritative average speed; Snake delay is included; stationary healer pressure is measured via pulses rather than direct arrival. Combat sensitivity has only two paired seeds per speed/weight cell; generator conclusions use 500.
+- Physical Android testing remains outstanding. P028B is not implemented or activated. No threat-sensitive generator, runtime tuning, P029+, build/release/signing or deployment changes were made.
+- Existing user modifications to `project.godot`, `scenes/main.tscn`, and unrelated generated UID files remain uncommitted and untouched.
+
+---
+
+# Previous handoff — LBS-P033R solid-red hit silhouettes
 
 **Status:** COMPLETE
 

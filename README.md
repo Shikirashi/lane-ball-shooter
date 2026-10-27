@@ -122,6 +122,21 @@ Once all four spawn budgets are exhausted and all remaining enemies are neutrali
 
 Eight soft-arcade SFX are synthesized in memory as 22.05 kHz, mono, 16-bit PCM: shoot, successful insert, swap, match, tier-aware defender attack, knockdown, revival, and a distinct 0.38-second enemy-death explosion/pop/crunch. They use short sine/triangle tones with gentle envelopes, a -15 dB playback level, a 0.28 PCM peak cap, and a bounded ten-voice stealing pool that controls multi-kill polyphony. The neutralization event is emitted once per enemy before terminal victory can disable gameplay audio, including tier-3 and emergency groups. No audio files, plugins, or runtime dependencies are required. Headless runs generate and validate the clips but skip device playback; actual timbre and loudness still require listening on desktop, Web, and Android.
 
+## P028A balancing laboratory
+
+The analysis-only Godot laboratory drives the real `ChainModel`, `MagazineState`, `MatchProgression`, `Battlefield` spawn director and `LaneCombatModel` combat code without rendering or audio. It separates the fixed starter pattern from fresh generation, visible circles from retained offscreen history, adjacent-pair insertion opportunities from passive 3+ groups, loaded/next/fired ammunition, and chain/ammo/timing causes of threatened-lane starvation. Scripted shots respect the 0.4-second cooldown and 0.20-second flight, call the production insertion method, and dispatch attacks only from actual match events.
+
+Run a quick three-scenario check or reproduce the committed 500-seed/25-scenario report:
+
+```sh
+./scripts/analyze_balance.sh --smoke
+./scripts/analyze_balance.sh --seeds 500 --seed-start 28001 --duration 120 --step 0.1 --output analysis/reports/p028a
+```
+
+Optional `--policy observe_only|basic_matcher|threat_priority|all` and `--scenario baseline|comparison|all` filters are available. Results are written as a causal Markdown report plus JSON and two CSV files under `analysis/reports/p028a/`. Alternate 120/140/160 px/s speeds and `[12,30,40,10,5,2,1]` run weights apply only to harness-owned model instances; production remains at 102 px/s and `[20,30,18,13,9,6,4]`.
+
+The committed sweep found fresh GREEN at 25.251% of 150,000 baseline-generated balls, with the same 20-ball p50 and 26-ball p95 drought as RED/YELLOW and a lower worst drought than all but BLUE. Length-7 groups were 4.00% of runs but 9.43% of emitted balls. In the paired two-seed sensitivity cases, GREEN adjacent-pair drought fell from 11.85 seconds at 102 px/s to 10.00 at 120 and 8.70 at 140; exploratory run weights reached 8.85 seconds at 102. These bot results motivate phone A/B testing rather than a shipped balance change.
+
 ## Export
 
 The committed `export_presets.cfg` contains `Web`, `Android Debug`, and `Android Release` presets. Install the **Godot 4.7.2 Standard** export templates matching the editor build before exporting. Mono templates do not satisfy this GDScript editor's template lookup.
@@ -284,6 +299,7 @@ godot --headless --path . --script res://tests/p020_special_enemy_abilities_test
 godot --headless --path . --script res://tests/p021_web_menu_export_test.gd
 godot --headless --path . --script res://tests/p023_enemy_speed_victory_copy_test.gd
 godot --headless --path . --script res://tests/p022_hp_penetrating_attacks_test.gd
+godot --headless --path . --script res://tests/p028a_balance_lab_test.gd
 godot --headless --path . --script res://tests/p033_controls_and_enemy_hp_test.gd
 godot --headless --path . --script res://tests/p033r_hit_silhouette_test.gd
 godot --headless --path . --script res://tests/p034a_sprite_baking_test.gd

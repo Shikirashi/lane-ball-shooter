@@ -74,6 +74,9 @@ var fresh_identity_counts: Array[int] = [0, 0, 0, 0]
 var fresh_run_length_counts: Array[int] = [0, 0, 0, 0, 0, 0, 0]
 var fresh_runs_generated := 0
 var longest_fresh_run := 0
+# Per-instance analysis seam. Production instances retain an exact duplicate of
+# FRESH_RUN_LENGTH_WEIGHTS; balancing tools may override only their own model.
+var fresh_run_length_weights: Array[int] = FRESH_RUN_LENGTH_WEIGHTS.duplicate()
 var total_rollbacks_started := 0
 var total_rollbacks_completed := 0
 var simulation_time := 0.0
@@ -824,6 +827,20 @@ func set_fresh_seed(seed_value: int) -> void:
 	fresh_seed = seed_value if seed_value != 0 else 1
 	_reset_fresh_generator()
 
+func set_analysis_fresh_run_length_weights(weights: Array[int]) -> bool:
+	if weights.size() != FRESH_RUN_LENGTH_WEIGHTS.size():
+		return false
+	var total := 0
+	for weight in weights:
+		if weight < 0:
+			return false
+		total += weight
+	if total != 100:
+		return false
+	fresh_run_length_weights = weights.duplicate()
+	_reset_fresh_generator()
+	return true
+
 func _reset_fresh_generator() -> void:
 	_fresh_rng.seed = fresh_seed
 	_fresh_color_bag.clear()
@@ -854,8 +871,8 @@ func _draw_fresh_run_color() -> int:
 func _draw_fresh_run_length() -> int:
 	var roll := _fresh_rng.randi_range(1, 100)
 	var cumulative := 0
-	for index in range(FRESH_RUN_LENGTH_WEIGHTS.size()):
-		cumulative += FRESH_RUN_LENGTH_WEIGHTS[index]
+	for index in range(fresh_run_length_weights.size()):
+		cumulative += fresh_run_length_weights[index]
 		if roll <= cumulative:
 			return index + 1
-	return FRESH_RUN_LENGTH_WEIGHTS.size()
+	return fresh_run_length_weights.size()

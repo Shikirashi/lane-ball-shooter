@@ -1,0 +1,12 @@
+series,weights,speed,policy,scenarios,victories,defeats,timeouts,mean_visible_green,mean_longest_green_match_drought_s,mean_green_starved_threat_s,shots,matches,neutralized
+policy_baseline,baseline,102.0,basic_matcher,3,3,0,0,2.72188547997468,10.1333333333333,0.0,130,131,96
+policy_baseline,baseline,102.0,observe_only,3,0,3,0,5.48778963094513,2.73333333333333,6.83333333333332,0,0,59
+policy_baseline,baseline,102.0,threat_priority,3,3,0,0,2.79092175888113,10.1333333333333,0.0,134,137,96
+speed_weights,baseline,102.0,basic_matcher,2,2,0,0,3.01172151491122,11.85,0.0,83,82,64
+speed_weights,baseline,120.0,basic_matcher,2,2,0,0,2.63631241893642,9.99999999999998,0.0,84,86,64
+speed_weights,baseline,140.0,basic_matcher,2,2,0,0,2.56047937569674,8.69999999999999,0.0,95,98,64
+speed_weights,baseline,160.0,basic_matcher,2,2,0,0,2.58350455448255,7.74999999999999,0.0,101,106,64
+speed_weights,experimental,102.0,basic_matcher,2,2,0,0,2.03548723094802,8.84999999999998,0.0,95,96,64
+speed_weights,experimental,120.0,basic_matcher,2,2,0,0,2.03941127951333,7.64999999999999,0.0,104,105,64
+speed_weights,experimental,140.0,basic_matcher,2,2,0,0,2.08048872453706,6.59999999999999,0.0,103,105,64
+speed_weights,experimental,160.0,basic_matcher,2,2,0,0,2.29985728848112,5.99999999999999,0.0,113,114,64
