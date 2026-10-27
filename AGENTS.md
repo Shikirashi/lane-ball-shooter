@@ -152,3 +152,9 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 - User explicitly authorized mild bias for human playtest. Source `7f2d096` (main gameplay hook `f812608`) ENABLES the corrected `ThreatRunSelector("mild")` with current live `Battlefield` time-to-defender; CI `40598952476` SUCCESS including fresh public Web/browser validation. Previous no-shipping restrictions in older P028B experiment instructions superseded **for mild only**, not moderate/strong, threat-aware variants or other balancing changes.
 - **NO ACTIVE CODEX TASK** in `.ai/TASK.md`. Await user's Web playtest feedback. Default conveyor 102px/s, original run length weights, four-color bag legality, enemy HP 3/6/3/3, sprites, controls and old signed Android APK unchanged. Any further tuning, APK rebuild, levels/branding/rename needs explicit new user approval.
+
+## Current state after mild playtest screenshot fix (2026-10-27)
+
+- **NO ACTIVE CODEX TASK.** Human playtest found mild (+50% eligible-threat color ordering) fairer, with naturally easy/hard moments; retain it unchanged pending further feedback.
+- Fix deployed for terminal UI overdraw: `GameOverOverlay` now has absolute z200 (above defender/charge/enemy/projectile positive z and settings z100), so dimmer covers all visuals and Restart stays unobstructed. Source `91d0712`, P018 test `dc16d93`, GitHub CI `40601383350` SUCCESS, public Web verified; user visual retest outstanding.
+- Preserve existing 102px/s conveyor, run-length weights, HP 3/6/3/3, sounds, controls, 2D sprites and old Android v0.1.0 identity/keystore. Do not auto-start more development.
