@@ -2,6 +2,12 @@
 
 Status: P024 COMPLETE (GitHub Actions `40246262499` green, auto-Web deploy verified); P027 RELEASED (signed ARM64 `android-v0.1.0` APK + portfolio Download APK card, Pages `40246539248` deployed). Only physical Android phone QA remains, no active Codex task (2026-10-25 23:53 UTC).
 
+## Public-facing name and forward roadmap (2026-10-27)
+- **User-confirmed title: Ball Battalion.** The repo, source identifiers, public Web URL, APK package, and prior releases remain under Lane Ball Shooter until a separately authorized migration. Do **not** silently rename or invalidate them.
+- **Mascot exploration, not a finalized asset:** **Batta + Lion = BattaLion**, playing on Japanese `バッタ` (*batta*, grasshopper/locust) and English *lion*/*battalion*. Explore a friendly jumping grasshopper–lion hybrid, duo, or simplified emblem; keep it visually distinct from the existing hostile Hopper enemy. Tagline and exact art are undecided.
+- **Proposed progression only; no Codex task activated:** P028 diagnose/fix perceived GREEN color scarcity; P029 data-driven levels; P030 seeded difficulty/level generator; P031 saved campaign UI; P032 mascot/branding/polish. Preserve current game mechanics and implement only after explicit per-task authorization.
+- **Detailed design, investigation criteria, and proposed acceptance checks:** [`BALL_BATTALION_ROADMAP.md`](BALL_BATTALION_ROADMAP.md). This roadmap is **not** authorization to change code and does not override established rules below.
+
 ## Game premise
 A 2D Zuma-like colored-ball chain across the **top** supplies attacks for **four horizontal 3D combat lanes** below. Colored defender characters stand at the left side of each combat lane; enemies hop leftward from the right. The player matches balls in the upper chain by firing vertically from a bottom shooter to cause the correspondingly colored defender to fire 3D projectiles rightward. The upper ball supply remains infinite, but the combat objective is now a **finite enemy encounter** with a victory condition; score/combo still matter. Later levels/waves may extend this, but no endless enemy spawning within the present encounter.
 
