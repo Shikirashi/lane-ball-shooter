@@ -249,3 +249,7 @@ After reviewing the corrected P033R visual results, the user said to continue. *
 For experiments only (not production): current conveyor 102px/s vs 120/140/160; original run weights `[20,30,18,13,9,6,4]` vs hypothetical `[12,30,40,10,5,2,1]`. Threat-aware next-run color bias is a FUTURE hypothesis: log time-to-danger/defensive starvation but do NOT ship a dynamic assistance algorithm now. Current enemy HP 3/6/3/3, physics, shooter, red hit feedback, emergency crystals, and source art remain unchanged.
 
 On handoff, inspect real data and jointly decide narrow **P028B** adjustments. Do not auto-activate it, P029 levels/campaign, P032 mascot/branding, or an Android APK upgrade.
+
+## 18. P028A review correction P028AR (ACTIVE, 2026-10-27)
+
+The initial reproducible Godot lab/500-seed report was delivered in `6564001`. GREEN generation ~25.251% and seven-ball runs ~9.43% of generated balls look valid. **However the automated player incorrectly aimed at the target ball's latest x at arrival**, while real shots hold their launch X during flight; and the chain had not yet advanced through the impact step. This biases perfect aim, human-comparison and conveyor speed sensitivity outcomes. **Only P028AR corrective task now ACTIVE**: fixed X, correct time ordering, reproducible tests and regenerate reports. No production chain speed/weights/HP/visual changes; P028B cannot be approved until corrected analysis is reviewed.
