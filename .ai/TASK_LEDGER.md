@@ -1,5 +1,7 @@
 # Lane Ball Shooter — Task Ledger
 
+**ONE ACTIVE CODEX TASK (2026-10-27): LBS-P028B-EXP — simulation-only threat-aware color-run generation A/B study.** User explicitly requested testing threat-aware generation after reviewing P028AR. See `.ai/TASK.md`: preserve authentic ChainModel four-color run bag; compare baseline, mild/moderate/strong per-run **live time-to-danger** priority under paired seeds; record fairness costs and true playable hit/match/starvation consequences, produce Godot-generated Markdown/CSV/JSON reports. **NO shipped adaptive generator, speed/cluster change, levels, assets or APK changes.** P028A/AR completed; P028B shipping and P029–P032 remain NOT ACTIVE. This latest status overrides historical idle paragraphs below.
+
 **NO ACTIVE CODEX TASK (2026-10-27).** P028A initial lab `6564001` corrected by **P028AR `78b535b`**, which now correctly holds fixed X during 0.20s projectile flight and resolves collision after chain movement. Technical source and regenerated-report review PASS; Codex reports 29 suites and 38 dedicated checks passing. GitHub CI `40571348733` completed SUCCESS, test/build and portfolio publication. Archive `.ai/TASKS/LBS-P028AR.md`. **P028B and P029–P032 remain PROPOSED / NOT ACTIVE.**
 
 **HISTORICAL: P028A initially active and implemented in `6564001`.** User explicitly said 'looks good, continue' after P033/P033R technical review. Activate P028A alone in `.ai/TASK.md`: measure per-color fresh/visible/matchable ammo availability, droughts, enemy pressure and seeded skill-policy encounters; compare isolated test-only conveyor speeds/run-length candidates with NO shipping balance changes. **P028B gameplay tuning and P029–P032 remain NOT ACTIVE.** This current status overrides historical idle notices below.
@@ -75,3 +77,6 @@ P028A's balance-simulation laboratory remains proposed and NOT active. **P033 is
 | LBS-P028B | **PROPOSED — NOT ACTIVE** | Evaluate and obtain approval for selected future gameplay modifications (distribution weights, feed speed, time-to-danger color bias) only after P028A report and human discussion. |
 
 | LBS-P028AR | **COMPLETE `78b535b`; technical review PASS, CI SUCCESS** | Fixed launch-X collision and correct impact timing; moving-target miss regression; regenerated 500-seed generator + 25-scenario reports, no production balance changes. Archive `.ai/TASKS/LBS-P028AR.md`. |
+
+| LBS-P028B-EXP | **ACTIVE — `.ai/TASK.md`** | Test-only baseline + mild/moderate/strong threat-aware next-run color ordering, respecting four-color bag, real Battlefield danger and fixed-X hits; paired seed studies, no-threat ablation, reproducible fairness/starvation report. Does not modify playable game settings. |
+| LBS-P028B-SHIP | **PROPOSED — NOT ACTIVE** | Optional production adaptive generator to be considered only after experimental report and explicit player decision. |
