@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Task Ledger
 
-**NO ACTIVE CODEX TASK (2026-10-27).** LBS-P034A sprite-baking implementation delivered in `5dbd708` and source/asset review passed; Web CI run `40544273523` SUCCESS. **User's visual approval of P034A sprites/animated preview remains pending.** Do not activate P034B (runtime 2D replacement), P033 controls or P028 balancing without approval. P034A archived at `.ai/TASKS/LBS-P034A.md`.
+**ONLY ACTIVE CODEX TASK (2026-10-27): LBS-P034B — migrate live battlefield to truly 2D sprites, lanes, projectiles and effects, with real gameplay screenshot QA for SSH review.** User elected to proceed after P034A technical/contact-sheet review despite being unable to run an interactive preview over SSH. Authoritative scope is `.ai/TASK.md`. P034A delivered at `5dbd708` (CI `40544273523` SUCCESS), archived at `.ai/TASKS/LBS-P034A.md`. **P033 controls and P028 balancing remain NOT ACTIVE.**
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
@@ -42,7 +42,7 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 
 ## Ball Battalion — proposed continuation after P027 (2026-10-27)
 
-**NOT ACTIVE.** User chose the public-facing name **Ball Battalion**, with an exploratory `Batta + Lion = BattaLion` grasshopper/locust–lion mascot pun. The game repository, released Android APK and deployed Web game remain named Lane Ball Shooter until a separately approved branding migration. The complete, source-checked planning handoff is [`BALL_BATTALION_ROADMAP.md`](BALL_BATTALION_ROADMAP.md). **Do not have Codex execute this proposed backlog just because it is written here.** `.ai/TASK.md` still defines NO ACTIVE TASK.
+**BRANDING / BALANCING BACKLOG NOT ACTIVE.** User chose the public-facing name **Ball Battalion**, with an exploratory `Batta + Lion = BattaLion` grasshopper/locust–lion mascot pun. The game repository, released Android APK and deployed Web game remain named Lane Ball Shooter until a separately approved branding migration. The complete, source-checked planning handoff is [`BALL_BATTALION_ROADMAP.md`](BALL_BATTALION_ROADMAP.md). **Do not have Codex execute this proposed backlog just because it is written here.** `.ai/TASK.md` now activates **only P034B**, not this general backlog.
 
 | Proposed ID | Status | Scope to be refined and activated one at a time |
 |---|---|---|
@@ -59,6 +59,6 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 |---|---|---|
 | LBS-P033 | PROPOSED — NOT ACTIVE | Android Classic touch with two-finger swap and raised shooter; horizontal loaded/next-ball layout (loaded remains centered and larger, NEXT beside it, edge-safe). Android Side controls: 1:2:1 horizontal zones; 25% relative trackpad for left/right movement, opposite 25% split vertically (upper tap swap, lower tap shoot), selectable handedness; hide old Android swap button; settings/persistence. Desktop/Web click/shoot and right-click swap over all noninteractive game canvas including conveyor; keep UI buttons intercepting clicks. |
 | LBS-P034A | **IMPLEMENTED — source/asset review PASS, user visual QA pending**; `5dbd708` | Eight real transparent PNGs, pivot metadata, contact sheet, CLI baker and isolated 2D preview; existing game not migrated. Archived task `.ai/TASKS/LBS-P034A.md`. |
-| LBS-P034B | PROPOSED — NOT ACTIVE | After user approval of P034A visuals, replace runtime 3D battlefield rendering with pure 2D lanes, sprites, projectiles and squash/stretch effects, while preserving authoritative combat rules and responsive 2D framing. |
+| LBS-P034B | **ACTIVE — `.ai/TASK.md`** | Migrate the live battlefield to actual 2D sprites/lanes/projectiles/effects, preserve gameplay/legacy tests, responsive framing, and commit real rendered screenshots for remote visual review. No P033 or P028 changes. |
 
-P028A's balance-simulation laboratory remains proposed; no color/speed/enemy changes are authorized by P034A.
+P028A's balance-simulation laboratory remains proposed; **P034B** does not authorize color/speed/enemy changes.
