@@ -85,3 +85,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 - **ONLY ACTIVE CODEX TASK:** `LBS-P034C`, specified in `.ai/TASK.md`. Earlier no-active/P034B-active status paragraphs here are historical.
 - Remove original 3D baked yellow ChargeOrb, genuinely rebake transparent defender PNGs with existing GPU/CLI pipeline; add independent colored faceted 2D charge crystals behind live defenders, shatter/fade once on authoritative emergency discharge, never restore on revival, restore on run restart. Never dim whole defender when spent. Retain all combat semantics.
 - New actual-Godot-rendered gameplay screenshot evidence REQUIRED for SSH review. Preserve existing P034A/P034B assets, tests and live all-2D runtime. `P033` controls, `P028` balancing, branding, Android version/release and other work NOT ACTIVE. No self-advancement.
+
+## After P034C technical review — 2026-10-27
+
+- **NO ACTIVE CODEX TASK.** The prior P034C ACTIVE status above is historical: Codex implemented the transparent rebake / colored crystal / one-shot shatter as `16347b3`, with handoff `04d6075`, source and screenshot review PASS. Archive `.ai/TASKS/LBS-P034C.md`. GitHub CI `40555144242` test/build job passed, final publication status still needs verification.
+- Do not self-activate P033 controls, P028 balancing, branding, levels or Android publishing. `.ai/TASK.md` is the ONLY authority for future work. Preserve local edits/signing files.
