@@ -1,3 +1,41 @@
+# ACTIVE CODEX CORRECTION — LBS-P033R: Fix unintended darkening from the damage-flash shader
+
+**Status:** FOLLOW-UP FIX REQUIRED after ChatGPT review of P033 implementation `294ddae627f46b7dce13f50dcd2006277776ae81` (2026-10-27). **Only this correction is authorized now.** Do NOT redo the already delivered P033 controls/HP/layout work and do NOT proceed to P028. Once corrected, retest and push.
+
+## Confirmed defect
+
+`scripts/world/lane_actor.gd` defines `HIT_FLASH_SHADER`:
+```glsl
+void fragment() {
+  vec4 pixel = texture(TEXTURE, UV) * COLOR;
+  pixel.rgb = mix(pixel.rgb, vec3(1.0, 0.015, 0.015), flash_strength * pixel.a);
+  COLOR = pixel;
+}
+```
+In Godot 4.x `canvas_item` fragment shaders, incoming `COLOR` **already contains the default TEXTURE sampled and multiplied by the CanvasItem's color**. Multiplying `texture(TEXTURE, UV) * COLOR` double-applies both sampled RGB and sampled alpha, causing all **UNHIT enemies to be too dark** and shrinking soft alpha edges. This is visible when comparing P033's screenshot with the authentic unchanged enemy sprites in P034C. Verified with official Godot CanvasItem fragment shader documentation:
+https://docs.godotengine.org/en/stable/tutorials/shaders/shader_reference/canvas_item_shader.html
+
+## Required narrowly scoped fix
+
+1. Update the shader to **use the already textured fragment `COLOR` only once**. For example:
+```glsl
+void fragment() {
+  vec4 pixel = COLOR;
+  pixel.rgb = mix(pixel.rgb, vec3(1.0, 0.015, 0.015), flash_strength);
+  COLOR = pixel;
+}
+```
+Do not multiply by sampled alpha as a flash coefficient; outgoing alpha already masks transparent/antialiased edges. It is okay to use a technically equivalent implementation preserving original color/alpha exactly at `flash_strength==0`, with a vivid red flash at `flash_strength==1`. Enemy shader materials must remain instance-independent. Preserve existing nonlethal hit timing, lethal corpse red flash/fall/fade, matching gameplay, and unchanged P033 HP 3/6/3/3.
+2. Add focused tests **beyond parameter-state assertions**: preferably verify actual 2D rendered RGBA output of an unhit enemy using the shader against the same sprite **without** any shader in the same Godot Compatibility renderer at the same transform (tolerance only for color-space/antialiasing differences). At `flash_strength=0`, RGB/alpha should match; at full strength, visible pixels should be strongly red while silhouette/alpha stays identical. A source-level assertion against `texture(TEXTURE, UV) * COLOR` can complement but not replace actual output verification. The earlier P033 test only checked shader parameter values and therefore missed this bug. If no actual GPU is available in headless CI, split strict logic/source coverage from standalone CLI screenshot run on GPU and document it; do not claim visual test when unrendered.
+3. Re-run `./scripts/ci/run_regression_tests.sh`, Web build/validation and the authentic `./scripts/capture_p033_gameplay.sh`. Update the affected P033 preview screenshots to reflect the corrected undamaged colors (prefer an additional proper Godot-rendered side-by-side damaged/undamaged enemy comparison if easily feasible), check bright red hit visually, verify original P034A/B/C sprite and crystal assets unchanged.
+4. Update `.ai/CODEX_HANDOFF.md` with P033R fix, actual tests, screenshot hash/paths, outcome; commit/push corrected code/tests/images and handoff to tracked branch. Preserve users' uncommitted local files and release signing keys. No unrelated UI, input, balance, packaging, Godot project version or publishing changes.
+
+**Stop after P033R correction.** User/ChatGPT will check push and close P033 before authorizing the P028A balance laboratory.
+
+---
+
+## Original P033 scope — already implemented in 294ddae (historical reference only)
+
 # ACTIVE CODEX TASK — LBS-P033: Mobile control modes, shooter ergonomics, easier enemies and vivid hit flashes
 
 **Status:** ACTIVE — user explicitly requested "fold into the next task to halve all enemy HP ... heavily tint the enemies sprite red ... Continue" after accepting the P034C visuals (2026-10-27). This is the **ONE AND ONLY** active task. Implement, test, commit/push and stop; do not advance to P028 balancing or P029–P032 content.
