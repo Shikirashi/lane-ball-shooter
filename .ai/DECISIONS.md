@@ -1,6 +1,6 @@
 # Lane Ball Shooter — Gameplay/Technical Decisions
 
-Status: P024 COMPLETE (GitHub Actions `40246262499` green, auto-Web deploy verified); P027 RELEASED (signed ARM64 `android-v0.1.0` APK + portfolio Download APK card, Pages `40246539248` deployed). P024/P027 done, Android physical QA pending. **P034A sprite capture delivered and source-reviewed** (`5dbd708`); **P034B IMPLEMENTED** (commit `b802096`, Web CI `40548949659` SUCCESS), source and screenshots reviewed; no active Codex task. Player visual/motion acceptance and native Android QA pending. **P034C is NOW the sole ACTIVE visual-polish task**; no P033/P028 changes authorized.
+Status: P024 COMPLETE (GitHub Actions `40246262499` green, auto-Web deploy verified); P027 RELEASED (signed ARM64 `android-v0.1.0` APK + portfolio Download APK card, Pages `40246539248` deployed). P024/P027 done, Android physical QA pending. **P034A sprite capture delivered and source-reviewed** (`5dbd708`); **P034B IMPLEMENTED** (commit `b802096`, Web CI `40548949659` SUCCESS), source and screenshots reviewed. Player visual/motion acceptance and native Android QA pending. **P034C is NOW the sole ACTIVE visual-polish task**; no P033/P028 changes authorized.
 
 ## Public-facing name and forward roadmap (2026-10-27)
 - **User-confirmed title: Ball Battalion.** The repo, source identifiers, public Web URL, APK package, and prior releases remain under Lane Ball Shooter until a separately authorized migration. Do **not** silently rename or invalidate them.
