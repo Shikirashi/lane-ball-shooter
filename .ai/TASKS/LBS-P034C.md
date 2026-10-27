@@ -2,7 +2,7 @@
 
 **Implementation:** COMPLETE — code/assets commit `16347b377d044702c7748a94ebb53f8bce435e57`; handoff `04d6075a3b8af9f7625a0a0e1956a089f8a6de98` (2026-10-27).
 
-**Review:** Source, authentic rebaked sprite images, crystal state screenshot, shatter screenshot and new tests reviewed. No blocking technical defect found; seven tiny shards may need aesthetic playtest for motion readability. Codex reports **26 local regression suites PASSED**, P034C 85 checks; GitHub CI build/test job PASSED for Actions run `40555144242`. Portfolio publish may still be processing as this note is drafted. Human motion and physical Android QA still pending.
+**Review:** Source, authentic rebaked sprite images, crystal state screenshot, shatter screenshot and new tests reviewed. No blocking technical defect found; seven tiny shards may need aesthetic playtest for motion readability. Codex reports **26 local regression suites PASSED**, P034C 85 checks; GitHub CI build/test job PASSED for Actions run `40555144242`. Portfolio publication subsequently verified successful: GitHub Actions run `40555144242` completed SUCCESS. Human motion and physical Android QA still pending.
 
 **Screenshots:** `assets/previews/p034c_crystal_states_1280x720.png` and `assets/previews/p034c_crystal_shatter_1600x720.png`. Re-baked orb-free defender sprites/contact sheet under `assets/sprites/baked/`.
 
