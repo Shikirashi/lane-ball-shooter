@@ -1,6 +1,8 @@
 # Lane Ball Shooter — Task Ledger
 
-NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
+**CURRENT ACTIVE TASK: LBS-P034A — transparent sprite-baking visual prototype.** The user requested Codex/Godot capture the existing 3D defenders and enemies into transparent PNGs for a possible all-2D presentation. This task captures and previews sprites only, with **no live gameplay/renderer migration**. P028/P033/P034B remain NOT ACTIVE. The previous no-active-task state described below is historical.
+
+PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
 
 | ID | Status | Goal |
 |---|---|---|
@@ -50,3 +52,13 @@ Development order: P001 -> P002 -> P003 -> P004 -> P005 -> P006 -> P007 -> P008 
 | LBS-P031 | PROPOSED — NOT ACTIVE | Level select, next/retry, best-score/progression UI; optional, unapproved stars and survival mode. |
 | LBS-P032 | PROPOSED — NOT ACTIVE | Ball Battalion branding, low-cost mascot exploration, match/combat feedback and actual Web/Android QA, with release/package renaming separately scoped. |
 
+
+## Ball Battalion — mobile controls and 2D art addendum (2026-10-27)
+
+| ID | Status | Scope |
+|---|---|---|
+| LBS-P033 | PROPOSED — NOT ACTIVE | Android Classic touch with two-finger swap and raised shooter; horizontal loaded/next-ball layout (loaded remains centered and larger, NEXT beside it, edge-safe). Android Side controls: 1:2:1 horizontal zones; 25% relative trackpad for left/right movement, opposite 25% split vertically (upper tap swap, lower tap shoot), selectable handedness; hide old Android swap button; settings/persistence. Desktop/Web click/shoot and right-click swap over all noninteractive game canvas including conveyor; keep UI buttons intercepting clicks. |
+| LBS-P034A | **ACTIVE — CODEX MAILBOX** | Render Godot's existing four 3D enemies and four defender colors into genuine transparent PNGs, generate a contact sheet and an isolated 2D squash/stretch preview. Do not replace the live 3D game yet. See `.ai/TASK.md`. |
+| LBS-P034B | PROPOSED — NOT ACTIVE | After user approval of P034A visuals, replace runtime 3D battlefield rendering with pure 2D lanes, sprites, projectiles and squash/stretch effects, while preserving authoritative combat rules and responsive 2D framing. |
+
+P028A's balance-simulation laboratory remains proposed; no color/speed/enemy changes are authorized by P034A.
