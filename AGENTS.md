@@ -113,3 +113,11 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 - **NO ACTIVE CODEX TASK.** P033 controls/HP `294ddae` and P033R red silhouette fix `f08ee3d` were delivered. Source, exact-alpha derived red masks and Godot-rendered comparison images have been reviewed; no blocking defects found. P033R archive `.ai/TASKS/LBS-P033R.md`. Earlier P033R ACTIVE notices are historical.
 - Only `.ai/TASK.md` authorizes work. P028A color/speed/enemy pressure balancing lab and remaining campaign/branding features are NOT ACTIVE. Physical Android gesture testing remains outstanding; no signed APK rebuild authorized.
+
+## Current ACTIVE scope — P028A analysis-only balancing lab (2026-10-27)
+
+- **ONLY ACTIVE CODEX TASK is LBS-P028A**, authoritative specification `.ai/TASK.md`. User approved continuing after P033/P033R, which are COMPLETE. Earlier NO ACTIVE TASK and P033/P033R-active notices are history.
+- Implement and **execute** deterministic, bounded Godot CLI model-driven analysis for color generation, actual conveyor visibility/match opportunity, loaded/next/fired ammo, recorded match outcomes and enemy pressure/time-to-danger, producing JSON/CSV and a causal Markdown report. Record seed provenance and realistic simulation limitations.
+- Test only alternate conveyor speed (102/120/140/160) and optional run weights in a sandbox. **NO SHIPPED BALANCE CHANGE**: do NOT adjust ChainModel default speed, current 1–7 run weights, four-color bag, seed policy, enemy HP **3/6/3/3**, speed/spawns, healing/Snake logic, physical off-left history, match/rollback, controls, 2D visuals or crystals.
+- **P028B is NOT ACTIVE**: do not implement threat-aware colors, starvation protection, speed increase or new weighted run distribution in gameplay until research report and a separate user decision. P029–P032 campaign/levels/branding and Android APK release NOT ACTIVE either.
+- Preserve all user-local files/signing secrets. Run whole regression suite plus bounded simulation smoke tests, commit generated report and tool/tests/handoff, push and STOP. Do not self-advance.
