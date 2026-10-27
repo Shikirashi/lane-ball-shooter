@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 NOW ACTIVE** for mobile/desktop controls + halved enemy HP and red hit feedback (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 implemented as `294ddae`, but focused P033R shader correction ACTIVE** after review (unhit sprites accidentally darkened); original scope mobile/desktop controls + halved enemy HP and red hit feedback (see `.ai/TASK.md`). P028–P032 remain proposed; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
@@ -229,3 +229,7 @@ The user approves **P033** after liking the P034C crystal visual result but find
 - **Testing:** full regression + proper HP/assertion updates, simulated touch IDs, actual gameplay screenshot capture for SSH review, CI Web build/auto-publish. Android release still historical v0.1.0; no signed APK update or signing-key operations in P033.
 
 **P028A automated balancing laboratory remains NOT ACTIVE.** No chain/run weights, feed speed, magazine, enemy spawn probability/frequency, level campaign, branding or APK release change is authorized by P033.
+
+## 14. P033R — damage-shader review correction (ACTIVE, 2026-10-27)
+
+P033 was pushed as `294ddae` with Android Classic/Side controls, raised horizontal magazine, 3/6/3/3 HP, and strong red hit shader. Source and real P033 screenshot review detected **a shader defect**: in Godot 4 CanvasItem fragment code, `COLOR` already includes `TEXTURE`, so `texture(TEXTURE, UV) * COLOR` incorrectly squares color and alpha of undamaged enemy sprites. Correct the shader to use already-textured `COLOR`, maintain vivid per-hit red and lethal flash, and add real-rendered pixel comparison tests and refreshed screenshots. **This narrow P033R is the only active Codex work.** P028A remains proposed; do not alter controls, HP, game data, branding or releases in P033R.
