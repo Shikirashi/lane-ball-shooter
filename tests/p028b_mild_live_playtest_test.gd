@@ -54,7 +54,7 @@ func _test_live_mild_generator() -> void:
 	_check(selector.choose([0, 1, 2, 3], -1, 0.0, 2) == 2, "no-threat run keeps the baseline color")
 
 	# Direct current state, not future spawn information or a guessed color.
-	battlefield.spawn_directed_enemy(TeamData.Identity.RED, EnemyTypesScript.Type.HOPPER, 1.6, -1, false)
+	battlefield.spawn_directed_enemy(TeamData.Identity.RED, EnemyTypesScript.Type.HOPPER, -3.0, -1, false)
 	main.call("_process", 0.1)
 	_check(selector.threat_snapshot[TeamData.Identity.RED] < 15.0, "live enemy near RED defender activates urgency in that lane")
 	_check(is_inf(selector.threat_snapshot[TeamData.Identity.BLUE]), "safe BLUE lane remains unthreatened")
