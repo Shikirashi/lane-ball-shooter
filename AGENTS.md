@@ -102,3 +102,9 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 ## Current ACTIVE correction after P033 initial push — P033R (2026-10-27)
 
 - **ONLY ACTIVE TASK** is narrowly scoped P033R shader fix in `.ai/TASK.md`. P033 code commit `294ddae` already implemented controls, raised shooter, canonical HP 3/6/3/3 and red hit feedback, but review detected wrongly darkened unhit sprites because a Godot 4 CanvasItem fragment shader multiplied `texture(TEXTURE, UV) * COLOR`; incoming fragment `COLOR` already includes the texture. Fix this double texture sampling, add actual rendered undamaged-vs-source RGBA regression evidence, recapture P033 screenshot, rerun tests/build and push handoff. DO NOT reimplement P033 or start P028 or change release/signing.
+
+## P033R latest user override — solid-red overlay, NO recoloring shader (2026-10-27)
+
+- The **ONE ACTIVE P033R** correction in `.ai/TASK.md` now uses a *separate solid-red alpha-matched `Sprite2D` silhouette over the original untouched enemy sprite*. The user's new explicit choice supersedes the earlier instruction above to **repair** the faulty tint shader. **Remove the shader instead of fixing/replacing it with another shader.**
+- Generate exact-alpha red-mask textures from the existing P034A enemy PNGs, ideally as reproducibly committed assets; align overlay to base sprite throughout animation/Snake transfers, fade over the existing real-hit timer and lethal corpse start, leave unhit sprites visually identical. Strict alpha/render tests and new actual gameplay screenshots for SSH review.
+- Preserve delivered P033 input and shooter work, canonical enemy HP 3/6/3/3, P034C crystals and all earlier gameplay. P028 and unrelated tasks NOT ACTIVE. No Android signed release or signing secrets.
