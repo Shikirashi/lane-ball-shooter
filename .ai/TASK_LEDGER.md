@@ -1,5 +1,7 @@
 # Lane Ball Shooter — Task Ledger
 
+**ONE ACTIVE CODEX TASK (2026-10-27): LBS-P028A — deterministic Godot balancing laboratory, baseline audit and experimental scenario analysis ONLY.** User explicitly said 'looks good, continue' after P033/P033R technical review. Activate P028A alone in `.ai/TASK.md`: measure per-color fresh/visible/matchable ammo availability, droughts, enemy pressure and seeded skill-policy encounters; compare isolated test-only conveyor speeds/run-length candidates with NO shipping balance changes. **P028B gameplay tuning and P029–P032 remain NOT ACTIVE.** This current status overrides historical idle notices below.
+
 **NO ACTIVE CODEX TASK (2026-10-27):** P033 controls/HP implemented in `294ddae`; user-selected P033R shader-free red silhouette overlays implemented in `f08ee3d` and code/images/tests technically reviewed PASS. Codex reports 28 regression suites PASS; GitHub CI `40561363700` completed SUCCESS including publication and browser verification. Archive `.ai/TASKS/LBS-P033R.md`. Android QA pending. **P028A/P029–P032 NOT ACTIVE.**
 
 PREVIOUS STATUS (2026-10-25): NO ACTIVE Codex task. P024 automatic Web publishing is COMPLETE and green (game Actions `40246262499`, Pages `40246406874`); P027 release-signed Android 0.1.0 APK and portfolio Download APK card are PUBLISHED (game release tag `android-v0.1.0`, portfolio card `94c5e77`, Pages `40246539248`). Physical Android phone playtest remains PENDING, so do not claim device runtime success. Next action is user's sideload/device QA, not a new Codex task.
@@ -66,3 +68,6 @@ P028A's balance-simulation laboratory remains proposed and NOT active. **P033 is
 | LBS-P034C | **IMPLEMENTED — reviewed; visual/device QA pending**; `16347b3` | Rebaked 4 transparent defender PNGs without yellow orb; separate colored crystal shatters once when spent; 26 suites locally passed, real state/shatter screenshots, archive `.ai/TASKS/LBS-P034C.md`. |
 
 | LBS-P033R | **COMPLETE `f08ee3d`; technical review PASS** | User-approved shader-free exact-alpha red silhouette sprites for hit/death, tested for preservation of original colors/alpha, committed renderer screenshots; archive `.ai/TASKS/LBS-P033R.md`. |
+
+| LBS-P028A | **ACTIVE — `.ai/TASK.md`** | Godot real-model simulator, seeded color/run/visible/matchable/ammo and enemy-pressure metrics, bounded scripted input bots, test-only speed/run-length probes, CSV/JSON plus readable causal report, regression checks; **no changes to production balance, HP, sprites or APK**. |
+| LBS-P028B | **PROPOSED — NOT ACTIVE** | Evaluate and obtain approval for selected future gameplay modifications (distribution weights, feed speed, time-to-danger color bias) only after P028A report and human discussion. |
