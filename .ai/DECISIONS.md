@@ -334,3 +334,10 @@ If necessary, implement conservative and configurable defaults and report decisi
 - CI `40598952476` completed SUCCESS (full Godot suites including new live integration, Web export, public file/browser check). Live URL https://shikirashi.github.io/lane-ball-shooter/ . `README.md` includes playtest scope. Existing Android signed v0.1.0 APK unchanged.
 - Retain speed **102 px/s**, weights `[20,30,18,13,9,6,4]`, four run colors, enemy HP **3/6/3/3**, touch controls, 2D visuals and rest of game. **Mild is a provisional PLAYTEST, not an empirically accepted improvement**: P028B study showed mixed per-lane fairness. Collect human feedback before additional shipping choices, no stronger bias, new weights, speed or toggle silently.
 - **NO ACTIVE CODEX TASK**; P029–P032 and Android new build still require separate user authorization.
+
+## 2026-10-27 human mild-bias playtest and terminal overlay fix
+
+- Human feedback: mild live bias "**looks good and feels more fair. sometimes hard, sometimes easy**". Retain user-approved mild arm for further play rather than increasing bias/speed or changing color-run weights yet.
+- User supplied end-screen screenshot and clarified both enemies and projectiles stay bright/frontmost, with a green projectile overlapping the Restart button. Identified generic Godot CanvasItem **z-index layering**: overlay z=0 vs actor effects z1–8 and settings z100. User requested correction as part of playtest feedback.
+- Applied `GameOverOverlay.z_as_relative=false`, `z_index=200` in `_ready()` to ensure the dimmer and modal cover all gameplay visuals, while interactive Restart sits above the dimmer. Regression checks in P018 include actual positive-z projectile/charge nodes, settings and win/lose modal. Commits `91d0712` / `dc16d93`; successful test/build/public Web CI `40601383350`. User visual retest pending.
+- **NO ACTIVE CODEX TASK**; no changes to mild generation, feed speed, run weights, HP, control modes, art or Android signing/version.
