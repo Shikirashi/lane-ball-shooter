@@ -1,7 +1,7 @@
 # Ball Battalion — Product Direction and Development Roadmap
 
 **Written:** 2026-10-27  
-**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **P028A/P028AR completed and technically reviewed** (`6564001` / `78b535b`); **P028B-EXP and P028B-EXPR COMPLETE** (`ca73b4b` / `0f15616`), no active Codex task; P028B shipping / P029–P032 NOT ACTIVE; Android physical QA pending.  
+**Status:** P034A/B/C implemented, Web CI green; user likes the new 2D/crystal visuals. **P033 `294ddae` and corrected shader-free P033R `f08ee3d` IMPLEMENTED, technically reviewed PASS**; includes mobile/desktop controls, halved enemy HP and red hit feedback; **P028A/P028AR completed and technically reviewed** (`6564001` / `78b535b`); **P028B-EXP and P028B-EXPR COMPLETE** (`ca73b4b` / `0f15616`); **mild-only P028B Web playtest LIVE** (`7f2d096`, CI `40598952476`), no active Codex task; further tuning / P029–P032 NOT ACTIVE; Android physical QA pending.  
 **Repository/project:** `Shikirashi/lane-ball-shooter`, historically named *Lane Ball Shooter*.  
 **Authoritative implementation status:** Consult `.ai/TASK.md`, `.ai/DECISIONS.md`, `.ai/CODEX_HANDOFF.md`, the source and current tests before making code changes.
 
@@ -277,3 +277,9 @@ P028B-EXPR `0f15616` removed the ineligible-world-threat confound; when no legal
 **Results:** 50,599 no-eligible `urgent_exhausted` synthetic selections, zero unnecessary interventions in each adaptive arm. Mild candidate offers limited summed mean-starvation improvement (-0.27s basic / -1.53s delayed) with some per-color losses (BLUE +0.43s basic, YELLOW +0.05s delayed). Moderate loses +0.65s aggregate under basic; strong loses +0.58s basic / +0.49s delayed. The bots still win every active-play seed; there is no support to ship any adaptive arm without human feedback.
 
 **No Codex task active:** Future mild live A/B, refined run weights, levels and mascot require distinct user approval. Shipped four-color bag, 102 px/s speed, run weights [20,30,18,13,9,6,4], HP 3/6/3/3, control modes and Android v0.1.0 identity unchanged.
+
+## 23. P028B-SHIP-MILD — user-approved Web playtest live (2026-10-27)
+
+At the user's direct request ("enable it on mild setting, deploy, and let me playtest"), ChatGPT connected the existing corrected research `ThreatRunSelector("mild")` to actual `Main` and live `Battlefield` time-to-danger. Run selection uses a +50% maximum relative preference **only for still-legal threatened colors**, respects the existing once-each four-run color bag, preserves baseline no-eligible fallback without RNG draws and repeats, and recreates seeded controller on restart. Additional live integration regression added. Source `7f2d096`; GitHub build-and-publish `40598952476` complete SUCCESS, public Web https://shikirashi.github.io/lane-ball-shooter/ verified.
+
+**Only mild live, as provisional feedback experiment**. Baseline 102 px/s feed, original 1–7 weights, HP 3/6/3/3, game controls and graphics unchanged. Previous Android v0.1.0 APK not rebuilt. Offline experiment remains mixed: mild reduced total bot starvation in paired research but worsened specific colors, and bot win rates are not predictive of phone players. Collect human feedback on responsiveness and whether other colors feel delayed before wider balancing, levels, mascot, renaming or Android release. No active Codex task now.
