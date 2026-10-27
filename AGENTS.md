@@ -129,5 +129,5 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 
 ## After P028AR technical review — no active task (2026-10-27)
 
-- **NO ACTIVE CODEX TASK.** Initial audit `6564001` corrected by `78b535b`, with fixed-X projectile/collision timing, reproducible generator/scenario analysis and reviewed tests/source PASS; archive `.ai/TASKS/LBS-P028AR.md`. The preceding P028AR ACTIVE section above is historical. CI `40571348733` final outcome still requires verification.
+- **NO ACTIVE CODEX TASK.** Initial audit `6564001` corrected by `78b535b`, with fixed-X projectile/collision timing, reproducible generator/scenario analysis and reviewed tests/source PASS; archive `.ai/TASKS/LBS-P028AR.md`. The preceding P028AR ACTIVE section above is historical. CI `40571348733` completed SUCCESS including test/build and portfolio publication.
 - P028B is **not authorized**. No changes to 102px/s production feed, 1–7 run weights, color RNG, HP 3/6/3/3, spawn director, input, 2D VFX or Android release. Await an explicit user decision in `.ai/TASK.md` before more Codex work.
