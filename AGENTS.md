@@ -108,3 +108,8 @@ This repository uses a shared Git mailbox. ChatGPT writes and advances tasks; Co
 - The **ONE ACTIVE P033R** correction in `.ai/TASK.md` now uses a *separate solid-red alpha-matched `Sprite2D` silhouette over the original untouched enemy sprite*. The user's new explicit choice supersedes the earlier instruction above to **repair** the faulty tint shader. **Remove the shader instead of fixing/replacing it with another shader.**
 - Generate exact-alpha red-mask textures from the existing P034A enemy PNGs, ideally as reproducibly committed assets; align overlay to base sprite throughout animation/Snake transfers, fade over the existing real-hit timer and lethal corpse start, leave unhit sprites visually identical. Strict alpha/render tests and new actual gameplay screenshots for SSH review.
 - Preserve delivered P033 input and shooter work, canonical enemy HP 3/6/3/3, P034C crystals and all earlier gameplay. P028 and unrelated tasks NOT ACTIVE. No Android signed release or signing secrets.
+
+## After P033R technical review — 2026-10-27
+
+- **NO ACTIVE CODEX TASK.** P033 controls/HP `294ddae` and P033R red silhouette fix `f08ee3d` were delivered. Source, exact-alpha derived red masks and Godot-rendered comparison images have been reviewed; no blocking defects found. P033R archive `.ai/TASKS/LBS-P033R.md`. Earlier P033R ACTIVE notices are historical.
+- Only `.ai/TASK.md` authorizes work. P028A color/speed/enemy pressure balancing lab and remaining campaign/branding features are NOT ACTIVE. Physical Android gesture testing remains outstanding; no signed APK rebuild authorized.
