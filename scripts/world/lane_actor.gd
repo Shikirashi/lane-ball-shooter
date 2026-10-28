@@ -185,13 +185,14 @@ func reset_run(spawn_initial := true) -> void:
 func _draw() -> void:
 	var panel := Rect2(0.0, 1.0, size.x, maxf(1.0, size.y - 2.0))
 	var lane_color := TeamData.color(team_identity)
-	draw_rect(panel, Color(0.055 + lane_index * 0.006, 0.075, 0.115, 0.98), true)
-	draw_rect(Rect2(0.0, _baseline_y + 3.0, size.x, maxf(2.0, size.y - _baseline_y - 3.0)), Color(0.085, 0.11, 0.16, 0.98), true)
+	var lane_shade := 0.055 + lane_index * 0.008
+	draw_rect(panel, Color(lane_shade, lane_shade, lane_shade, 0.98), true)
+	draw_rect(Rect2(0.0, _baseline_y + 3.0, size.x, maxf(2.0, size.y - _baseline_y - 3.0)), UiPalette.SURFACE, true)
 	draw_line(Vector2(size.x * _side_margin_ratio, _baseline_y + 2.0), Vector2(size.x * (1.0 - _side_margin_ratio), _baseline_y + 2.0), lane_color.darkened(0.08), maxf(2.0, size.y * 0.035))
-	draw_line(Vector2(0.0, 0.5), Vector2(size.x, 0.5), Color(0.21, 0.27, 0.38, 0.72), 1.0)
+	draw_line(Vector2(0.0, 0.5), Vector2(size.x, 0.5), UiPalette.SEPARATOR, 1.0)
 	var marker_center := Vector2(world_x_to_local(LaneCombatModel.LEFT_BOUNDARY + 0.18), _baseline_y - size.y * 0.20)
 	draw_circle(marker_center, clampf(size.y * 0.12, 7.0, 15.0), Color(lane_color, 0.92))
-	TeamData.draw_symbol(self, team_identity, marker_center, clampf(size.y * 0.12, 7.0, 15.0), Color(0.05, 0.065, 0.095, 0.9))
+	TeamData.draw_symbol(self, team_identity, marker_center, clampf(size.y * 0.12, 7.0, 15.0), Color(0.04, 0.04, 0.04, 0.9))
 	_draw_state_effects()
 	_draw_death_bursts()
 	if _attack_feedback > 0.0 and combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE:
@@ -386,7 +387,7 @@ func _create_enemy_visual(uid: int, enemy_type: int) -> Dictionary:
 	root_node.add_child(sprite)
 	var hit_overlay := _make_hit_overlay(ENEMY_ASSETS[enemy_type], sprite)
 	root_node.add_child(hit_overlay)
-	var shadow := _ellipse_polygon(Vector2.ONE, Color(0.01, 0.018, 0.03, 0.52), 24)
+	var shadow := _ellipse_polygon(Vector2.ONE, Color(0.01, 0.01, 0.01, 0.52), 24)
 	shadow.name = "EnemyShadow_%d" % uid
 	shadow.z_index = 2
 	add_child(shadow)
@@ -579,7 +580,7 @@ func _update_status_visual() -> void:
 		return
 	_last_status_key = status_key
 	_status_label.text = "%s  %s  %s" % [TeamData.symbol_name(team_identity), state_name, charge_name]
-	_status_label.modulate = TeamData.color(team_identity).lightened(0.25) if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else Color(0.72, 0.75, 0.82)
+	_status_label.modulate = TeamData.color(team_identity).lightened(0.25) if combat_model.defender_state == LaneCombatModel.DefenderState.ACTIVE else UiPalette.TEXT_SECONDARY
 	_defender_sprite.self_modulate = Color.WHITE
 
 

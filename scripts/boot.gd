@@ -2,6 +2,7 @@ extends Node
 
 const MainScene := preload("res://scenes/main.tscn")
 const LayoutCalculator := preload("res://scripts/responsive_layout.gd")
+const UiPaletteScript := preload("res://scripts/ui/ui_palette.gd")
 
 const TITLE_TEXT := "LANE BALL SHOOTER"
 const START_TEXT := "START GAME"
@@ -53,7 +54,7 @@ func _build_menu() -> void:
 
 	_background = ColorRect.new()
 	_background.name = "DarkBackdrop"
-	_background.color = Color(0.018, 0.028, 0.055, 1.0)
+	_background.color = UiPaletteScript.BACKGROUND
 	_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu_root.add_child(_background)
 
@@ -62,10 +63,7 @@ func _build_menu() -> void:
 	_title.text = TITLE_TEXT
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_title.add_theme_color_override("font_color", Color(0.92, 0.95, 1.0))
-	_title.add_theme_color_override("font_shadow_color", Color(0.12, 0.42, 0.68, 0.75))
-	_title.add_theme_constant_override("shadow_offset_x", 3)
-	_title.add_theme_constant_override("shadow_offset_y", 3)
+	_title.add_theme_color_override("font_color", UiPaletteScript.TEXT)
 	_menu_root.add_child(_title)
 
 	_start_button = _make_button(START_TEXT, "StartGame")
@@ -74,7 +72,7 @@ func _build_menu() -> void:
 
 	_dialog_layer = ColorRect.new()
 	_dialog_layer.name = "FullscreenDialogLayer"
-	_dialog_layer.color = Color(0.0, 0.0, 0.0, 0.68)
+	_dialog_layer.color = UiPaletteScript.OVERLAY
 	_dialog_layer.mouse_filter = Control.MOUSE_FILTER_STOP
 	_dialog_layer.visible = false
 	_menu_root.add_child(_dialog_layer)
@@ -82,11 +80,7 @@ func _build_menu() -> void:
 	_dialog_panel = PanelContainer.new()
 	_dialog_panel.name = "FullscreenDialog"
 	_dialog_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.055, 0.075, 0.13, 1.0)
-	panel_style.border_color = Color(0.22, 0.58, 0.88, 1.0)
-	panel_style.set_border_width_all(2)
-	panel_style.set_corner_radius_all(14)
+	var panel_style := UiPaletteScript.panel_style(UiPaletteScript.PANEL, UiPaletteScript.WHITE, 2, 4)
 	panel_style.content_margin_left = 28.0
 	panel_style.content_margin_right = 28.0
 	panel_style.content_margin_top = 24.0
@@ -106,6 +100,7 @@ func _build_menu() -> void:
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_prompt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_prompt.add_theme_font_size_override("font_size", 26)
+	_prompt.add_theme_color_override("font_color", UiPaletteScript.TEXT)
 	dialog_column.add_child(_prompt)
 
 	var choices := HBoxContainer.new()
@@ -132,19 +127,7 @@ func _make_button(text_value: String, node_name: String) -> Button:
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.custom_minimum_size = Vector2(280.0, 68.0)
 	button.add_theme_font_size_override("font_size", 23)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(0.10, 0.30, 0.51, 1.0)
-	normal.border_color = Color(0.28, 0.66, 0.96, 1.0)
-	normal.set_border_width_all(2)
-	normal.set_corner_radius_all(12)
-	var hover := normal.duplicate()
-	hover.bg_color = Color(0.14, 0.42, 0.68, 1.0)
-	var pressed := normal.duplicate()
-	pressed.bg_color = Color(0.07, 0.22, 0.39, 1.0)
-	button.add_theme_stylebox_override("normal", normal)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("focus", hover)
-	button.add_theme_stylebox_override("pressed", pressed)
+	UiPaletteScript.apply_button(button)
 	return button
 
 func _on_start_pressed() -> void:

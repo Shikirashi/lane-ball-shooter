@@ -23,12 +23,15 @@ func _ready() -> void:
 	gear_button.tooltip_text = "Control settings"
 	gear_button.custom_minimum_size = Vector2(52.0, 52.0)
 	gear_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	gear_button.add_theme_font_size_override("font_size", 24)
+	UiPalette.apply_button(gear_button)
 	gear_button.pressed.connect(_open)
 	add_child(gear_button)
 	panel = PanelContainer.new()
 	panel.name = "ControlSettingsPanel"
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.visible = false
+	panel.add_theme_stylebox_override("panel", UiPalette.panel_style(UiPalette.PANEL, UiPalette.WHITE, 2, 4))
 	add_child(panel)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 10)
@@ -36,6 +39,8 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = "TOUCH CONTROLS"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_color", UiPalette.TEXT)
+	title.add_theme_font_size_override("font_size", 18)
 	column.add_child(title)
 	var mode_row := HBoxContainer.new()
 	column.add_child(mode_row)
@@ -63,6 +68,7 @@ func _button(label: String) -> Button:
 	button.text = label
 	button.custom_minimum_size = Vector2(122.0, 48.0)
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
+	UiPalette.apply_button(button)
 	return button
 
 func configure_layout(safe_rect: Rect2, viewport_size := Vector2.ZERO) -> void:
@@ -70,7 +76,7 @@ func configure_layout(safe_rect: Rect2, viewport_size := Vector2.ZERO) -> void:
 	size = viewport_size if viewport_size.x > 0.0 and viewport_size.y > 0.0 else safe_rect.end
 	gear_button.position = Vector2(safe_rect.end.x - 116.0, safe_rect.position.y + 7.0)
 	gear_button.size = Vector2(52.0, 52.0)
-	panel.size = Vector2(minf(330.0, safe_rect.size.x - 24.0), minf(340.0, safe_rect.size.y - 24.0))
+	panel.size = Vector2(minf(330.0, safe_rect.size.x - 24.0), minf(240.0, safe_rect.size.y - 24.0))
 	panel.position = safe_rect.get_center() - panel.size * 0.5
 
 func set_choices(mode_value: int, handedness_value: int) -> void:
@@ -111,3 +117,8 @@ func _sync_buttons() -> void:
 	side_button.disabled = mode == TouchControlRouter.Mode.SIDE
 	right_button.disabled = handedness == TouchControlRouter.Handedness.RIGHT
 	left_button.disabled = handedness == TouchControlRouter.Handedness.LEFT
+	UiPalette.apply_button(classic_button, classic_button.disabled)
+	UiPalette.apply_button(side_button, side_button.disabled)
+	UiPalette.apply_button(right_button, right_button.disabled)
+	UiPalette.apply_button(left_button, left_button.disabled)
+	UiPalette.apply_button(close_button)

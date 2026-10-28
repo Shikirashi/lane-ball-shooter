@@ -44,34 +44,34 @@ func _draw() -> void:
 	var value_font_size := 13 if compact else 15
 	var baseline := minf(25.0, size.y - 13.0)
 
-	draw_string(ThemeDB.fallback_font, Vector2(14.0, baseline), "LBS" if compact else "LANE BALL SHOOTER", HORIZONTAL_ALIGNMENT_LEFT, -1.0, title_font_size, Color(0.92, 0.96, 1.0))
-	draw_string(ThemeDB.fallback_font, Vector2(14.0, minf(size.y - 12.0, baseline + 22.0)), "ENEMIES %02d/%02d" % [enemies_neutralized, enemies_total], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 11 if compact else 12, Color(0.62, 0.9, 0.72))
-	draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.30, baseline), "SCORE  %06d" % score, HORIZONTAL_ALIGNMENT_LEFT, -1.0, value_font_size, Color.WHITE)
-	var combo_color := Color(0.82, 0.9, 1.0) if combo_count > 0 else Color(0.52, 0.59, 0.7)
+	draw_string(ThemeDB.fallback_font, Vector2(14.0, baseline), "LBS" if compact else "LANE BALL SHOOTER", HORIZONTAL_ALIGNMENT_LEFT, -1.0, title_font_size, UiPalette.TEXT)
+	draw_string(ThemeDB.fallback_font, Vector2(14.0, minf(size.y - 12.0, baseline + 22.0)), "ENEMIES %02d/%02d" % [enemies_neutralized, enemies_total], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 11 if compact else 12, UiPalette.TEXT_SECONDARY)
+	draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.30, baseline), "SCORE  %06d" % score, HORIZONTAL_ALIGNMENT_LEFT, -1.0, value_font_size, UiPalette.TEXT)
+	var combo_color := UiPalette.COMBO if combo_count > 0 else UiPalette.TEXT_DISABLED
 	draw_string(ThemeDB.fallback_font, Vector2(size.x * 0.54, baseline), "COMBO  x%d" % combo_count, HORIZONTAL_ALIGNMENT_LEFT, -1.0, value_font_size, combo_color)
 
 	var state_text := "READY"
-	var state_color := Color(0.55, 0.62, 0.74)
+	var state_color := UiPalette.TEXT_SECONDARY
 	if fever_active:
 		state_text = "FEVER"
-		state_color = Color(1.0, 0.72 + sin(_fever_pulse) * 0.08, 0.22)
+		state_color = UiPalette.FEVER.lightened(sin(_fever_pulse) * 0.08)
 	elif tier > 0:
 		state_text = "TIER %d" % tier
-		state_color = Color(0.67, 0.86, 1.0)
+		state_color = UiPalette.COMBO
 	draw_string(ThemeDB.fallback_font, Vector2(info_right - 94.0, baseline), state_text, HORIZONTAL_ALIGNMENT_CENTER, 88.0, value_font_size, state_color)
 
 	var meter_left := size.x * 0.29
 	var meter_right := info_right - 8.0
 	var meter_rect := Rect2(meter_left, size.y - 8.0, meter_right - meter_left, 5.0)
-	draw_rect(meter_rect, Color(0.1, 0.14, 0.22), true)
+	draw_rect(meter_rect, UiPalette.SURFACE_RAISED, true)
 	if window_ratio > 0.0:
-		var fill_color := Color(1.0, 0.55, 0.14) if fever_active else Color(0.3, 0.68, 1.0)
+		var fill_color := UiPalette.FEVER if fever_active else UiPalette.COMBO
 		draw_rect(Rect2(meter_rect.position, Vector2(meter_rect.size.x * window_ratio, meter_rect.size.y)), fill_color, true)
-	draw_rect(meter_rect, Color(0.36, 0.44, 0.58), false, 1.0)
+	draw_rect(meter_rect, UiPalette.BORDER, false, 1.0)
 
 func _panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.075, 0.055, 0.055, 0.98) if fever_active else Color(0.035, 0.05, 0.09, 0.96)
-	style.border_color = Color(0.78, 0.46, 0.12) if fever_active else Color(0.18, 0.24, 0.36)
+	style.bg_color = UiPalette.PANEL
+	style.border_color = UiPalette.FEVER if fever_active else UiPalette.SEPARATOR
 	style.border_width_bottom = 2 if fever_active else 1
 	return style

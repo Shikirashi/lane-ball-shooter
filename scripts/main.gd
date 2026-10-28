@@ -6,6 +6,7 @@ const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
 const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 const TouchRouterScript = preload("res://scripts/input/touch_control_router.gd")
 const PreferencesScript = preload("res://scripts/input/control_preferences.gd")
+const UiPaletteScript = preload("res://scripts/ui/ui_palette.gd")
 # Live Web playtest: use the same eligible-threat-only mild sampler tested by P028B-EXPR.
 const ThreatRunSelectorScript = preload("res://scripts/analysis/threat_run_selector.gd")
 const BalanceLabScript = preload("res://scripts/analysis/balance_lab.gd")
@@ -296,7 +297,7 @@ func _build_scene() -> void:
 	add_child(_sfx)
 	_background = ColorRect.new()
 	_background.name = "Background"
-	_background.color = Color(0.025, 0.035, 0.065)
+	_background.color = UiPaletteScript.BACKGROUND
 	_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_background)
 

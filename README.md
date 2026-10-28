@@ -2,6 +2,12 @@
 
 A fully 2D lane-defense game prototype in **Godot 4 / GDScript**, targeting Web and Android (landscape).
 
+## Monochrome interface
+
+Web and native gameplay share a deliberately minimal white-on-black interface: `#050505` field, charcoal panels, gray separators, and off-white type. Team balls, actors and crystals retain their identity colors, while COMBO/FEVER, damage, danger, victory and defeat keep only their meaningful accents. The Web `START GAME` / fullscreen prompt, gameplay HUD, conveyor, launcher, control settings and terminal overlays all use the same palette in `scripts/ui/ui_palette.gd`.
+
+Reproduce the real Godot 4.7.2 Compatibility-renderer review images with `./scripts/capture_p036_monochrome.sh`. The command requires an available `DISPLAY` or `WAYLAND_DISPLAY`, waits for `RenderingServer.frame_post_draw`, and writes the focused `assets/previews/p036_*.png` gameplay, wide, Web menu, fullscreen prompt, settings, victory and defeat captures.
+
 - 2D Zuma-like moving ball chain, shooter-mounted two-ball ammunition preview and compact swap control.
 - Four responsive 2D combat lanes with baked defenders, animated enemies and procedural effects.
 - Matches activate same-color defender attacks; successive matches build combo/fever.

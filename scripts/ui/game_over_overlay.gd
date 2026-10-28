@@ -22,6 +22,7 @@ func _ready() -> void:
 	_restart_button.name = "RestartButton"
 	_restart_button.text = "RESTART  [R]"
 	_restart_button.custom_minimum_size = Vector2(220.0, 54.0)
+	UiPalette.apply_button(_restart_button)
 	_restart_button.pressed.connect(_on_restart_pressed)
 	add_child(_restart_button)
 	resized.connect(_layout_button)
@@ -66,16 +67,16 @@ func _layout_button() -> void:
 	_restart_button.position = content.get_center() + Vector2(-110.0, 58.0)
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.015, 0.02, 0.04, 0.84), true)
+	draw_rect(Rect2(Vector2.ZERO, size), UiPalette.OVERLAY, true)
 	var content := _content_rect if _content_rect.size.x > 0.0 else Rect2(Vector2.ZERO, size)
 	var center_x := content.get_center().x
 	var center_y := content.get_center().y
 	var title := title_text()
-	var title_color := Color(0.4, 1.0, 0.62) if victory else Color(1.0, 0.38, 0.25)
+	var title_color := UiPalette.SUCCESS if victory else UiPalette.FAILURE
 	var subtitle := subtitle_text()
 	draw_string(ThemeDB.fallback_font, Vector2(center_x - 220.0, center_y - 45.0), title, HORIZONTAL_ALIGNMENT_CENTER, 440.0, 46, title_color)
-	draw_string(ThemeDB.fallback_font, Vector2(center_x - 180.0, center_y + 6.0), "FINAL SCORE  %06d" % final_score, HORIZONTAL_ALIGNMENT_CENTER, 360.0, 22, Color.WHITE)
-	draw_string(ThemeDB.fallback_font, Vector2(center_x - 180.0, center_y + 34.0), subtitle, HORIZONTAL_ALIGNMENT_CENTER, 360.0, 15, Color(0.72, 0.8, 0.92))
+	draw_string(ThemeDB.fallback_font, Vector2(center_x - 180.0, center_y + 6.0), "FINAL SCORE  %06d" % final_score, HORIZONTAL_ALIGNMENT_CENTER, 360.0, 22, UiPalette.TEXT)
+	draw_string(ThemeDB.fallback_font, Vector2(center_x - 180.0, center_y + 34.0), subtitle, HORIZONTAL_ALIGNMENT_CENTER, 360.0, 15, UiPalette.TEXT_SECONDARY)
 
 func _on_restart_pressed() -> void:
 	restart_requested.emit()

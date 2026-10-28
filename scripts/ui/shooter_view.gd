@@ -104,28 +104,33 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
-	var track_color := Color(0.32, 0.4, 0.55, 0.8)
+	var track_color := UiPalette.SEPARATOR
 	draw_line(Vector2(track_left, shooter_y + 27.0), Vector2(track_right, shooter_y + 27.0), track_color, 4.0)
 	draw_circle(Vector2(track_left, shooter_y + 27.0), 5.0, track_color)
 	draw_circle(Vector2(track_right, shooter_y + 27.0), 5.0, track_color)
-	draw_dashed_line(Vector2(shooter_x, shooter_y - 48.0), Vector2(shooter_x, shot_ceiling), Color(0.75, 0.88, 1.0, 0.17), 1.0, 8.0)
+	draw_dashed_line(Vector2(shooter_x, shooter_y - 48.0), Vector2(shooter_x, shot_ceiling), Color(1.0, 1.0, 1.0, 0.18), 1.0, 8.0)
 
-	var body_color := Color(0.18, 0.22, 0.33)
+	var body_color := UiPalette.SURFACE_RAISED
 	draw_colored_polygon(PackedVector2Array([
 		Vector2(shooter_x - 28.0, shooter_y + 23.0),
 		Vector2(shooter_x + 28.0, shooter_y + 23.0),
 		Vector2(shooter_x + 18.0, shooter_y - 12.0),
 		Vector2(shooter_x - 18.0, shooter_y - 12.0),
 	]), body_color)
-	draw_rect(Rect2(shooter_x - 7.0, shooter_y - 34.0, 14.0, 30.0), Color(0.55, 0.63, 0.75), true)
+	draw_polyline(PackedVector2Array([
+		Vector2(shooter_x - 28.0, shooter_y + 23.0), Vector2(shooter_x + 28.0, shooter_y + 23.0),
+		Vector2(shooter_x + 18.0, shooter_y - 12.0), Vector2(shooter_x - 18.0, shooter_y - 12.0),
+		Vector2(shooter_x - 28.0, shooter_y + 23.0),
+	]), UiPalette.BORDER, 2.0, true)
+	draw_rect(Rect2(shooter_x - 7.0, shooter_y - 34.0, 14.0, 30.0), UiPalette.TEXT_SECONDARY, true)
 	var ball_center := loaded_ball_center()
 	draw_circle(ball_center, 19.0, TeamData.color(loaded_identity))
-	TeamData.draw_symbol(self, loaded_identity, ball_center, 19.0, Color(0.07, 0.09, 0.14, 0.9))
+	TeamData.draw_symbol(self, loaded_identity, ball_center, 19.0, Color(0.04, 0.04, 0.04, 0.9))
 	var preview_center := next_ball_center()
 	draw_circle(preview_center + Vector2(1.0, 2.0), 10.0, Color(0.0, 0.0, 0.0, 0.35))
 	draw_circle(preview_center, 9.0, TeamData.color(next_identity))
 	draw_arc(preview_center, 9.0, 0.0, TAU, 20, Color(1.0, 1.0, 1.0, 0.4), 1.0)
-	TeamData.draw_symbol(self, next_identity, preview_center, 9.0, Color(0.07, 0.09, 0.14, 0.9))
+	TeamData.draw_symbol(self, next_identity, preview_center, 9.0, Color(0.04, 0.04, 0.04, 0.9))
 	if _muzzle_flash > 0.0:
 		draw_circle(Vector2(shooter_x, shooter_y - 50.0), 8.0 + _muzzle_flash * 55.0, Color(1.0, 0.92, 0.55, _muzzle_flash * 5.0))
 
@@ -134,5 +139,5 @@ func _draw() -> void:
 		var identity: int = shot.identity
 		draw_circle(shot_position + Vector2(1.0, 3.0), 13.0, Color(0.0, 0.0, 0.0, 0.35))
 		draw_circle(shot_position, 12.0, TeamData.color(identity))
-		TeamData.draw_symbol(self, identity, shot_position, 12.0, Color(0.06, 0.08, 0.12, 0.9))
+		TeamData.draw_symbol(self, identity, shot_position, 12.0, Color(0.04, 0.04, 0.04, 0.9))
 

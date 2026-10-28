@@ -65,10 +65,10 @@ func _draw() -> void:
 	var lane_rect := conveyor_window_rect()
 	draw_style_box(_panel_style(), lane_rect)
 	var cy := lane_rect.get_center().y
-	draw_line(Vector2(22.0, cy), Vector2(size.x - 22.0, cy), Color(0.3, 0.38, 0.52, 0.75), 3.0)
+	draw_line(Vector2(22.0, cy), Vector2(size.x - 22.0, cy), UiPalette.BORDER, 3.0)
 	if model != null:
 		if debug_visible:
-			draw_string(ThemeDB.fallback_font, Vector2(size.x - 248.0, size.y - 5.0), _debug_text(), HORIZONTAL_ALIGNMENT_RIGHT, 232.0, 10, Color(0.65, 0.72, 0.84, 0.85))
+			draw_string(ThemeDB.fallback_font, Vector2(size.x - 248.0, size.y - 5.0), _debug_text(), HORIZONTAL_ALIGNMENT_RIGHT, 232.0, 10, UiPalette.TEXT_SECONDARY)
 	if _feedback_time > 0.0:
 		var feedback_color := TeamData.color(_feedback_identity).lightened(0.18)
 		var feedback_text := "MATCH %s x%d" % [TeamData.display_name(_feedback_identity), _feedback_size]
@@ -125,8 +125,8 @@ func set_settling_visuals_visible(value: bool) -> void:
 		settling_overlay.visible = value
 
 func _draw_direction_hint(center: Vector2) -> void:
-	var shade := Color(0.92, 0.96, 1.0, 0.92)
-	draw_rect(Rect2(center.x - 3.0, center.y - 20.0, 6.0, 40.0), Color(0.02, 0.03, 0.06, 0.75), true)
+	var shade := UiPalette.TEXT
+	draw_rect(Rect2(center.x - 3.0, center.y - 20.0, 6.0, 40.0), UiPalette.BLACK, true)
 	var arrow := PackedVector2Array([
 		center + Vector2(-17.0, 0.0),
 		center + Vector2(4.0, -11.0),
@@ -136,8 +136,8 @@ func _draw_direction_hint(center: Vector2) -> void:
 
 func _panel_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.045, 0.065, 0.115, 0.96)
-	style.border_color = Color(0.25, 0.33, 0.48, 0.9)
+	style.bg_color = UiPalette.PANEL
+	style.border_color = UiPalette.BORDER
 	style.set_border_width_all(2)
-	style.set_corner_radius_all(16)
+	style.set_corner_radius_all(4)
 	return style

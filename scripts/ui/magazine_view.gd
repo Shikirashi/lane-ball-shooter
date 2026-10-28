@@ -34,10 +34,10 @@ func _notification(what: int) -> void:
 func _draw() -> void:
 	_update_swap_rect()
 	var swap_center := _swap_rect.get_center()
-	var button_color := Color(0.29, 0.38, 0.56) if _swap_hovered else Color(0.19, 0.26, 0.4)
-	draw_circle(swap_center + Vector2(1.0, 3.0), 29.0, Color(0.0, 0.0, 0.0, 0.35))
+	var button_color := UiPalette.SURFACE_RAISED if _swap_hovered else UiPalette.SURFACE
+	draw_circle(swap_center + Vector2(1.0, 3.0), 29.0, UiPalette.BLACK)
 	draw_circle(swap_center, 28.0, button_color)
-	draw_arc(swap_center, 28.0, 0.0, TAU, 32, Color(0.48, 0.6, 0.8), 2.0)
+	draw_arc(swap_center, 28.0, 0.0, TAU, 32, UiPalette.WHITE if _swap_hovered else UiPalette.BORDER, 2.0)
 	_draw_swap_arrow(swap_center, -1.0)
 	_draw_swap_arrow(swap_center, 1.0)
 
@@ -52,8 +52,8 @@ func _draw_swap_arrow(center: Vector2, direction: float) -> void:
 	var y := center.y + direction * 7.0
 	var start_x := center.x - direction * 13.0
 	var end_x := center.x + direction * 13.0
-	draw_line(Vector2(start_x, y), Vector2(end_x, y), Color.WHITE, 3.0, true)
+	draw_line(Vector2(start_x, y), Vector2(end_x, y), UiPalette.WHITE, 3.0, true)
 	var tip := Vector2(end_x, y)
-	draw_line(tip, tip + Vector2(-direction * 6.0, -6.0), Color.WHITE, 3.0, true)
-	draw_line(tip, tip + Vector2(-direction * 6.0, 6.0), Color.WHITE, 3.0, true)
+	draw_line(tip, tip + Vector2(-direction * 6.0, -6.0), UiPalette.WHITE, 3.0, true)
+	draw_line(tip, tip + Vector2(-direction * 6.0, 6.0), UiPalette.WHITE, 3.0, true)
 

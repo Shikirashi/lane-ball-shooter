@@ -38,4 +38,4 @@ func _draw() -> void:
 		draw_circle(center + Vector2(2.0, 4.0), draw_radius + 1.0, Color(0.0, 0.0, 0.0, 0.35))
 		draw_circle(center, draw_radius, TeamData.color(int(ball.identity)))
 		draw_arc(center, draw_radius, 0.0, TAU, 32, Color(1.0, 1.0, 1.0, 0.34), 2.0)
-		TeamData.draw_symbol(self, int(ball.identity), center, draw_radius, Color(0.08, 0.1, 0.16, 0.88))
+		TeamData.draw_symbol(self, int(ball.identity), center, draw_radius, Color(0.04, 0.04, 0.04, 0.9))
