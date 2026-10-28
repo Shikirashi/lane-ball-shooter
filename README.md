@@ -73,14 +73,18 @@ Regenerate the P034C intact/spent and mid-shatter review evidence with:
 
 It writes `assets/previews/p034c_crystal_states_1280x720.png` and `assets/previews/p034c_crystal_shatter_1600x720.png` from real deterministic gameplay state. Its `SubViewport` is capture-only and is never created by ordinary gameplay.
 
-Native desktop and Android builds enter gameplay immediately. The Web export instead boots to a dark `LANE BALL SHOOTER` menu without constructing the gameplay scene or advancing its simulation. `START GAME` opens the exact prompt `Play in fullscreen?`: `YES` requests browser fullscreen directly from that button press and then starts the game, while `NO` starts in the page canvas without requesting fullscreen. A browser may deny fullscreen; gameplay still starts normally. Escape/browser fullscreen exit uses the normal responsive resize path. For desktop-only menu preview, run `godot --path . -- --web-menu-preview`.
+Native desktop enters gameplay immediately. Android first opens a monochrome `LANE BALL SHOOTER` menu with `PLAY` and `CONTROLS`; no gameplay scene or simulation exists until PLAY. CONTROLS uses a real gameplay capture with two illustrated Classic fingers or correctly mirrored Side `SLIDE`/`SWAP`/`SHOOT` regions, and saves the same control preferences used in game. The Web export retains its separate `START GAME` flow: `YES` requests fullscreen synchronously from the button press and starts, while `NO` starts in-page. For desktop-only Web menu preview, run `godot --path . -- --web-menu-preview`.
+
+During Android gameplay, the top pause control freezes the entire scene tree—including combat, conveyor, shots, timers, animations and audio cues—while keeping the pause UI responsive. `RESUME` preserves the run, `CONTROLS` opens the shared illustrated selector, and `RESTART` / `MAIN MENU` require confirmation. Back dismisses confirmations/guides and toggles pause consistently. The terminal win/loss overlay remains above pause controls.
+
+Regenerate the real guide source and Android UI review captures with `./scripts/capture_controls_reference.sh` and `./scripts/capture_p037_android_ui.sh`. Both require a real Compatibility renderer and wait for completed frames; outputs are `assets/ui/controls_gameplay_reference.png` and `assets/previews/p037_*.png`.
 
 Controls:
 
 - Desktop/Web: move the mouse horizontally to aim. Left-click anywhere on noninteractive game canvas to aim and fire; right-click anywhere or press Space to swap. Real UI controls consume clicks first.
 - Android defaults to **Classic**: the first finger can aim by absolute X anywhere on noninteractive canvas and fires once on release; a second distinct finger swaps once on touch-down without stealing aim or firing.
 - Android **Side** mode uses a 1:2:1 screen split. For the default right-handed mapping, the right quarter is a relative 1:1 aim trackpad and the left quarter is actions (upper half SWAP, lower half SHOOT); left-handed mode mirrors these edges. Trackpad release never fires.
-- Open the small HUD gear to select Classic/Side and right-/left-handed mapping. Settings persist in `user://control_settings.cfg`; opening/using the panel cancels active gestures. The old circular swap button remains on desktop/Web and is hidden on Android.
+- Android control choices are available from the main menu and paused game; the desktop/Web HUD gear retains its compact selector. Settings persist in `user://control_settings.cfg`, and opening/closing menus cancels active gestures. The old circular swap button remains on desktop/Web and is hidden on Android.
 - Press F3 to show or hide live ball/segment/gap diagnostics, including retained-left count/position, active population, unsupported segments, gravity speed/displacement, fresh generation and invariant violations.
 - Press M to mute or unmute procedural sound effects.
 - After a lane breach or cleared wave, press R or use the on-screen RESTART button to begin a fresh run.

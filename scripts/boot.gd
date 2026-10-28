@@ -3,6 +3,8 @@ extends Node
 const MainScene := preload("res://scenes/main.tscn")
 const LayoutCalculator := preload("res://scripts/responsive_layout.gd")
 const UiPaletteScript := preload("res://scripts/ui/ui_palette.gd")
+const PreferencesScript := preload("res://scripts/input/control_preferences.gd")
+const ControlGuideScript := preload("res://scripts/ui/control_guide_view.gd")
 
 const TITLE_TEXT := "LANE BALL SHOOTER"
 const START_TEXT := "START GAME"
@@ -11,6 +13,7 @@ const FULLSCREEN_PROMPT := "Play in fullscreen?"
 # Test hooks are assigned before this node enters the tree. -1 uses real platform
 # detection; 0/1 force the native/Web lifecycle without spoofing OS features.
 var forced_web_mode := -1
+var forced_android_mode := -1
 var fullscreen_requester: Callable
 var gameplay_starter: Callable
 
@@ -27,9 +30,18 @@ var _prompt: Label
 var _yes_button: Button
 var _no_button: Button
 var _choice_locked := false
+var _native_menu := false
+var _play_button: Button
+var _controls_button: Button
+var _control_guide: ControlGuideView
+var _preferences := PreferencesScript.new()
 
 func _ready() -> void:
-	if should_show_web_menu():
+	if should_show_android_menu():
+		_build_native_menu()
+		get_viewport().size_changed.connect(_layout)
+		_layout()
+	elif should_show_web_menu():
 		_build_menu()
 		get_viewport().size_changed.connect(_layout)
 		_layout()
@@ -39,12 +51,74 @@ func _ready() -> void:
 static func platform_uses_menu(web_feature: bool, android_feature: bool) -> bool:
 	return web_feature and not android_feature
 
+static func platform_uses_android_menu(android_feature: bool) -> bool:
+	return android_feature
+
+func should_show_android_menu() -> bool:
+	if forced_android_mode >= 0:
+		return forced_android_mode == 1
+	return platform_uses_android_menu(OS.has_feature("android"))
+
 func should_show_web_menu() -> bool:
 	if forced_web_mode >= 0:
 		return forced_web_mode == 1
 	if "--web-menu-preview" in OS.get_cmdline_user_args():
 		return true
 	return platform_uses_menu(OS.has_feature("web"), OS.has_feature("android"))
+
+func _build_native_menu() -> void:
+	_native_menu = true
+	_preferences.load_settings()
+	_menu_root = Control.new()
+	_menu_root.name = "AndroidMainMenu"
+	_menu_root.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(_menu_root)
+	_background = ColorRect.new()
+	_background.name = "DarkBackdrop"
+	_background.color = UiPaletteScript.BACKGROUND
+	_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_menu_root.add_child(_background)
+	_title = Label.new()
+	_title.name = "Title"
+	_title.text = TITLE_TEXT
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_title.add_theme_color_override("font_color", UiPaletteScript.TEXT)
+	_menu_root.add_child(_title)
+	_play_button = _make_button("PLAY", "Play")
+	_controls_button = _make_button("CONTROLS", "Controls")
+	_play_button.pressed.connect(func(): _start_game_once())
+	_controls_button.pressed.connect(_open_native_controls)
+	_menu_root.add_child(_play_button)
+	_menu_root.add_child(_controls_button)
+	_control_guide = ControlGuideScript.new()
+	_control_guide.name = "AndroidControlGuide"
+	_control_guide.visible = false
+	_control_guide.choices_changed.connect(_on_native_choices_changed)
+	_control_guide.close_requested.connect(_close_native_controls)
+	_menu_root.add_child(_control_guide)
+	_play_button.grab_focus()
+
+func _open_native_controls() -> void:
+	_control_guide.configure(_preferences.mode, _preferences.handedness)
+	_control_guide.visible = true
+	_control_guide.close_button.grab_focus()
+
+func _close_native_controls() -> void:
+	_control_guide.visible = false
+	_controls_button.grab_focus()
+
+func _on_native_choices_changed(mode: int, handedness: int) -> void:
+	_preferences.mode = mode
+	_preferences.handedness = handedness
+	_preferences.save_settings()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _native_menu or not (event is InputEventKey) or not event.pressed or event.echo:
+		return
+	if event is InputEventKey and (event.keycode == KEY_ESCAPE or event.keycode == KEY_BACK) and _control_guide.visible:
+		_close_native_controls()
+		get_viewport().set_input_as_handled()
 
 func _build_menu() -> void:
 	_menu_root = Control.new()
@@ -191,6 +265,20 @@ func _apply_layout(viewport_size: Vector2, requested_safe_rect := Rect2()) -> vo
 	_menu_root.size = viewport_size
 	_background.position = Vector2.ZERO
 	_background.size = viewport_size
+	if _native_menu:
+		var native_title_width := minf(800.0, safe_rect.size.x - 40.0)
+		_title.position = Vector2(safe_rect.get_center().x - native_title_width * 0.5, safe_rect.position.y + safe_rect.size.y * 0.18)
+		_title.size = Vector2(native_title_width, 100.0)
+		_title.add_theme_font_size_override("font_size", roundi(clampf(safe_rect.size.y * 0.075, 34.0, 58.0)))
+		var button_size := Vector2(clampf(safe_rect.size.x * 0.28, 260.0, 380.0), 64.0)
+		_play_button.size = button_size
+		_controls_button.size = button_size
+		_play_button.position = Vector2(safe_rect.get_center().x - button_size.x * 0.5, safe_rect.position.y + safe_rect.size.y * 0.49)
+		_controls_button.position = _play_button.position + Vector2(0.0, 78.0)
+		_control_guide.position = Vector2.ZERO
+		_control_guide.size = viewport_size
+		_control_guide.configure_safe_rect(safe_rect)
+		return
 	_dialog_layer.position = Vector2.ZERO
 	_dialog_layer.size = viewport_size
 

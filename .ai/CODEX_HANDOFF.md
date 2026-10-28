@@ -1,4 +1,44 @@
-# Codex Handoff — LBS-P035 Android 0.2.0 release
+# LBS-P037 — Android main menu, pause, and illustrated controls
+
+**Status:** COMPLETE
+
+## Delivered
+
+- Android boot now presents `PLAY` and `CONTROLS` without constructing `Main`; Web retains its synchronous fullscreen YES/NO boot and desktop retains direct startup. PLAY is guarded exactly once, and confirmed in-game MAIN MENU returns through the Android boot route.
+- Added one reusable screenshot-based `ControlGuideView` backed by the genuine P036 gameplay capture at `assets/ui/controls_gameplay_reference.png`. Classic renders two outlined fingertip/body illustrations plus the exact swap/release instructions. Side draws the actual 25% action edge, 50% center and 25% relative trackpad layout with upper SWAP/lower SHOOT, mirrored for handedness.
+- Selected Classic/Side and handedness use raised rounded white-bordered cards; unselected schemes are plain white text on black. Choices persist through the existing `ControlPreferences` file and immediately reconfigure the live router.
+- Added Android-only pause UI below terminal z=200. It clears touch ownership, pauses the full SceneTree, and provides RESUME, shared CONTROLS, confirmed RESTART and confirmed MAIN MENU. Back unwinds confirmation/guide/pause state. Android hides the redundant gear; desktop/Web behavior remains intact.
+- Neutralized engine and Web fallback clear colors to P036 near-black without changing Android package/version/signing. The pre-existing local `project.godot` edits were preserved; only the single clear-color line is intended for the commit.
+
+## Renderer evidence
+
+Godot `4.7.2.stable.official.ed1daf0bf`, OpenGL Compatibility, AMD Radeon RX 6700 XT:
+
+- `assets/previews/p037_android_main_1280x720.png`
+- `assets/previews/p037_android_main_wide_1600x720.png`
+- `assets/previews/p037_classic_guide_1280x720.png`
+- `assets/previews/p037_side_right_1280x720.png`
+- `assets/previews/p037_side_left_1280x720.png`
+- `assets/previews/p037_pause_1280x720.png`
+
+All were inspected at original resolution. Text is legible, fingers read as outlined fingertips with contact rings, Side boxes match and mirror the production router, selected/unselected treatments are distinct, pause content is unobstructed, and no navy backdrop remains.
+
+## Verification
+
+- Focused P037: **PASS, 46 checks**, including persisted preference reload and narrow-safe-area confinement.
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 33 suites**; P011 remains 16,485 checks / 2,400 operations.
+- Fresh `./scripts/build_web.sh`: **PASS**. Exact-nine Web release validation: **PASS**, PCK SHA-256 `272111611b90876f0a5cd5c31d700bc1e1a32f93e6fde76f50fcf5e2d9b20b62`.
+- Web publication automation fixture, Android release scaffolding, and Android toolchain setup checks: **PASS**. No release export or publication was performed.
+
+## Limitations / scope
+
+- No Android APK was built, signed, tagged or published; versionCode 2/versionName 0.2.0 and the existing v0.2.0 portfolio card remain untouched. P038 was not started.
+- No physical Android device was attached for touch/back/notch testing; deterministic injected-platform tests and Compatibility-renderer safe-area captures cover the implemented contract pending device QA.
+- Existing user modifications to `project.godot`, `scenes/main.tscn`, and unrelated generated UID files remain preserved.
+
+---
+
+# Previous handoff — LBS-P035 Android 0.2.0 release
 
 **Status:** COMPLETE
 

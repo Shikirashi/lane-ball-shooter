@@ -7,6 +7,7 @@ const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 const TouchRouterScript = preload("res://scripts/input/touch_control_router.gd")
 const PreferencesScript = preload("res://scripts/input/control_preferences.gd")
 const UiPaletteScript = preload("res://scripts/ui/ui_palette.gd")
+const PauseMenuScript = preload("res://scripts/ui/pause_menu_view.gd")
 # Live Web playtest: use the same eligible-threat-only mild sampler tested by P028B-EXPR.
 const ThreatRunSelectorScript = preload("res://scripts/analysis/threat_run_selector.gd")
 const BalanceLabScript = preload("res://scripts/analysis/balance_lab.gd")
@@ -21,6 +22,7 @@ var _magazine_view: MagazineView
 var _hud_view: HudView
 var _game_over_overlay: GameOverOverlay
 var _settings_view: ControlSettingsView
+var _pause_view: PauseMenuView
 var _sfx: Node
 var _magazine := MagazineState.new()
 var _chain_model := ChainModel.new()
@@ -40,6 +42,8 @@ var _victory_pending := false
 var _victory_delay_remaining := 0.0
 var _progression_chain_time := 0.0
 var _processing_chain := false
+var _paused := false
+var main_menu_requester: Callable
 
 func _ready() -> void:
 	_build_scene()
@@ -61,6 +65,11 @@ func _ready() -> void:
 	_game_over_overlay.restart_requested.connect(_restart_run)
 	_settings_view.choices_changed.connect(_on_control_choices_changed)
 	_settings_view.visibility_changed_by_user.connect(_on_settings_visibility_changed)
+	_pause_view.pause_requested.connect(_pause_game)
+	_pause_view.resume_requested.connect(_resume_game)
+	_pause_view.restart_confirmed.connect(_restart_from_pause)
+	_pause_view.main_menu_confirmed.connect(_return_to_main_menu)
+	_pause_view.choices_changed.connect(_on_control_choices_changed)
 	_settings_view.set_choices(_preferences.mode, _preferences.handedness)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
@@ -87,6 +96,15 @@ func _process(delta: float) -> void:
 	_processing_chain = false
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_ESCAPE or event.keycode == KEY_BACK) and _is_mobile_platform() and not _game_over:
+		if _paused:
+			_resume_game()
+		else:
+			_pause_game()
+		get_viewport().set_input_as_handled()
+		return
+	if _paused:
+		return
 	if _game_over:
 		if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R:
 			_restart_run()
@@ -148,6 +166,10 @@ func set_mobile_platform_override(value: int) -> void:
 	_mobile_platform_override = value
 	if _magazine_view != null:
 		_magazine_view.visible = not _is_mobile_platform()
+	if _settings_view != null:
+		_settings_view.gear_button.visible = not _is_mobile_platform()
+	if _pause_view != null:
+		_pause_view.pause_button.visible = _is_mobile_platform() and not _game_over
 
 func _is_mobile_platform() -> bool:
 	if _mobile_platform_override >= 0:
@@ -160,6 +182,7 @@ func _on_control_choices_changed(mode: int, handedness: int) -> void:
 	_preferences.save_settings()
 	_touch_router.configure(mode, handedness, _safe_rect)
 	_clear_touch_ownership()
+	_pause_view.guide.configure(mode, handedness)
 
 func _on_settings_visibility_changed(_open: bool) -> void:
 	_clear_touch_ownership()
@@ -234,6 +257,7 @@ func _on_game_over_requested(_identity: int) -> void:
 	_shooter_view.set_simulation_paused(true)
 	_chain_view.set_settling_visuals_visible(false)
 	_game_over_overlay.show_game_over(_progression.score)
+	_pause_view.pause_button.visible = false
 
 func _on_encounter_cleared() -> void:
 	if _game_over:
@@ -245,6 +269,7 @@ func _on_encounter_cleared() -> void:
 	_clear_touch_ownership()
 	_shooter_view.set_simulation_paused(true)
 	_chain_view.set_settling_visuals_visible(false)
+	_pause_view.pause_button.visible = false
 
 func _finish_victory_presentation() -> void:
 	if not _victory_pending or not _victory:
@@ -290,6 +315,39 @@ func _restart_run() -> void:
 	_magazine.reset_run()
 	_battlefield.reset_run()
 	_game_over_overlay.hide_for_restart()
+	_pause_view.pause_button.visible = _is_mobile_platform()
+
+func _pause_game() -> void:
+	if _paused or _game_over or not _is_mobile_platform():
+		return
+	_clear_touch_ownership()
+	_paused = true
+	_pause_view.show_paused(_preferences.mode, _preferences.handedness)
+	get_tree().paused = true
+
+func _resume_game() -> void:
+	if not _paused:
+		return
+	_clear_touch_ownership()
+	get_tree().paused = false
+	_paused = false
+	_pause_view.hide_paused()
+	_clear_touch_ownership()
+
+func _restart_from_pause() -> void:
+	get_tree().paused = false
+	_paused = false
+	_pause_view.hide_paused()
+	_restart_run()
+
+func _return_to_main_menu() -> void:
+	get_tree().paused = false
+	_paused = false
+	_clear_touch_ownership()
+	if main_menu_requester.is_valid():
+		main_menu_requester.call()
+		return
+	get_tree().change_scene_to_file("res://scenes/boot.tscn")
 
 func _build_scene() -> void:
 	_sfx = SfxManagerScript.new()
@@ -323,6 +381,9 @@ func _build_scene() -> void:
 	_settings_view = ControlSettingsView.new()
 	_settings_view.name = "ControlSettings"
 	add_child(_settings_view)
+	_pause_view = PauseMenuScript.new()
+	_pause_view.name = "PauseMenu"
+	add_child(_pause_view)
 	_game_over_overlay = GameOverOverlay.new()
 	_game_over_overlay.name = "GameOverOverlay"
 	add_child(_game_over_overlay)
@@ -342,6 +403,9 @@ func _apply_layout(viewport_size: Vector2, safe_rect: Rect2) -> void:
 	_hud_view.position = layout.hud_rect.position
 	_hud_view.size = layout.hud_rect.size
 	_settings_view.configure_layout(_safe_rect, viewport_size)
+	_settings_view.gear_button.visible = not _is_mobile_platform() and not _settings_view.is_open()
+	_pause_view.configure_layout(_safe_rect, viewport_size)
+	_pause_view.pause_button.visible = _is_mobile_platform() and not _game_over
 	_game_over_overlay.position = Vector2.ZERO
 	_game_over_overlay.size = viewport_size
 	_game_over_overlay.set_content_rect(_safe_rect)
