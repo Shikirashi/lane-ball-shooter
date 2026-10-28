@@ -29,6 +29,7 @@ All were inspected at original resolution. Text is legible, fingers read as outl
 - `./scripts/ci/run_regression_tests.sh`: **PASS, all 33 suites**; P011 remains 16,485 checks / 2,400 operations.
 - Fresh `./scripts/build_web.sh`: **PASS**. Exact-nine Web release validation: **PASS**, PCK SHA-256 `272111611b90876f0a5cd5c31d700bc1e1a32f93e6fde76f50fcf5e2d9b20b62`.
 - Web publication automation fixture, Android release scaffolding, and Android toolchain setup checks: **PASS**. No release export or publication was performed.
+- Post-push GitHub Actions run `40649322913`: **SUCCESS**. It reran every suite, rebuilt the exact P037 source, published only the nine-file portfolio game folder, and passed public HTTPS byte plus real-browser startup verification.
 
 ## Limitations / scope
 
