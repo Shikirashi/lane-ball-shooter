@@ -147,7 +147,7 @@ func _test_reference_and_startup_colors() -> void:
 	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
 	_check(project.contains("default_clear_color=Color(0.0196, 0.0196, 0.0196, 1)"), "engine startup clear is neutral P036 black")
 	_check(presets.contains("background_color=Color(0.0196, 0.0196, 0.0196, 1)"), "Web fallback background is neutral")
-	_check(presets.contains("version/code=4") and presets.contains("version/name=\"0.2.0\""), "P039 keeps user-facing Android 0.2.0 while advancing internal code")
+	_check(presets.contains("version/code=5") and presets.contains("version/name=\"0.2.0\""), "P040 keeps user-facing Android 0.2.0 while advancing internal code")
 	for fixture in PREVIEWS:
 		var preview_image := Image.new()
 		_check(preview_image.load(ProjectSettings.globalize_path(str(fixture[0]))) == OK and preview_image.get_size() == fixture[1], "%s is required real-renderer P037 evidence" % fixture[0])

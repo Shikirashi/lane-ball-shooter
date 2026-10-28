@@ -3,7 +3,6 @@ extends Control
 
 signal choices_changed(mode: int, handedness: int)
 signal close_requested
-signal test_vibration_requested
 
 const REFERENCE_PATH := "res://assets/ui/controls_gameplay_reference.png"
 
@@ -20,11 +19,11 @@ var annotations: Control
 var classic_swap_label: Label
 var classic_shoot_label: Label
 var close_button: Button
-var haptic_section: VBoxContainer
-var test_vibration_button: Button
-var vibration_status_label: Label
+var content_row: HBoxContainer
+var preview_frame: PanelContainer
+var options_column: VBoxContainer
+var handedness_row: HBoxContainer
 var _safe_rect := Rect2()
-var _haptics_enabled := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -40,36 +39,30 @@ func _build() -> void:
 	add_child(backdrop)
 	var panel := PanelContainer.new()
 	panel.name = "GuidePanel"
-	panel.add_theme_stylebox_override("panel", UiPalette.panel_style(UiPalette.BACKGROUND, UiPalette.WHITE, 2, 8))
+	var panel_style := UiPalette.panel_style(UiPalette.BACKGROUND, UiPalette.WHITE, 2, 8)
+	panel_style.content_margin_left = 20.0
+	panel_style.content_margin_right = 20.0
+	panel_style.content_margin_top = 18.0
+	panel_style.content_margin_bottom = 18.0
+	panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(panel)
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.position = Vector2.ZERO
-	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 8)
-	panel.add_child(column)
-	title_label = Label.new()
-	title_label.text = "CONTROLS"
-	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title_label.add_theme_font_size_override("font_size", 22)
-	title_label.add_theme_color_override("font_color", UiPalette.TEXT)
-	column.add_child(title_label)
-	var modes := HBoxContainer.new()
-	modes.alignment = BoxContainer.ALIGNMENT_CENTER
-	modes.add_theme_constant_override("separation", 18)
-	column.add_child(modes)
-	classic_button = _choice_button("CLASSIC")
-	side_button = _choice_button("SIDE")
-	classic_button.pressed.connect(func(): select_mode(TouchControlRouter.Mode.CLASSIC))
-	side_button.pressed.connect(func(): select_mode(TouchControlRouter.Mode.SIDE))
-	modes.add_child(classic_button)
-	modes.add_child(side_button)
-	var preview_frame := PanelContainer.new()
+
+	content_row = HBoxContainer.new()
+	content_row.name = "TwoColumnLayout"
+	content_row.add_theme_constant_override("separation", 24)
+	panel.add_child(content_row)
+	preview_frame = PanelContainer.new()
 	preview_frame.name = "PreviewFrame"
-	preview_frame.custom_minimum_size = Vector2(720.0, 360.0)
+	preview_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_frame.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	preview_frame.add_theme_stylebox_override("panel", UiPalette.panel_style(UiPalette.PANEL, UiPalette.BORDER, 1, 2))
-	column.add_child(preview_frame)
+	content_row.add_child(preview_frame)
 	preview_stack = Control.new()
-	preview_stack.custom_minimum_size = Vector2(720.0, 360.0)
+	preview_stack.name = "PreviewStack"
+	preview_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	preview_frame.add_child(preview_stack)
 	preview_stack.resized.connect(_layout_annotations)
 	preview = TextureRect.new()
@@ -82,59 +75,75 @@ func _build() -> void:
 	preview_stack.add_child(preview)
 	annotations = GuideAnnotations.new()
 	annotations.name = "GuideAnnotations"
+	annotations.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	annotations.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	preview_stack.add_child(annotations)
 	classic_swap_label = _annotation_label("TAP WITH ANOTHER FINGER TO SWAP")
 	classic_shoot_label = _annotation_label("RELEASE FINGERS TO SHOOT")
 	preview_stack.add_child(classic_swap_label)
 	preview_stack.add_child(classic_shoot_label)
-	var hands := HBoxContainer.new()
-	hands.name = "Handedness"
-	hands.alignment = BoxContainer.ALIGNMENT_CENTER
-	hands.add_theme_constant_override("separation", 12)
-	column.add_child(hands)
+
+	options_column = VBoxContainer.new()
+	options_column.name = "OptionsColumn"
+	options_column.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	options_column.add_theme_constant_override("separation", 12)
+	content_row.add_child(options_column)
+	title_label = Label.new()
+	title_label.name = "Title"
+	title_label.text = "CONTROLS"
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title_label.custom_minimum_size.y = 42.0
+	title_label.add_theme_font_size_override("font_size", 26)
+	title_label.add_theme_color_override("font_color", UiPalette.TEXT)
+	options_column.add_child(title_label)
+	var modes := HBoxContainer.new()
+	modes.name = "SchemeChoices"
+	modes.alignment = BoxContainer.ALIGNMENT_CENTER
+	modes.add_theme_constant_override("separation", 12)
+	options_column.add_child(modes)
+	classic_button = _choice_button("CLASSIC")
+	side_button = _choice_button("SIDE")
+	classic_button.pressed.connect(func(): select_mode(TouchControlRouter.Mode.CLASSIC))
+	side_button.pressed.connect(func(): select_mode(TouchControlRouter.Mode.SIDE))
+	modes.add_child(classic_button)
+	modes.add_child(side_button)
+	handedness_row = HBoxContainer.new()
+	handedness_row.name = "Handedness"
+	handedness_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	handedness_row.add_theme_constant_override("separation", 12)
+	options_column.add_child(handedness_row)
 	right_button = _small_button("RIGHT")
 	left_button = _small_button("LEFT")
 	right_button.pressed.connect(func(): select_handedness(TouchControlRouter.Handedness.RIGHT))
 	left_button.pressed.connect(func(): select_handedness(TouchControlRouter.Handedness.LEFT))
-	hands.add_child(right_button)
-	hands.add_child(left_button)
-	haptic_section = VBoxContainer.new()
-	haptic_section.name = "HapticDiagnostic"
-	haptic_section.alignment = BoxContainer.ALIGNMENT_CENTER
-	haptic_section.add_theme_constant_override("separation", 2)
-	column.add_child(haptic_section)
-	test_vibration_button = _small_button("TEST VIBRATION")
-	test_vibration_button.name = "TestVibration"
-	test_vibration_button.custom_minimum_size = Vector2(240.0, 44.0)
-	test_vibration_button.pressed.connect(func(): test_vibration_requested.emit())
-	haptic_section.add_child(test_vibration_button)
-	vibration_status_label = Label.new()
-	vibration_status_label.name = "VibrationRequestStatus"
-	vibration_status_label.text = "VIBRATION REQUEST SENT"
-	vibration_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vibration_status_label.add_theme_font_size_override("font_size", 13)
-	vibration_status_label.add_theme_color_override("font_color", UiPalette.TEXT_SECONDARY)
-	vibration_status_label.visible = false
-	haptic_section.add_child(vibration_status_label)
+	handedness_row.add_child(right_button)
+	handedness_row.add_child(left_button)
+	var spacer := Control.new()
+	spacer.name = "OptionsSpacer"
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	options_column.add_child(spacer)
 	close_button = _small_button("BACK")
+	close_button.name = "Back"
 	close_button.pressed.connect(func(): close_requested.emit())
-	column.add_child(close_button)
+	options_column.add_child(close_button)
 	resized.connect(_layout)
 	_layout()
-	set_haptics_enabled(_haptics_enabled)
 
 func _choice_button(text_value: String) -> Button:
 	var button := Button.new()
 	button.text = text_value
-	button.custom_minimum_size = Vector2(180.0, 54.0)
+	button.custom_minimum_size = Vector2(150.0, 76.0)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.add_theme_font_size_override("font_size", 20)
 	return button
 
 func _small_button(text_value: String) -> Button:
 	var button := Button.new()
 	button.text = text_value
-	button.custom_minimum_size = Vector2(126.0, 46.0)
+	button.custom_minimum_size = Vector2(140.0, 72.0)
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.add_theme_font_size_override("font_size", 20)
 	UiPalette.apply_button(button)
 	return button
 
@@ -161,21 +170,6 @@ func configure_safe_rect(value: Rect2) -> void:
 	_safe_rect = value
 	_layout()
 
-func set_haptics_enabled(value: bool) -> void:
-	_haptics_enabled = value
-	if is_instance_valid(haptic_section):
-		haptic_section.visible = value
-	if is_instance_valid(test_vibration_button):
-		test_vibration_button.visible = value
-	if not value and is_instance_valid(vibration_status_label):
-		vibration_status_label.visible = false
-
-func show_vibration_request_sent(requested: bool) -> void:
-	if not _haptics_enabled or not is_instance_valid(vibration_status_label):
-		return
-	vibration_status_label.text = "VIBRATION REQUEST SENT" if requested else "ANDROID VIBRATION REQUEST BLOCKED"
-	vibration_status_label.visible = true
-
 func select_mode(value: int) -> void:
 	mode = value
 	_sync()
@@ -191,8 +185,7 @@ func _sync() -> void:
 		return
 	_style_scheme(classic_button, mode == TouchControlRouter.Mode.CLASSIC)
 	_style_scheme(side_button, mode == TouchControlRouter.Mode.SIDE)
-	right_button.visible = mode == TouchControlRouter.Mode.SIDE
-	left_button.visible = mode == TouchControlRouter.Mode.SIDE
+	handedness_row.visible = mode == TouchControlRouter.Mode.SIDE
 	UiPalette.apply_button(right_button, handedness == TouchControlRouter.Handedness.RIGHT)
 	UiPalette.apply_button(left_button, handedness == TouchControlRouter.Handedness.LEFT)
 	classic_swap_label.visible = mode == TouchControlRouter.Mode.CLASSIC
@@ -222,15 +215,14 @@ func _layout() -> void:
 	if not is_instance_valid(title_label):
 		return
 	var panel := get_node("GuidePanel") as PanelContainer
-	var margin := 18.0
+	var margin := 12.0
 	var bounds := _safe_rect if _safe_rect.size.x > 0.0 and _safe_rect.size.y > 0.0 else Rect2(Vector2.ZERO, size)
-	panel.size = Vector2(minf(900.0, bounds.size.x - margin * 2.0), minf(680.0, bounds.size.y - margin * 2.0))
+	panel.size = Vector2(maxf(0.0, minf(1400.0, bounds.size.x - margin * 2.0)), maxf(0.0, minf(900.0, bounds.size.y - margin * 2.0)))
 	panel.position = bounds.position + (bounds.size - panel.size) * 0.5
-	var reserved_height := 330.0 if _haptics_enabled else 220.0
-	var preview_height := clampf(panel.size.y - reserved_height, 190.0, 410.0)
-	var frame := panel.find_child("PreviewFrame", true, false) as Control
-	frame.custom_minimum_size = Vector2(0.0, preview_height)
-	preview_stack.custom_minimum_size = Vector2(0.0, preview_height)
+	var inner_width := maxf(0.0, panel.size.x - 40.0)
+	var options_width := clampf(inner_width * 0.40, 340.0, 520.0)
+	preview_frame.custom_minimum_size = Vector2(280.0, 0.0)
+	options_column.custom_minimum_size = Vector2(options_width, 0.0)
 	_layout_annotations()
 
 func _layout_annotations() -> void:
@@ -238,6 +230,8 @@ func _layout_annotations() -> void:
 		return
 	var container_size := preview.size
 	var texture_size := Vector2(preview.texture.get_size()) if preview.texture != null else container_size
+	if container_size.x <= 0.0 or container_size.y <= 0.0 or texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return
 	var scale_value := minf(container_size.x / texture_size.x, container_size.y / texture_size.y)
 	var content_size := texture_size * scale_value
 	var content_position := (container_size - content_size) * 0.5
@@ -266,11 +260,7 @@ class GuideAnnotations extends Control:
 		var quarter := rect.size.x * 0.25
 		var action_x := rect.position.x if hand == TouchControlRouter.Handedness.RIGHT else rect.end.x - quarter
 		var slide_x := rect.end.x - quarter if hand == TouchControlRouter.Handedness.RIGHT else rect.position.x
-		return {
-			"swap": Rect2(action_x, rect.position.y, quarter, rect.size.y * 0.5),
-			"shoot": Rect2(action_x, rect.position.y + rect.size.y * 0.5, quarter, rect.size.y * 0.5),
-			"slide": Rect2(slide_x, rect.position.y, quarter, rect.size.y),
-		}
+		return {"swap": Rect2(action_x, rect.position.y, quarter, rect.size.y * 0.5), "shoot": Rect2(action_x, rect.position.y + rect.size.y * 0.5, quarter, rect.size.y * 0.5), "slide": Rect2(slide_x, rect.position.y, quarter, rect.size.y)}
 
 	func _draw() -> void:
 		if mode == TouchControlRouter.Mode.SIDE:

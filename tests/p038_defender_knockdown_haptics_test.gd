@@ -72,7 +72,7 @@ func _test_authoritative_knockdown_haptic() -> void:
 
 func _test_release_contract() -> void:
 	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
-	_check(presets.count("version/code=4") == 2, "both Android presets use internal version code 4")
+	_check(presets.count("version/code=5") == 2, "both Android presets use internal version code 5")
 	_check(presets.count("version/name=\"0.2.0\"") == 2, "both Android presets retain user-facing version 0.2.0")
 	_check(presets.count("permissions/vibrate=true") == 2, "both Android presets request the VIBRATE normal permission")
 	var source := FileAccess.get_file_as_string("res://scripts/android_haptics.gd")

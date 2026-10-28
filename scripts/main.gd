@@ -72,7 +72,6 @@ func _ready() -> void:
 	_pause_view.restart_confirmed.connect(_restart_from_pause)
 	_pause_view.main_menu_confirmed.connect(_return_to_main_menu)
 	_pause_view.choices_changed.connect(_on_control_choices_changed)
-	_pause_view.test_vibration_requested.connect(_on_test_vibration_requested)
 	_settings_view.set_choices(_preferences.mode, _preferences.handedness)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
@@ -173,7 +172,6 @@ func set_mobile_platform_override(value: int) -> void:
 		_settings_view.gear_button.visible = not _is_mobile_platform()
 	if _pause_view != null:
 		_pause_view.pause_button.visible = _is_mobile_platform() and not _game_over
-		_pause_view.set_haptics_enabled(_is_mobile_platform())
 
 func _is_mobile_platform() -> bool:
 	if _mobile_platform_override >= 0:
@@ -247,10 +245,6 @@ func _on_defender_knocked_down(identity: int) -> void:
 
 func _request_defender_knockdown_vibration(identity := -1) -> bool:
 	return AndroidHapticsScript.request(&"defender_down", identity, _is_mobile_platform(), vibration_requester)
-
-func _on_test_vibration_requested() -> void:
-	var requested := AndroidHapticsScript.request(&"controls_test", -1, _is_mobile_platform(), vibration_requester)
-	_pause_view.show_vibration_request_sent(requested)
 
 func _on_defender_revived(_identity: int) -> void:
 	_sfx.play_cue("revive")
@@ -419,7 +413,6 @@ func _apply_layout(viewport_size: Vector2, safe_rect: Rect2) -> void:
 	_settings_view.gear_button.visible = not _is_mobile_platform() and not _settings_view.is_open()
 	_pause_view.configure_layout(_safe_rect, viewport_size)
 	_pause_view.pause_button.visible = _is_mobile_platform() and not _game_over
-	_pause_view.set_haptics_enabled(_is_mobile_platform())
 	_game_over_overlay.position = Vector2.ZERO
 	_game_over_overlay.size = viewport_size
 	_game_over_overlay.set_content_rect(_safe_rect)
