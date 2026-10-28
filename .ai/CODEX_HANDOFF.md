@@ -1,3 +1,49 @@
+# LBS-P039 — Android haptic diagnostics and revision 3 release
+
+**Status:** COMPLETE
+
+## Implementation and diagnosis
+
+- Replaced the previous isolated 160 ms request with one centralized `AndroidHaptics` path used by both the authoritative defender-down boundary and the new Android-only `TEST VIBRATION` control. Each accepted native request is 500 ms at amplitude 1.0. Desktop/Web requests remain gated and cannot activate hardware.
+- Added the diagnostic button to both main-menu Controls and pause-menu Controls. Both surfaces use the same helper as combat, issue exactly one request per press and display the truthful status `VIBRATION REQUEST SENT`; they do not claim the motor responded. The button stays hidden on non-Android platforms.
+- Added concise `[LBS_HAPTIC]` logging for source (`controls_test` or `defender_down`), lane, duration, amplitude, platform gate and native/injected route. The main combat relay also logs receipt of the actual down signal, separating gameplay-event failure from native haptic failure.
+- Godot's handheld-vibration call is fire-and-forget: reaching it cannot prove physical motor activation. The signed APK does declare `android.permission.VIBRATE`, but Android/app haptic settings or device/API handling may still suppress a valid request. Notification vibration alone therefore did not prove that the game's prior request reached the same route.
+- Kept package `com.shikirashi.laneballshooter` and user-facing versionName `0.2.0`; incremented only versionCode to `4`. No combat, control, balance, visual or audio rules changed.
+
+## Authentic behavior coverage and renderer evidence
+
+- Added `p039_android_haptics_diagnostic_test.gd` with 45 checks. It drives a genuine `LaneCombatModel` defender through ordinary damage into `_knock_down`, relays through `Battlefield`, and verifies exactly one shared 500 ms / 1.0 request in `Main`. It proves ordinary hits, enemy attacks/deaths, pause/resume/restart and suppressed duplicate downs do not vibrate; revival followed by a second real down does.
+- The suite invokes both real control-guide button surfaces and verifies shared routing, truthful feedback, Android-only visibility, one-request semantics, platform gating and layouts at 1280×720, 1600×720 and a narrow safe area. Existing P038 coverage was updated only for the approved stronger haptic/version values.
+- Real Godot 4.7.2 Compatibility-renderer captures were generated and inspected: `assets/previews/p039_main_controls_1280x720.png`, `p039_pause_controls_1600x720.png`, and `p039_controls_narrow_safe_1280x720.png`. Button, back navigation, illustrations and wrapped Classic copy are legible and remain inside their safe areas.
+- P006 now isolates its control preference fixture in a temporary path. This preserves the user's actual saved Side preference while preventing machine-local settings from changing the deterministic Classic-input assertion.
+
+## Published Android release
+
+- Tested source: `f64320c418b5b2c0b4f7932993848dd9d51118b3` (`Add Android haptic diagnostics and revision 3 versioning`).
+- Immutable public release: [`android-v0.2.0-r3`](https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.2.0-r3), public, non-draft and non-prerelease. Existing v0.1.0, v0.2.0 and revision-2 releases were preserved.
+- Public asset: https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.2.0-r3/lane-ball-shooter-android.apk
+- Downloaded asset: 27,957,849 bytes; SHA-256 `05a626bdcf84e02204aa1a84eb674040a31bad9d6cfc9738a5073b019a1194ad`; package `com.shikirashi.laneballshooter`; versionName `0.2.0`; versionCode `4`; ARM64-v8a only; min SDK 24; target SDK 36; non-debuggable; zip-aligned; v2/v3 signed; `android.permission.VIBRATE` present.
+- Signer certificate SHA-256 `796f2c679d962a8195ebf1a38d959002829561dfd26d2dae86e52ccdec7224fc` exactly matches downloaded v0.1.0, v0.2.0 and r2 APKs. The public r3 download matches the clean local build byte-for-byte.
+- Built from a pristine isolated worktree at the exact source commit with Godot 4.7.2 and the existing protected SDK/JDK/templates/signing identity. No signing material was regenerated, copied into Git, displayed or changed.
+
+## Verification
+
+- Focused P037/P038/P039: **PASS**, 46 / 16 / 45 checks.
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 35 suites**, both in the working tree and a clean detached checkout at the exact release source. P011 retained 16,485 checks / 2,400 operations.
+- Android release scaffolding, toolchain policy, shell syntax, clean export and `verify_android_release.sh`: **PASS**. Manifest inspection independently confirmed VIBRATE; signer/package/version/ABI/SDK/debug/alignment checks passed.
+- Fresh local Web build and exact-nine validation: **PASS**. Clean-source PCK SHA-256 `e8e9fd5e3a8adca7c58967e5fb3d20b6f06b66cfff0883f4523bed70effc3477`.
+- Post-push Web run [`40661052466`](https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40661052466): **SUCCESS**. It reran every regression, built the exact source, published only the nine Web runtime files as portfolio commit `f9522625ff9d91a5c0a5b08b62e2e239b508f07a`, and passed public byte/browser checks.
+- Portfolio card commit `30382c0275bf205a831b2973840f9d531bc93097` changes only the existing card's URL and revision label. Pages run [`40661561997`](https://github.com/Shikirashi/Shikirashi.github.io/actions/runs/40661561997): **SUCCESS**. Live HTML has exactly one card and r3 URL; r2 and r3 APK URLs remain available. Public Web startup passed with secure context, title `Lane Ball Shooter`, one 1280×633 canvas and no loader.
+
+## Required phone checkpoint
+
+- `adb devices -l` found no attached device. Physical vibration, update installation, touch ergonomics, audio and performance remain unverified; this report intentionally does not claim the motor issue is solved.
+- Install r3 over r2, then test main-menu `CONTROLS > TEST VIBRATION`, pause-menu `CONTROLS > TEST VIBRATION`, and an actual defender knockdown. For logs: run `adb logcat -c`, then `adb logcat | grep --line-buffered LBS_HAPTIC` while testing.
+- Interpretation: button log without vibration points beyond the shared UI/game route toward Android/app policy or engine/device delivery; button vibration plus missing defender-down log points to gameplay routing; both vibration paths working confirms the revision on that device.
+- Pre-existing user changes to `project.godot`, `scenes/main.tscn`, and unrelated generated UID files remain uncommitted and untouched. P039 is complete; do not advance without a newly active mailbox.
+
+---
+
 # LBS-P038 — Android 0.2.0 revision 2 release and knockdown haptics
 
 **Status:** COMPLETE
