@@ -412,6 +412,7 @@ All seven were inspected at original resolution. Neutral framing is black/gray, 
 - `./scripts/ci/test_publish_automation.sh exports/web`: **PASS**, exact-folder publication and failure safety preserved.
 - `./scripts/ci/test_android_release_scaffolding.sh`: **PASS**; `./scripts/ci/test_android_toolchain_setup.sh`: **PASS**. No APK was built or signed.
 - `git diff --check`: **PASS**.
+- Post-push GitHub Actions run `40646655273`: **SUCCESS**. The pinned build reran all suites, rebuilt/validated the nine-file Web release, atomically published only the portfolio game folder, and passed public HTTPS byte plus real-browser startup verification.
 
 ## Scope / limitations
 
