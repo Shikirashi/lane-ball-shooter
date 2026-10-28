@@ -1,6 +1,6 @@
 # LBS-P040 — Android touch-first Controls layout
 
-**Status:** PARTIAL — implementation/tests/Web complete; signed Android r4 and portfolio update blocked by missing protected local release environment
+**Status:** COMPLETE — implementation, same-signer Android r4 release, portfolio update and public verification delivered
 
 ## Delivered source
 
@@ -17,20 +17,23 @@
 ## Verification
 
 - P037/P038/P039/P040 focused suites: **PASS** (46 / 16 / 29 / 183 checks). P039 was retained and repurposed to prove diagnostics are absent while genuine knockdown/platform/logging regressions remain.
-- `./scripts/ci/run_regression_tests.sh`: **PASS, all 36 suites**. P011 retained 16,485 deterministic checks / 2,400 operations.
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 36 suites** on Mintbase from a clean detached checkout at exact release source `a7a6a05`. P011 retained 16,485 deterministic checks / 2,400 operations.
 - Android release scaffolding/toolchain policy, shell syntax and `git diff --check`: **PASS**.
-- Fresh pinned Godot 4.7.2 Web export: **PASS**, exactly nine runtime files; publication safety/failure-path checks passed. Local PCK SHA-256: `47560ccda382a4fed74caeccbee5f11c02b19a081fbd82385934b99f5bab596c`.
+- Fresh pinned Godot 4.7.2 Web export: **PASS**, exactly nine runtime files; publication safety/failure-path checks passed. The already reviewed/published source build PCK SHA-256 was `47560ccda382a4fed74caeccbee5f11c02b19a081fbd82385934b99f5bab596c`.
 - GitHub Web run [`40671482915`](https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40671482915): **SUCCESS**. It reran all 36 suites, built/validated the exact source, published only the Web runtime delta as portfolio commit `29d3a2faa319fc20b892d3bdaaf1b7689fb71898`, and passed public HTTPS byte plus secure live-canvas checks. Portfolio Pages run [`40671788042`](https://github.com/Shikirashi/Shikirashi.github.io/actions/runs/40671788042): **SUCCESS**. The existing APK card remained on truthful r3.
 
-## Release blocker / untouched public state
+## Published Android release and portfolio
 
-- The documented user-local files are absent: Temurin JDK `/home/shiki/.local/share/lane-ball-shooter/toolchains/temurin-17.0.21+9`, SDK `/home/shiki/Android/Sdk`, signing environment `/home/shiki/.local/share/lane-ball-shooter/signing/release-signing.env`, and original keystore beside it. The signing variables are unset. The matching Android template is present, but `scripts/build_android.sh` must fail closed without all four missing components.
-- Per task safety rules, Codex did **not** recreate/rotate a key, inspect or restore the root-protected backup, expose credentials, forge a build result, create tag/release `android-v0.2.0-r4`, upload an APK, or change the portfolio card. Public r3 and all older artifacts remain immutable; the portfolio still truthfully links to r3.
-- To resume, the user must restore the existing local JDK/SDK/signing files by their approved secure process (without changing signer identity), then rerun P040. The required next gate is a clean detached export from `a7a6a05`, strict code5/name0.2.0/signer/manifest/ABI/SDK verification against prior public APKs, public r4 byte verification, and only then the one-card portfolio URL update.
+- The continuation ran on host `mintbase`, where the established user-local Temurin JDK 17, Android SDK, protected `0600` signing environment and protected original keystore were present. Existence/permissions were checked without printing secrets. No key was recreated, rotated, copied, migrated, exposed or modified.
+- Built from a second pristine detached checkout at exact source `a7a6a05ac10b11a434b34bae1b439d5147baf09f`. The verified APK is 28,119,258 bytes with SHA-256 `9e343bfc008c8cfc2d19336fc4ba245c9a4219f0c3dd302caa827287fffe7819`; package `com.shikirashi.laneballshooter`; versionName `0.2.0`; versionCode `5`; ARM64-v8a only; min SDK 24; target SDK 36; non-debuggable; zip-aligned; v2/v3 signed; VIBRATE declared.
+- Signer certificate SHA-256 `796f2c679d962a8195ebf1a38d959002829561dfd26d2dae86e52ccdec7224fc` matches the downloaded public r3 asset and all earlier recorded releases.
+- Public immutable release: [`android-v0.2.0-r4`](https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.2.0-r4), public/non-draft/non-prerelease and tagged at exact source. Asset: https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.2.0-r4/lane-ball-shooter-android.apk. The downloaded asset matched the clean local build byte-for-byte and passed the full verifier. r3, r2, v0.2.0 and v0.1.0 remain unchanged.
+- Portfolio commit `caa14efe2da86290197a214afa60da656605c031` changes only the existing card URL and revision caption; exactly one card remains and all nine Web runtime files were preserved. Pages run [`40704526667`](https://github.com/Shikirashi/Shikirashi.github.io/actions/runs/40704526667): **SUCCESS**. Live r4/r3 downloads, live HTML and Web URL passed HTTPS checks; secure browser startup passed with title `Lane Ball Shooter`, one 1280×633 canvas and no loader.
 
 ## Physical phone QA
 
-- No authorized connected device/toolchain was available, so native rendering, upgrade install and vibration are not claimed. After a valid r4 exists: install over r3; check main Controls Classic and Side; switch Right/Left and restart to confirm persistence; open Pause → Controls and use Back; resume the same run; then cause a real defender DOWN and confirm the single pulse subject to the phone's system haptic setting.
+- `adb devices -l` found no attached device, so native rendering, upgrade installation and vibration are not claimed. Install r4 over r3; check main Controls Classic and Side; switch Right/Left and restart to confirm persistence; open Pause → Controls and use Back; resume the same run; then cause a real defender DOWN and confirm the single pulse subject to the phone's system haptic setting.
+- Pre-existing user edits to `project.godot`, `scenes/main.tscn` and unrelated generated UID files remained uncommitted and untouched. P040 is complete; do not advance without a newly active mailbox.
 
 ---
 
