@@ -1,3 +1,10 @@
+## 2026-10-28 — P039 vibration diagnostic APK released, awaiting phone feedback
+
+- P039 technically reviewed COMPLETE. Source `f64320c418b5b2c0b4f7932993848dd9d51118b3`, docs `4b54aebe0d4d351beaadc8e08a3fdf05bccdaa89`, immutable public `android-v0.2.0-r3` release/tag points to exact tested source. VersionName `0.2.0`, internal code4, original app ID and signer unchanged. GitHub public APK 27,957,849 bytes with SHA256 `05a626bdcf84e02204aa1a84eb674040a31bad9d6cfc9738a5073b019a1194ad`, old v0.1/v0.2/r2 assets preserved.
+- Central shared `AndroidHaptics` uses `Input.vibrate_handheld(500,1.0)` for authentic defender DOWN and Android-only TEST VIBRATION button reachable from both main/paused Controls, with truthful REQUEST SENT status and [LBS_HAPTIC] native-request log. 45 P039 checks PASS and 35 suites PASS per Codex; Web CI `40661052466` SUCCESS. Existing portfolio card updated ONLY URL/caption `30382c0`, Pages `40661561997` SUCCESS, Web boots. ChatGPT verified source, GitHub tag, asset digest/size, CI and portfolio 2-line diff; binary signature and hash check per Codex.
+- Crucial uncertainty: NO device connected during P039; prior r2 did not vibrate on user's phone although notifications vibrated. User must install r3 and press MAIN MENU > CONTROLS > TEST VIBRATION, then cause real defender down and try paused Controls. Software "REQUEST SENT" is not physical success. If silent, capture `adb logcat | grep --line-buffered LBS_HAPTIC` for diagnosis.
+- Archive `.ai/TASKS/LBS-P039.md`. No active Codex task until explicit new user instruction.
+
 ## 2026-10-28 — Device-test regression: defender DOWN vibrates nowhere; P039 active for diagnosis
 
 - User installed/tested `android-v0.2.0-r2`: Android MAIN MENU and illustrated controls work, but **the phone does not vibrate on actual defender DOWN**. User independently confirmed the phone **does vibrate on notifications** and general vibration settings are normal. This rules out a completely dead motor, not all app-vibration-specific OS settings or missing native request. P038's 16 synthetic haptic checks were insufficient to prove device output.
