@@ -1,3 +1,9 @@
+## 2026-10-28 — P036 reviewed, Web delivered; P037 Android menus ACTIVE
+
+- **P036 COMPLETE**: source `0e656e9`, Codex handoff verification `14707d3`, test-only `p036_monochrome_ui_test` 75 checks PASS, 32 Godot regression suites PASS, Web CI `40646655273` SUCCESS and portfolio Pages `40646877117` SUCCESS. Shared `UiPalette` makes Web entry, game, HUD, settings, lanes and end overlay white-on-black with semantic team/FEVER/COMBO color. Seven genuine Godot render captures under `assets/previews/p036_*.png`; Codex inspected images at original resolution. GitHub connection prevented ChatGPT from independently decoding image pixels; source, tests, files and CI reviewed.
+- **P037 is the ONLY ACTIVE task** in `.ai/TASK.md`. Android first screen MAIN MENU PLAY/CONTROLS; genuine pause and Back/resume/confirm flow; illustrated real-game screenshot Classic/Side guides, accurate finger and SLIDE/SHOOT/SWAP placements with handed mirroring; selected white bordered/raised card vs unselected plain white text on black. Reuse P036 palette, avoid new gameplay changes. Fix legacy navy fallback `project.godot` default engine clear (only if safe with locally dirty user file) so first frames are neutral.
+- **P038 still QUEUED**, not authorized: Android versionName 0.3.0/code3 same signed signer/package and existing portfolio APK card update only after P037 review. Native public v0.2.0 unaffected. No Play Store, level content, rebrand or additional balance changes.
+
 ## 2026-10-28 — P036 white/black UI, P037 native menus, P038 Android release
 
 - User requested near-black backgrounds and white UI text/borders/surfaces across **both Web and Android**, eliminating purple/navy styling. Preserve semantically necessary colors in four teams/balls/actors, FEVER/COMBO, warnings and red hit silhouettes. New shared `UiPalette` recommended.
