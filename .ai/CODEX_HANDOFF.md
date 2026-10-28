@@ -1,3 +1,39 @@
+# LBS-P040 — Android touch-first Controls layout
+
+**Status:** PARTIAL — implementation/tests/Web complete; signed Android r4 and portfolio update blocked by missing protected local release environment
+
+## Delivered source
+
+- Tested/pushed source commit: `a7a6a05ac10b11a434b34bae1b439d5147baf09f` (`Redesign Android controls for touch`). Android remains versionName `0.2.0`; only versionCode advanced from 4 to 5.
+- Replaced the Android guide's stacked 900 px card with one safe-area-driven landscape panel: undistorted gameplay preview and Classic/Side annotations are left; title, scheme, optional handedness and Back are right. The same `ControlGuideView` serves main-menu and paused Controls and remains `PROCESS_MODE_ALWAYS`.
+- Removed `TEST VIBRATION`, its status label, reserved layout space, signal, properties and forwarding from guide/boot/pause/Main. Authentic `Main._on_defender_knocked_down` → `AndroidHaptics.request` → `Input.vibrate_handheld(500, 1.0)` and `android.permission.VIBRATE` are unchanged. Control taps, shoot/swap, menus, ordinary hits and duplicate DOWN do not vibrate; a real second DOWN after revival still requests a new pulse.
+- Preserved black/white styling, raised white-bordered selected scheme, transparent/plain-text unselected hitbox, mirrored Side zones, preference persistence, Android Back and true pause.
+
+## Layout and renderer evidence
+
+- Actual global touch rectangles measured by `p040_android_controls_touch_layout_test.gd`: scheme buttons are 76 px high; handedness and Back are 72 px high. At 1280×720 they are approximately 237×76, 237×72 and 486×72; at wide 1600×720 / 2340×1080 they are 254×76, 254×72 and 520×72; at safe `Rect2(150,24,980,672)` they are 177×76, 177×72 and 366×72; at compact 960×540 they remain about 173×76, 173×72 and 358×72. Every visible target stays above the 64×120 acceptance floor.
+- Genuine Godot 4.7.2 Compatibility-renderer captures were generated and visually inspected at native size: `p040_main_classic_1280x720.png`, `p040_main_side_right_1280x720.png`, `p040_main_side_left_wide_1600x720.png`, `p040_main_classic_narrow_safe_1280x720.png`, and `p040_pause_side_right_1280x720.png`. Preview/options order, annotation aspect/legibility, white selection outlines, target spacing and safe-area containment passed inspection.
+
+## Verification
+
+- P037/P038/P039/P040 focused suites: **PASS** (46 / 16 / 29 / 183 checks). P039 was retained and repurposed to prove diagnostics are absent while genuine knockdown/platform/logging regressions remain.
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 36 suites**. P011 retained 16,485 deterministic checks / 2,400 operations.
+- Android release scaffolding/toolchain policy, shell syntax and `git diff --check`: **PASS**.
+- Fresh pinned Godot 4.7.2 Web export: **PASS**, exactly nine runtime files; publication safety/failure-path checks passed. Local PCK SHA-256: `47560ccda382a4fed74caeccbee5f11c02b19a081fbd82385934b99f5bab596c`.
+- GitHub Web run [`40671482915`](https://github.com/Shikirashi/lane-ball-shooter/actions/runs/40671482915): **SUCCESS**. It reran all 36 suites, built/validated the exact source, published only the Web runtime delta as portfolio commit `29d3a2faa319fc20b892d3bdaaf1b7689fb71898`, and passed public HTTPS byte plus secure live-canvas checks. Portfolio Pages run [`40671788042`](https://github.com/Shikirashi/Shikirashi.github.io/actions/runs/40671788042): **SUCCESS**. The existing APK card remained on truthful r3.
+
+## Release blocker / untouched public state
+
+- The documented user-local files are absent: Temurin JDK `/home/shiki/.local/share/lane-ball-shooter/toolchains/temurin-17.0.21+9`, SDK `/home/shiki/Android/Sdk`, signing environment `/home/shiki/.local/share/lane-ball-shooter/signing/release-signing.env`, and original keystore beside it. The signing variables are unset. The matching Android template is present, but `scripts/build_android.sh` must fail closed without all four missing components.
+- Per task safety rules, Codex did **not** recreate/rotate a key, inspect or restore the root-protected backup, expose credentials, forge a build result, create tag/release `android-v0.2.0-r4`, upload an APK, or change the portfolio card. Public r3 and all older artifacts remain immutable; the portfolio still truthfully links to r3.
+- To resume, the user must restore the existing local JDK/SDK/signing files by their approved secure process (without changing signer identity), then rerun P040. The required next gate is a clean detached export from `a7a6a05`, strict code5/name0.2.0/signer/manifest/ABI/SDK verification against prior public APKs, public r4 byte verification, and only then the one-card portfolio URL update.
+
+## Physical phone QA
+
+- No authorized connected device/toolchain was available, so native rendering, upgrade install and vibration are not claimed. After a valid r4 exists: install over r3; check main Controls Classic and Side; switch Right/Left and restart to confirm persistence; open Pause → Controls and use Back; resume the same run; then cause a real defender DOWN and confirm the single pulse subject to the phone's system haptic setting.
+
+---
+
 # LBS-P039 — Android haptic diagnostics and revision 3 release
 
 **Status:** COMPLETE
