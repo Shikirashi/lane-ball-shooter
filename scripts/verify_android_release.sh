@@ -42,18 +42,24 @@ if grep -Eqi 'Android Debug|androiddebugkey' <<<"$signer_report"; then
 	echo "Refusing an APK signed with an Android debug certificate." >&2
 	exit 1
 fi
+expected_signer_sha256='796f2c679d962a8195ebf1a38d959002829561dfd26d2dae86e52ccdec7224fc'
+if ! grep -Eqi "Signer #1 certificate SHA-256 digest: $expected_signer_sha256" <<<"$signer_report"; then
+	echo "APK signer does not match the protected Lane Ball Shooter release identity." >&2
+	exit 1
+fi
 
 badging="$($tool_dir/aapt dump badging "$apk_path")"
 package_line="$(grep -m1 '^package:' <<<"$badging")"
 native_line="$(grep -m1 '^native-code:' <<<"$badging" || true)"
 sdk_line="$(grep -m1 '^sdkVersion:' <<<"$badging" || true)"
+target_sdk_line="$(grep -m1 '^targetSdkVersion:' <<<"$badging" || true)"
 printf '%s\n' "$package_line" "$sdk_line" "$native_line"
 
 grep -q "name='com.shikirashi.laneballshooter'" <<<"$package_line" || {
 	echo "Unexpected Android package identifier." >&2
 	exit 1
 }
-grep -q "versionCode='2'" <<<"$package_line" || {
+grep -q "versionCode='3'" <<<"$package_line" || {
 	echo "Unexpected Android version code." >&2
 	exit 1
 }
@@ -65,8 +71,12 @@ grep -q "versionName='0.2.0'" <<<"$package_line" || {
 	echo "APK must contain only the arm64-v8a native ABI." >&2
 	exit 1
 }
-if [[ -z "$sdk_line" ]]; then
-	echo "APK does not report a minimum Android SDK version." >&2
+if [[ "$sdk_line" != "sdkVersion:'24'" ]]; then
+	echo "APK must retain minimum Android SDK 24." >&2
+	exit 1
+fi
+if [[ "$target_sdk_line" != "targetSdkVersion:'36'" ]]; then
+	echo "APK must retain target Android SDK 36." >&2
 	exit 1
 fi
 if grep -q '^application-debuggable' <<<"$badging"; then
@@ -83,6 +93,10 @@ if [[ -n "$permissions" ]]; then
 fi
 if grep -Eq "$dangerous_permissions" <<<"$permissions"; then
 	echo "APK requests an unexpected sensitive permission." >&2
+	exit 1
+fi
+if ! grep -q "name='android.permission.VIBRATE'" <<<"$permissions"; then
+	echo "APK is missing the required android.permission.VIBRATE permission." >&2
 	exit 1
 fi
 

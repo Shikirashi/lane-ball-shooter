@@ -2,6 +2,8 @@ extends Node
 
 const SHOOT_COOLDOWN := 0.4
 const VICTORY_PRESENTATION_DELAY := 3.0
+const DEFENDER_KNOCKDOWN_VIBRATION_MS := 160
+const DEFENDER_KNOCKDOWN_VIBRATION_AMPLITUDE := 0.7
 const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
 const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 const TouchRouterScript = preload("res://scripts/input/touch_control_router.gd")
@@ -44,6 +46,7 @@ var _progression_chain_time := 0.0
 var _processing_chain := false
 var _paused := false
 var main_menu_requester: Callable
+var vibration_requester: Callable
 
 func _ready() -> void:
 	_build_scene()
@@ -238,6 +241,20 @@ func _on_match_resolved(result: Dictionary) -> void:
 
 func _on_defender_knocked_down(_identity: int) -> void:
 	_sfx.play_cue("knockdown")
+	_request_defender_knockdown_vibration()
+
+func _request_defender_knockdown_vibration() -> bool:
+	if not _is_mobile_platform():
+		return false
+	if vibration_requester.is_valid():
+		vibration_requester.call(DEFENDER_KNOCKDOWN_VIBRATION_MS, DEFENDER_KNOCKDOWN_VIBRATION_AMPLITUDE)
+		return true
+	# A platform override is useful for deterministic tests, but must never make
+	# a desktop test runner address local haptic hardware.
+	if not OS.has_feature("android"):
+		return false
+	Input.vibrate_handheld(DEFENDER_KNOCKDOWN_VIBRATION_MS, DEFENDER_KNOCKDOWN_VIBRATION_AMPLITUDE)
+	return true
 
 func _on_defender_revived(_identity: int) -> void:
 	_sfx.play_cue("revive")
