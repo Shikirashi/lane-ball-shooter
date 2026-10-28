@@ -1,3 +1,46 @@
+# LBS-P038 — Android 0.2.0 revision 2 release and knockdown haptics
+
+**Status:** COMPLETE
+
+## Implementation
+
+- Added one Android-only 160 ms, 0.7-amplitude vibration request at the existing authoritative `defender_knocked_down` signal boundary. Ordinary defender damage, enemy attacks/deaths, menu actions and suppressed repeat knockdowns do not vibrate. The observer does not mutate combat state, and an injectable request callback keeps the behavior deterministic in headless tests.
+- Enabled only `android.permission.VIBRATE` in both Android presets. Both presets retain package `com.shikirashi.laneballshooter` and user-facing versionName `0.2.0`; internal versionCode is now `3`.
+- Strengthened the release verifier and scaffolding checks to require code 3/name 0.2.0, VIBRATE, min SDK 24, target SDK 36 and the established release certificate. Existing non-debug, ARM64-only, alignment, v2/v3 signing and sensitive-permission checks remain fail-closed.
+- The release includes P036's monochrome interface and P037's Android `PLAY` / `CONTROLS` boot menu, illustrated Classic/Side controls, saved handedness, and pause flow. No gameplay balance or unrelated platform behavior changed.
+
+## Published Android release
+
+- Tested release source: `e1cf9ef115fd36feaee84e16e83265fdde8983e4`.
+- New immutable public tag/release: [`android-v0.2.0-r2`](https://github.com/Shikirashi/lane-ball-shooter/releases/tag/android-v0.2.0-r2), public, non-draft and non-prerelease. The existing `android-v0.2.0` and `android-v0.1.0` releases were not overwritten.
+- Public asset: https://github.com/Shikirashi/lane-ball-shooter/releases/download/android-v0.2.0-r2/lane-ball-shooter-android.apk
+- Verified APK: 27,845,951 bytes; SHA-256 `e614f9c3867bfbfa830bc4e548d48510398649ee22d6e7bbebba05c4476fc3f8`; package `com.shikirashi.laneballshooter`; versionName `0.2.0`; versionCode `3`; ARM64-v8a only; min SDK 24; target SDK 36; non-debuggable; zip-aligned; v2/v3 signed; VIBRATE declared.
+- Signer certificate SHA-256 `796f2c679d962a8195ebf1a38d959002829561dfd26d2dae86e52ccdec7224fc` exactly matches downloaded v0.1.0 and v0.2.0 APKs, preserving update compatibility. The public revision-2 download matched the local clean build byte-for-byte and by signer.
+- Built from a clean detached checkout using Godot 4.7.2, the existing JDK/Android SDK/templates and existing protected release identity. No key was regenerated, copied into Git, exposed or modified.
+
+## Portfolio and Web verification
+
+- Portfolio commit `cc66c6fa132bd0783262223446782a637b267f80` changes only the existing Lane Ball Shooter card link and label. The live homepage contains exactly one APK card and one revision-2 URL, displaying `Android 0.2.0 — Updated build — Download APK`; no duplicate card or unrelated portfolio content changed.
+- Portfolio Pages run `40656227205`: **SUCCESS**. The live root, all three immutable APK asset URLs, and the tested Web runtime URLs returned HTTP 200.
+- Game Web build/publication run `40655777347`: **SUCCESS** from the P038 source. Its automation portfolio commit `88e2531` and Pages run `40656057586` completed before the card-only commit.
+- Real-browser verification against the public Web game passed: secure context, title `Lane Ball Shooter`, one live 1280×633 canvas and no loader.
+
+## Verification
+
+- `./scripts/ci/run_regression_tests.sh`: **PASS, all 34 suites**. New P038 suite: **PASS, 16 checks**, including actual ordinary-damage and authoritative-knockdown paths, repeat suppression, restart behavior, desktop/Web gating, non-mutating observation, preset permission and signal wiring.
+- The complete 34-suite regression run also passed from a clean detached checkout at the exact release source; P011 retained its deterministic 16,485 checks / 2,400 operations stress coverage.
+- `scripts/ci/test_android_release_scaffolding.sh`, `scripts/ci/test_android_toolchain_setup.sh` and shell syntax checks: **PASS**.
+- Clean `scripts/build_android.sh` plus `scripts/verify_android_release.sh`: **PASS** for package/version, certificate, non-debug status, ABI, SDK levels, permission, alignment and signature.
+- Public release download/hash/size/signer comparison, old-release preservation, portfolio card count, Pages deployment and live Web browser startup: **PASS**.
+
+## Limitations and preservation
+
+- `adb devices -l` found no attached Android device. Physical install/update, actual vibration strength, Classic/Side gestures, Back/menu behavior, safe-area coverage, audio and performance remain device QA; automated tests exercise the authoritative haptic boundary and platform gating.
+- Pre-existing user modifications to `project.godot`, `scenes/main.tscn`, and unrelated generated UID files were preserved and excluded from P038 commits.
+- P038 is complete. Do not advance to another task without a new active mailbox.
+
+---
+
 # LBS-P037 — Android main menu, pause, and illustrated controls
 
 **Status:** COMPLETE
