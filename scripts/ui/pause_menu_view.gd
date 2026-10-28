@@ -7,6 +7,7 @@ signal choices_changed(mode: int, handedness: int)
 signal restart_confirmed
 signal main_menu_confirmed
 signal pause_requested
+signal test_vibration_requested
 
 var pause_button: Button
 var overlay: ColorRect
@@ -57,6 +58,7 @@ func _build() -> void:
 	guide.visible = false
 	guide.choices_changed.connect(func(mode: int, hand: int): choices_changed.emit(mode, hand))
 	guide.close_requested.connect(_close_controls)
+	guide.test_vibration_requested.connect(func(): test_vibration_requested.emit())
 	overlay.add_child(guide)
 
 func _panel(title_text: String, labels: Array[String]) -> PanelContainer:
@@ -111,6 +113,14 @@ func hide_paused() -> void:
 
 func is_open() -> bool:
 	return overlay.visible
+
+func set_haptics_enabled(value: bool) -> void:
+	if is_instance_valid(guide):
+		guide.set_haptics_enabled(value)
+
+func show_vibration_request_sent(requested: bool) -> void:
+	if is_instance_valid(guide):
+		guide.show_vibration_request_sent(requested)
 
 func _open_controls() -> void:
 	menu_panel.visible = false

@@ -2,14 +2,13 @@ extends Node
 
 const SHOOT_COOLDOWN := 0.4
 const VICTORY_PRESENTATION_DELAY := 3.0
-const DEFENDER_KNOCKDOWN_VIBRATION_MS := 160
-const DEFENDER_KNOCKDOWN_VIBRATION_AMPLITUDE := 0.7
 const LayoutCalculator = preload("res://scripts/responsive_layout.gd")
 const SfxManagerScript = preload("res://scripts/audio/sfx_manager.gd")
 const TouchRouterScript = preload("res://scripts/input/touch_control_router.gd")
 const PreferencesScript = preload("res://scripts/input/control_preferences.gd")
 const UiPaletteScript = preload("res://scripts/ui/ui_palette.gd")
 const PauseMenuScript = preload("res://scripts/ui/pause_menu_view.gd")
+const AndroidHapticsScript = preload("res://scripts/android_haptics.gd")
 # Live Web playtest: use the same eligible-threat-only mild sampler tested by P028B-EXPR.
 const ThreatRunSelectorScript = preload("res://scripts/analysis/threat_run_selector.gd")
 const BalanceLabScript = preload("res://scripts/analysis/balance_lab.gd")
@@ -73,6 +72,7 @@ func _ready() -> void:
 	_pause_view.restart_confirmed.connect(_restart_from_pause)
 	_pause_view.main_menu_confirmed.connect(_return_to_main_menu)
 	_pause_view.choices_changed.connect(_on_control_choices_changed)
+	_pause_view.test_vibration_requested.connect(_on_test_vibration_requested)
 	_settings_view.set_choices(_preferences.mode, _preferences.handedness)
 	get_viewport().size_changed.connect(_layout)
 	_on_magazine_changed(_magazine.loaded_identity, _magazine.next_identity)
@@ -173,6 +173,7 @@ func set_mobile_platform_override(value: int) -> void:
 		_settings_view.gear_button.visible = not _is_mobile_platform()
 	if _pause_view != null:
 		_pause_view.pause_button.visible = _is_mobile_platform() and not _game_over
+		_pause_view.set_haptics_enabled(_is_mobile_platform())
 
 func _is_mobile_platform() -> bool:
 	if _mobile_platform_override >= 0:
@@ -239,22 +240,17 @@ func _on_match_resolved(result: Dictionary) -> void:
 		var attack: Dictionary = outcome.get("attack", {})
 		_sfx.play_cue("attack", int(attack.get("tier", 1)))
 
-func _on_defender_knocked_down(_identity: int) -> void:
+func _on_defender_knocked_down(identity: int) -> void:
 	_sfx.play_cue("knockdown")
-	_request_defender_knockdown_vibration()
+	print("%s defender_down lane=%d android_gate=%s" % [AndroidHapticsScript.LOG_PREFIX, identity, str(_is_mobile_platform()).to_lower()])
+	_request_defender_knockdown_vibration(identity)
 
-func _request_defender_knockdown_vibration() -> bool:
-	if not _is_mobile_platform():
-		return false
-	if vibration_requester.is_valid():
-		vibration_requester.call(DEFENDER_KNOCKDOWN_VIBRATION_MS, DEFENDER_KNOCKDOWN_VIBRATION_AMPLITUDE)
-		return true
-	# A platform override is useful for deterministic tests, but must never make
-	# a desktop test runner address local haptic hardware.
-	if not OS.has_feature("android"):
-		return false
-	Input.vibrate_handheld(DEFENDER_KNOCKDOWN_VIBRATION_MS, DEFENDER_KNOCKDOWN_VIBRATION_AMPLITUDE)
-	return true
+func _request_defender_knockdown_vibration(identity := -1) -> bool:
+	return AndroidHapticsScript.request(&"defender_down", identity, _is_mobile_platform(), vibration_requester)
+
+func _on_test_vibration_requested() -> void:
+	var requested := AndroidHapticsScript.request(&"controls_test", -1, _is_mobile_platform(), vibration_requester)
+	_pause_view.show_vibration_request_sent(requested)
 
 func _on_defender_revived(_identity: int) -> void:
 	_sfx.play_cue("revive")
@@ -423,6 +419,7 @@ func _apply_layout(viewport_size: Vector2, safe_rect: Rect2) -> void:
 	_settings_view.gear_button.visible = not _is_mobile_platform() and not _settings_view.is_open()
 	_pause_view.configure_layout(_safe_rect, viewport_size)
 	_pause_view.pause_button.visible = _is_mobile_platform() and not _game_over
+	_pause_view.set_haptics_enabled(_is_mobile_platform())
 	_game_over_overlay.position = Vector2.ZERO
 	_game_over_overlay.size = viewport_size
 	_game_over_overlay.set_content_rect(_safe_rect)

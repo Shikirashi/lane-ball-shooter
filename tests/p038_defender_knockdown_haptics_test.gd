@@ -52,7 +52,7 @@ func _test_authoritative_knockdown_haptic() -> void:
 	_check(lane.defender_state == LaneCombatModel.DefenderState.DOWN, "authoritative lane transition still downs the defender")
 	_check(lane.revival_progress == 0 and lane.emergency_available == emergency_before, "haptic observer does not mutate defender gameplay state")
 	_check(pulses.size() == 1, "one authoritative defender-down transition requests one pulse")
-	_check(int(pulses[0].duration_ms) == 160 and is_equal_approx(float(pulses[0].amplitude), 0.7), "knockdown pulse uses the approved 160 ms and 0.7 amplitude")
+	_check(int(pulses[0].duration_ms) == 500 and is_equal_approx(float(pulses[0].amplitude), 1.0), "knockdown pulse uses the P039 500 ms and 1.0 amplitude")
 	lane.call("_knock_down")
 	_check(pulses.size() == 1, "duplicate down-state requests emit no second haptic")
 
@@ -72,12 +72,13 @@ func _test_authoritative_knockdown_haptic() -> void:
 
 func _test_release_contract() -> void:
 	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
-	_check(presets.count("version/code=3") == 2, "both Android presets use internal version code 3")
+	_check(presets.count("version/code=4") == 2, "both Android presets use internal version code 4")
 	_check(presets.count("version/name=\"0.2.0\"") == 2, "both Android presets retain user-facing version 0.2.0")
 	_check(presets.count("permissions/vibrate=true") == 2, "both Android presets request the VIBRATE normal permission")
-	var source := FileAccess.get_file_as_string("res://scripts/main.gd")
-	_check(source.contains("Input.vibrate_handheld(DEFENDER_KNOCKDOWN_VIBRATION_MS"), "Android runtime uses Godot handheld vibration API")
-	_check(source.contains("_battlefield.defender_knocked_down.connect(_on_defender_knocked_down)"), "haptic remains wired to the authoritative Battlefield down signal")
+	var source := FileAccess.get_file_as_string("res://scripts/android_haptics.gd")
+	_check(source.contains("Input.vibrate_handheld(DURATION_MS, AMPLITUDE)"), "central Android runtime uses Godot handheld vibration API")
+	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	_check(main_source.contains("_battlefield.defender_knocked_down.connect(_on_defender_knocked_down)"), "haptic remains wired to the authoritative Battlefield down signal")
 
 func _finish() -> void:
 	paused = false

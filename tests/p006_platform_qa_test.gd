@@ -43,6 +43,10 @@ func _test_layout_calculator() -> void:
 func _test_live_layout_and_input() -> void:
 	var packed: PackedScene = load("res://scenes/main.tscn")
 	var main := packed.instantiate()
+	# Classic-control assertions must not depend on the player's persisted
+	# Android preference (which may legitimately be Side after device testing).
+	var preferences_path := "/tmp/lbs-p006-controls-%d.cfg" % Time.get_ticks_usec()
+	main.set("_preferences", ControlPreferences.new(preferences_path))
 	root.add_child(main)
 	await process_frame
 	await process_frame
@@ -160,6 +164,7 @@ func _test_live_layout_and_input() -> void:
 		_check(lane.get("_projectile_visuals").size() == 0 and lane.get("_state_effects").is_empty(), "restart lane %d clears projectiles and state effects" % lane.team_identity)
 	main.queue_free()
 	await process_frame
+	DirAccess.remove_absolute(preferences_path)
 
 func _dispatch_touch(index: int, position: Vector2, pressed: bool) -> void:
 	var event := InputEventScreenTouch.new()

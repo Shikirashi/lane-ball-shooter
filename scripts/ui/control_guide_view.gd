@@ -3,6 +3,7 @@ extends Control
 
 signal choices_changed(mode: int, handedness: int)
 signal close_requested
+signal test_vibration_requested
 
 const REFERENCE_PATH := "res://assets/ui/controls_gameplay_reference.png"
 
@@ -14,11 +15,16 @@ var side_button: Button
 var right_button: Button
 var left_button: Button
 var preview: TextureRect
+var preview_stack: Control
 var annotations: Control
 var classic_swap_label: Label
 var classic_shoot_label: Label
 var close_button: Button
+var haptic_section: VBoxContainer
+var test_vibration_button: Button
+var vibration_status_label: Label
 var _safe_rect := Rect2()
+var _haptics_enabled := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -62,9 +68,10 @@ func _build() -> void:
 	preview_frame.custom_minimum_size = Vector2(720.0, 360.0)
 	preview_frame.add_theme_stylebox_override("panel", UiPalette.panel_style(UiPalette.PANEL, UiPalette.BORDER, 1, 2))
 	column.add_child(preview_frame)
-	var preview_stack := Control.new()
+	preview_stack = Control.new()
 	preview_stack.custom_minimum_size = Vector2(720.0, 360.0)
 	preview_frame.add_child(preview_stack)
+	preview_stack.resized.connect(_layout_annotations)
 	preview = TextureRect.new()
 	preview.name = "GameplayReference"
 	preview.texture = load(REFERENCE_PATH)
@@ -92,11 +99,30 @@ func _build() -> void:
 	left_button.pressed.connect(func(): select_handedness(TouchControlRouter.Handedness.LEFT))
 	hands.add_child(right_button)
 	hands.add_child(left_button)
+	haptic_section = VBoxContainer.new()
+	haptic_section.name = "HapticDiagnostic"
+	haptic_section.alignment = BoxContainer.ALIGNMENT_CENTER
+	haptic_section.add_theme_constant_override("separation", 2)
+	column.add_child(haptic_section)
+	test_vibration_button = _small_button("TEST VIBRATION")
+	test_vibration_button.name = "TestVibration"
+	test_vibration_button.custom_minimum_size = Vector2(240.0, 44.0)
+	test_vibration_button.pressed.connect(func(): test_vibration_requested.emit())
+	haptic_section.add_child(test_vibration_button)
+	vibration_status_label = Label.new()
+	vibration_status_label.name = "VibrationRequestStatus"
+	vibration_status_label.text = "VIBRATION REQUEST SENT"
+	vibration_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vibration_status_label.add_theme_font_size_override("font_size", 13)
+	vibration_status_label.add_theme_color_override("font_color", UiPalette.TEXT_SECONDARY)
+	vibration_status_label.visible = false
+	haptic_section.add_child(vibration_status_label)
 	close_button = _small_button("BACK")
 	close_button.pressed.connect(func(): close_requested.emit())
 	column.add_child(close_button)
 	resized.connect(_layout)
 	_layout()
+	set_haptics_enabled(_haptics_enabled)
 
 func _choice_button(text_value: String) -> Button:
 	var button := Button.new()
@@ -116,7 +142,10 @@ func _annotation_label(text_value: String) -> Label:
 	var label := Label.new()
 	label.text = text_value
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 14)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.clip_text = true
+	label.add_theme_font_size_override("font_size", 12)
 	label.add_theme_color_override("font_color", UiPalette.WHITE)
 	label.add_theme_color_override("font_outline_color", UiPalette.BLACK)
 	label.add_theme_constant_override("outline_size", 5)
@@ -131,6 +160,21 @@ func configure(mode_value: int, handedness_value: int) -> void:
 func configure_safe_rect(value: Rect2) -> void:
 	_safe_rect = value
 	_layout()
+
+func set_haptics_enabled(value: bool) -> void:
+	_haptics_enabled = value
+	if is_instance_valid(haptic_section):
+		haptic_section.visible = value
+	if is_instance_valid(test_vibration_button):
+		test_vibration_button.visible = value
+	if not value and is_instance_valid(vibration_status_label):
+		vibration_status_label.visible = false
+
+func show_vibration_request_sent(requested: bool) -> void:
+	if not _haptics_enabled or not is_instance_valid(vibration_status_label):
+		return
+	vibration_status_label.text = "VIBRATION REQUEST SENT" if requested else "ANDROID VIBRATION REQUEST BLOCKED"
+	vibration_status_label.visible = true
 
 func select_mode(value: int) -> void:
 	mode = value
@@ -182,9 +226,11 @@ func _layout() -> void:
 	var bounds := _safe_rect if _safe_rect.size.x > 0.0 and _safe_rect.size.y > 0.0 else Rect2(Vector2.ZERO, size)
 	panel.size = Vector2(minf(900.0, bounds.size.x - margin * 2.0), minf(680.0, bounds.size.y - margin * 2.0))
 	panel.position = bounds.position + (bounds.size - panel.size) * 0.5
-	var preview_height := clampf(panel.size.y - 200.0, 220.0, 430.0)
+	var reserved_height := 330.0 if _haptics_enabled else 220.0
+	var preview_height := clampf(panel.size.y - reserved_height, 190.0, 410.0)
 	var frame := panel.find_child("PreviewFrame", true, false) as Control
 	frame.custom_minimum_size = Vector2(0.0, preview_height)
+	preview_stack.custom_minimum_size = Vector2(0.0, preview_height)
 	_layout_annotations()
 
 func _layout_annotations() -> void:
@@ -198,13 +244,18 @@ func _layout_annotations() -> void:
 	annotations.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 	annotations.position = content_position
 	annotations.size = content_size
-	classic_swap_label.position = content_position + Vector2(content_size.x * 0.05, content_size.y * 0.22)
-	classic_swap_label.size = Vector2(content_size.x * 0.42, 32.0)
-	classic_shoot_label.position = content_position + Vector2(content_size.x * 0.48, content_size.y * 0.80)
-	classic_shoot_label.size = Vector2(content_size.x * 0.47, 32.0)
+	classic_swap_label.position = content_position + Vector2(content_size.x * 0.02, content_size.y * 0.12)
+	classic_swap_label.size = Vector2(content_size.x * 0.43, 48.0)
+	classic_shoot_label.position = content_position + Vector2(content_size.x * 0.70, content_size.y * 0.62)
+	classic_shoot_label.size = Vector2(content_size.x * 0.28, 52.0)
 
 func side_regions() -> Dictionary:
-	return GuideAnnotations.side_regions(Rect2(Vector2.ZERO, annotations.size), handedness)
+	var region_size := annotations.size
+	if region_size.x <= 0.0 or region_size.y <= 0.0:
+		region_size = preview.size
+	if region_size.x <= 0.0 or region_size.y <= 0.0:
+		region_size = Vector2(720.0, 360.0)
+	return GuideAnnotations.side_regions(Rect2(Vector2.ZERO, region_size), handedness)
 
 
 class GuideAnnotations extends Control:

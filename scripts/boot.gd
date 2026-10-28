@@ -5,6 +5,7 @@ const LayoutCalculator := preload("res://scripts/responsive_layout.gd")
 const UiPaletteScript := preload("res://scripts/ui/ui_palette.gd")
 const PreferencesScript := preload("res://scripts/input/control_preferences.gd")
 const ControlGuideScript := preload("res://scripts/ui/control_guide_view.gd")
+const AndroidHapticsScript := preload("res://scripts/android_haptics.gd")
 
 const TITLE_TEXT := "LANE BALL SHOOTER"
 const START_TEXT := "START GAME"
@@ -16,6 +17,7 @@ var forced_web_mode := -1
 var forced_android_mode := -1
 var fullscreen_requester: Callable
 var gameplay_starter: Callable
+var vibration_requester: Callable
 
 var gameplay_start_count := 0
 var fullscreen_request_count := 0
@@ -96,6 +98,8 @@ func _build_native_menu() -> void:
 	_control_guide.visible = false
 	_control_guide.choices_changed.connect(_on_native_choices_changed)
 	_control_guide.close_requested.connect(_close_native_controls)
+	_control_guide.test_vibration_requested.connect(_on_test_vibration_requested)
+	_control_guide.set_haptics_enabled(true)
 	_menu_root.add_child(_control_guide)
 	_play_button.grab_focus()
 
@@ -112,6 +116,10 @@ func _on_native_choices_changed(mode: int, handedness: int) -> void:
 	_preferences.mode = mode
 	_preferences.handedness = handedness
 	_preferences.save_settings()
+
+func _on_test_vibration_requested() -> void:
+	var requested := AndroidHapticsScript.request(&"controls_test", -1, should_show_android_menu(), vibration_requester)
+	_control_guide.show_vibration_request_sent(requested)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _native_menu or not (event is InputEventKey) or not event.pressed or event.echo:
