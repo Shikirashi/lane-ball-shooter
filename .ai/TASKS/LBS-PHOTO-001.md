@@ -2,6 +2,18 @@
 
 **Status:** QUEUED. Do not replace or execute the current `.ai/TASK.md` (LBS-P040) until ChatGPT explicitly activates this task. Screenshot work is portfolio-only and must not alter production gameplay or shipping Android builds.
 
+
+## Mandatory Git-tracked screenshot review handoff — updated 1 November 2026
+
+**The user's approved workflow has changed:** Codex must **push the screenshot images themselves** with the scoped photo-session commit so ChatGPT can inspect the genuine output via GitHub without manual file uploads. Do not leave *all* images Git-ignored. Screenshots remain **DRAFT/UNAPPROVED** until the user reviews them.
+
+1. Keep large original renders in their existing local capture folder, ignored if appropriate. For each requested candidate, create a **small, visually faithful review copy** inside a tracked repo directory (suggest `docs/portfolio/review/`, or `docs/portfolio/review/<task-id>/` if necessary). Prefer **JPG or WebP at real 1280×720–1920×1080 resolution, quality approximately 85–92**; PNG is fine when small (especially flat-color 2D). Retain aspect ratio and actual gameplay pixels. No AI upscaling, filters, synthetic content, drawn labels, or replacements.
+2. Commit/push the **2–4 chosen preview binaries plus scripts/docs** in the same repo and branch. They must appear on GitHub at normal clickable blob/raw URLs, not just an ignored local path or a Markdown filename. Do NOT commit hundreds of frames, videos, caches, game build binaries, high-resolution raw archives, or unrelated work. If repo policy or storage limits make the PNG too large, use a compressed review derivative, not git-lfs-only inaccessible images.
+3. Codex's responsibility for image QA is **mechanical only**: confirm file exists, can be decoded, sensible dimensions/aspect ratio, no zero-byte/blank capture, expected filenames, clean commit, and GitHub-visible tracked path. **Do not spend agent usage studying screenshots, interpreting artistic quality, comparing composition, scoring visuals, or selecting a hero. ChatGPT and the user perform subjective image review directly from pushed files.**
+4. Report source render path, pushed preview path, native/review dimensions and commit SHA. Never mark a screenshot "approved" or deploy it on the portfolio site until the user explicitly chooses it. Only publish game shots safe for a public repository (no secrets/personal data/proprietary material).
+5. When adding review screenshots later, overwrite or remove obsolete **review derivatives** only after preserving the underlying local originals and recording the change; do not rewrite gameplay. Preserve existing active mailbox restrictions — a queued task does not become active merely because this handoff rule is updated.
+
+
 ## Updated capture rule — static, non-hostile, Codex first
 
 Codex must set up a **frozen, deterministic 2D composition**, and take the first 2–3 real renderer screenshots before asking for user feedback. The desired ball may appear halfway up its launch path, with its *vertical trail already drawn*, but **it must NOT be moving and the user must NOT need to time the shot**. Create an isolated portfolio-only render state with ball/projectile, conveyor, defenders and enemies held at attractive static positions and enemy attacks/time progression disabled. The trail is a static visual element sourced from the game's own rendering logic; no need to catch a live physics frame. Never apply this freeze to normal gameplay, and preserve the current match/game balance. User can then take unlimited time to reframe and manually capture the exact still. If rendering is not available, leave reproducible static fixture instructions and label capture blocked.
