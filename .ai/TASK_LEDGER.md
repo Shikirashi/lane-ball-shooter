@@ -124,3 +124,12 @@ P028A's balance-simulation laboratory remains proposed and NOT active. **P033 is
 | LBS-P040 | **ACTIVE — `.ai/TASK.md`** | Remove Android TEST VIBRATION diagnostic UI, enlarge controls to ≥64px touch height, two-column preview LEFT/options RIGHT responsive safe areas; retain defender-down 500ms haptic. Same-signed Android 0.2.0 code5 release `android-v0.2.0-r4`, existing portfolio card update; no unrelated work. |
 
 | LBS-P040 CHECKPOINT | **PARTIAL — UI PASS; Android r4 release BLOCKED (STILL ACTIVE)** | Source `a7a6a05`, 36 suites P040 183 checks, Web CI `40671482915` PASS; original signing/JDK/SDK absent on Codex host. Finish signed 0.2.0/code5 r4 on original Mintbase; preserve public r3 and portfolio until APK verified. |
+
+
+## Portfolio photo-session backlog (approved planning; not active)
+
+| Task | Status | Scope |
+| --- | --- | --- |
+| LBS-PHOTO-001 | QUEUED — NOT ACTIVE | Real gameplay mid-shot projectile + localized vertical motion trail; 720p+ user-approved capture. Do not disturb P040. See `.ai/TASKS/LBS-PHOTO-001.md`. |
+
+The existing single active Codex task in `.ai/TASK.md` is unchanged. ChatGPT must activate this photo-session separately when appropriate.
