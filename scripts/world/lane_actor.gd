@@ -211,6 +211,7 @@ func _build_defender() -> void:
 	_build_charge_crystal()
 	_status_label = Label.new()
 	_status_label.name = "LaneStatus"
+	_status_label.visible = false # Hide on-screen ACTIVE/CHARGE/SPENT/DOWN labels while preserving crystal sync.
 	_status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_status_label.modulate = TeamData.color(team_identity).lightened(0.2)
 	add_child(_status_label)
