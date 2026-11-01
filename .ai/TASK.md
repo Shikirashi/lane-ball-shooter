@@ -40,6 +40,18 @@ Create 2–3 **genuine Godot 4.7.2 Compatibility-renderer** screenshots of the c
 
 **Required isolation:** Preserve `master` and release work P040, `scenes/main.tscn`, `scripts/ui/shooter_view.gd`, existing release/config files and normal loaded/shooting visuals; no runtime size changes. Only `tools/capture_lbs_photo_001.gd`, its photo-only auxiliary script(s) if needed, `docs/portfolio/review/lbs_photo_001/` and capture report/handoff should change.
 
+## Approved photo follow-up — REMOVE ALL VISIBLE DEFENDER STATUS TEXT (1 November 2026)
+
+The user approved the **green, enlarged in-flight ball Candidate C**, then requested that the small per-defender `TEAM ACTIVE CHARGE` / `SPENT` / `DOWN` text be removed from **actual gameplay and the screenshot**.
+
+- This photo branch contains the **same narrow gameplay UI source adjustment** as `ui/lbs-remove-defender-status-labels`: `LaneActor._build_defender()` sets the `LaneStatus` label invisible. This retains the status node for existing regression compatibility, and keeps charge crystal/revival/discharge mechanics and `_update_status_visual()` updates intact. The production change is pending test/merge on its separate branch; DO NOT merge it into production automatically.
+- Use the existing deterministic photo capture `tools/capture_lbs_photo_001.gd` to render a **NEW** genuine Godot 1600×900 PNG named `docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c_large_clean_01.png`. Do NOT fake-remove pixels from the old `c_large_01` image or overwrite it. The only expected visual delta is removal of the per-lane status labels; keep the 24-px bright GREEN diamond shot, projectile trail, conveyor, enemies, score and layout identical.
+- First run Godot import/parse, focused `tests/lbs_photo_001_capture_test.gd`, all repository regression suites (including `p034c_charge_crystal_test.gd`), and a real Compatibility renderer capture. The production UI branch additionally contains a focused new `p041_defender_status_hidden_test.gd`; apply it to this photo branch for test consistency if useful.
+- Codex only performs **mechanical checks**: PNG exists, decodes, is 1600×900, exact name, image contains content, push verified, no unrelated files. Do not spend Codex usage on subjective screenshot review.
+- Commit/push the **new PNG binary plus narrowly scoped photo script/source/report changes** to `portfolio/lbs-photo-001`, not `master`. Stop and report image GitHub link, test results and commit SHA. ChatGPT can then swap the approved screenshot in the Projects preview to this authentic version. **Do not publish the website directly from this branch or change Android APK/Web release.**
+
+The prior `ball_battalion_photo_001_c_large_01.png` remains the user's **approved composition**. Its text-free real screenshot successor is specifically authorized by the user-requested label removal, but still needs successful capture verification before replacing the portfolio image.
+
 ## Project preservation / verification
 
 - Strictly preserve all LBS-P040 accepted Controls layout, haptics, Android permission/build/signing/versionCode and pinned tested release commit. `master` remains unchanged and independently usable for the release task. This branch is photography-only.
