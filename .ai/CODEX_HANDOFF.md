@@ -1,6 +1,18 @@
 # LBS-PHOTO-001 — deterministic portfolio gameplay screenshots
 
-**Status:** COMPLETE — draft images pushed for user/ChatGPT review; none selected or published
+**Status:** SECOND PASS COMPLETE — revised candidate pushed for user/ChatGPT review; none approved or published
+
+## Candidate C large-projectile second pass
+
+**Implementation commit / branch:** `9fedd062b11d8186c68015df7cedcf301c9f6815` on `portfolio/lbs-photo-001`
+
+- Preserved candidate C's exact deterministic staging and all original A/B/C PNG bytes. Added only [`ball_battalion_photo_001_c_large_01.png`](https://github.com/Shikirashi/lane-ball-shooter/blob/9fedd062b11d8186c68015df7cedcf301c9f6815/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c_large_01.png) ([raw](https://raw.githubusercontent.com/Shikirashi/lane-ball-shooter/9fedd062b11d8186c68015df7cedcf301c9f6815/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c_large_01.png)).
+- The tools-only overlay covers the frozen authentic 12-px GREEN shot at its unchanged center with a 24-px GREEN circle and the authoritative `TeamData.draw_symbol` diamond. Its 64-px localized vertical trail remains. The runtime `ShooterView`, normal 12-px airborne ball and 19-px loaded shooter ball are unchanged.
+- Revised PNG: 1600x900 RGBA, 91,623 bytes, SHA-256 `a0571db7b97235f956f9c08dfa038e33da9bd25f3526a53c30e8bfc5fbf6b725`. A second real Godot 4.7.2 Compatibility render reproduced identical bytes. ImageMagick mechanically localized all changes versus original C to a trimmed 51x87-pixel region.
+- Capture isolation: **PASS, 14 checks**. Full regression: **PASS, all 37 suites**. Shell syntax and `git diff --check`: **PASS**.
+- No subjective image assessment or ranking was performed. No website, runtime gameplay, Android release/signing, project/export files or `master` work changed.
+
+## First-pass implementation
 
 **Implementation commit / branch:** `7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b` on `portfolio/lbs-photo-001`
 
