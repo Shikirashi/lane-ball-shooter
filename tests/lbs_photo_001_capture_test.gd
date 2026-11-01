@@ -19,6 +19,7 @@ func _check(condition: bool, message: String) -> void:
 func _run() -> void:
 	var capture_source := FileAccess.get_file_as_string("res://tools/capture_lbs_photo_001.gd")
 	var main_source := FileAccess.get_file_as_string("res://scripts/main.gd")
+	var shooter_source := FileAccess.get_file_as_string("res://scripts/ui/shooter_view.gd")
 	var project_source := FileAccess.get_file_as_string("res://project.godot")
 	_check(not main_source.contains("LbsPhotoProjectileTrail") and not main_source.contains("PHOTO-001"), "production Main has no photo-fixture dependency")
 	_check(not project_source.contains("capture_lbs_photo_001"), "project defaults do not enable capture mode")
@@ -28,13 +29,16 @@ func _run() -> void:
 	_check(capture_source.contains("shooter.set_simulation_paused(true)"), "capture freezes the authentic ShooterView projectile")
 	_check(capture_source.contains("ShooterView.SHOT_TRAVEL_TIME * flight_ratio"), "capture stages a real fixed point on the production flight path")
 	_check(capture_source.contains("Vector2i(1600, 900)"), "capture uses native 16:9 1600x900 output")
-	_check(capture_source.count("ball_battalion_photo_001_") == 3, "capture declares exactly three bounded candidates")
+	_check(capture_source.count("ball_battalion_photo_001_") == 4, "capture retains three originals and declares one bounded second-pass candidate")
+	_check(capture_source.contains("SECOND_PASS_CANDIDATES") and capture_source.contains("--originals"), "default capture isolates second pass while retaining opt-in original reproducibility")
+	_check(capture_source.contains("ball_battalion_photo_001_c_large_01.png") and capture_source.contains("\"photo_projectile_radius\": 24.0"), "second pass uses candidate C staging with a 24px photo-only projectile")
+	_check(shooter_source.contains("draw_circle(shot_position, 12.0"), "normal gameplay projectile remains 12px")
 
 	var trail: LbsPhotoProjectileTrail = TrailScript.new()
 	root.add_child(trail)
-	trail.configure(TeamData.Identity.GREEN, Vector2(400.0, 300.0), 64.0)
+	trail.configure(TeamData.Identity.GREEN, Vector2(400.0, 300.0), 64.0, 24.0)
 	_check(trail.identity == TeamData.Identity.GREEN and trail.projectile_position == Vector2(400.0, 300.0), "capture-only trail retains staged identity and position")
-	_check(is_equal_approx(trail.trail_length, 64.0) and not trail.is_processing(), "capture-only trail is static and locally bounded")
+	_check(is_equal_approx(trail.trail_length, 64.0) and is_equal_approx(trail.photo_projectile_radius, 24.0) and not trail.is_processing(), "capture-only trail and enlarged projectile are static and locally bounded")
 	trail.queue_free()
 	await process_frame
 	_finish()

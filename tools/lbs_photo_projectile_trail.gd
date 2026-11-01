@@ -4,6 +4,7 @@ extends Control
 var identity := TeamData.Identity.RED
 var projectile_position := Vector2.ZERO
 var trail_length := 64.0
+var photo_projectile_radius := 0.0
 
 
 func _ready() -> void:
@@ -11,10 +12,11 @@ func _ready() -> void:
 	set_process(false)
 
 
-func configure(value: int, position_value: Vector2, length_value := 64.0) -> void:
+func configure(value: int, position_value: Vector2, length_value := 64.0, radius_value := 0.0) -> void:
 	identity = posmod(value, TeamData.COUNT)
 	projectile_position = position_value
 	trail_length = clampf(length_value, 36.0, 88.0)
+	photo_projectile_radius = clampf(radius_value, 0.0, 28.0)
 	queue_redraw()
 
 
@@ -38,4 +40,16 @@ func _draw() -> void:
 			projectile_position + Vector2(0.0, trail_length * ratio),
 			radii[index],
 			Color(color, alphas[index])
+		)
+	if photo_projectile_radius > 0.0:
+		# Second-pass photo overlay only: cover the authentic frozen 12px shot at
+		# the exact same center without touching ShooterView's runtime radius.
+		draw_circle(projectile_position + Vector2(2.0, 4.0), photo_projectile_radius + 1.0, Color(0.0, 0.0, 0.0, 0.38))
+		draw_circle(projectile_position, photo_projectile_radius, color)
+		TeamData.draw_symbol(
+			self,
+			identity,
+			projectile_position,
+			photo_projectile_radius,
+			Color(0.04, 0.04, 0.04, 0.9)
 		)

@@ -5,7 +5,7 @@ const TrailScript := preload("res://tools/lbs_photo_projectile_trail.gd")
 
 const CAPTURE_SIZE := Vector2i(1600, 900)
 const OUTPUT_DIR := "res://docs/portfolio/review/lbs_photo_001"
-const CANDIDATES := [
+const ORIGINAL_CANDIDATES := [
 	{
 		"name": "ball_battalion_photo_001_a.png",
 		"shot_identity": TeamData.Identity.RED,
@@ -34,6 +34,18 @@ const CANDIDATES := [
 		"score": 9140,
 	},
 ]
+const SECOND_PASS_CANDIDATES := [
+	{
+		"name": "ball_battalion_photo_001_c_large_01.png",
+		"shot_identity": TeamData.Identity.GREEN,
+		"next_identity": TeamData.Identity.RED,
+		"shooter_ratio": 0.39,
+		"flight_ratio": 0.44,
+		"enemy_shift": -0.36,
+		"score": 9140,
+		"photo_projectile_radius": 24.0,
+	},
+]
 
 
 func _initialize() -> void:
@@ -46,11 +58,12 @@ func _run() -> void:
 		push_error("LBS-PHOTO-001 could not create %s" % absolute_output)
 		quit(1)
 		return
-	for candidate in CANDIDATES:
+	var candidates := ORIGINAL_CANDIDATES if OS.get_cmdline_user_args().has("--originals") else SECOND_PASS_CANDIDATES
+	for candidate in candidates:
 		if not await _capture_candidate(candidate):
 			quit(1)
 			return
-	print("LBS-PHOTO-001 capture: wrote %d deterministic real-renderer screenshots at %s" % [CANDIDATES.size(), CAPTURE_SIZE])
+	print("LBS-PHOTO-001 capture: wrote %d deterministic real-renderer screenshots at %s" % [candidates.size(), CAPTURE_SIZE])
 	quit(0)
 
 
@@ -153,8 +166,9 @@ func _stage_frozen_game(main: Node, candidate: Dictionary) -> void:
 	trail.name = "CaptureOnlyStaticProjectileTrail"
 	trail.size = Vector2(CAPTURE_SIZE)
 	main.add_child(trail)
-	main.move_child(trail, shooter.get_index())
-	trail.configure(shot_identity, projectile_position, 64.0)
+	var photo_radius := float(candidate.get("photo_projectile_radius", 0.0))
+	main.move_child(trail, shooter.get_index() + (1 if photo_radius > 0.0 else 0))
+	trail.configure(shot_identity, projectile_position, 64.0, photo_radius)
 
 	(main.get("_hud_view") as HudView).set_progress(int(candidate.score), 3, 3, false, 0.72)
 	main.call("_on_encounter_progress_changed", 12, 32, 20)

@@ -10,4 +10,4 @@ if [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]]; then
 fi
 
 "$godot_binary" --path "$repo_dir" --audio-driver Dummy --rendering-method gl_compatibility \
-	--script res://tools/capture_lbs_photo_001.gd
+	--script res://tools/capture_lbs_photo_001.gd -- "$@"
