@@ -1,6 +1,19 @@
 # LBS-PHOTO-001 — deterministic portfolio gameplay screenshots
 
-**Status:** SECOND PASS COMPLETE — revised candidate pushed for user/ChatGPT review; none approved or published
+**Status:** CLEAN STATUS-TEXT FOLLOW-UP COMPLETE — genuine revised screenshot ready for review; not published
+
+## Clean approved-composition follow-up
+
+**Capture commit / branch:** `1e7c1557e8d89e39012adc6bd66e58613351b275` on `portfolio/lbs-photo-001`
+
+- Verified the prepared `LaneActor` source hides the retained `LaneStatus` node. Label visibility stays false through layout, status sync, knockdown and restart; status/crystal state update logic remains intact.
+- Focused checks: photo isolation **PASS (14)**; hidden defender status **PASS (24)**; P034C charge crystals **PASS (85)**; P005 combat/knockdown/revival **PASS (63)**.
+- `scripts/ci/run_regression_tests.sh`: **PASS, all 38 suites**.
+- Rendered [`ball_battalion_photo_001_c_large_clean_01.png`](https://github.com/Shikirashi/lane-ball-shooter/blob/1e7c1557e8d89e39012adc6bd66e58613351b275/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c_large_clean_01.png) ([raw](https://raw.githubusercontent.com/Shikirashi/lane-ball-shooter/1e7c1557e8d89e39012adc6bd66e58613351b275/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c_large_clean_01.png)) twice with the real Godot 4.7.2 Compatibility renderer. It is a 1600x900 RGBA PNG, 79,893 bytes, SHA-256 `1262c7ff5bcd8fcb33ea3fc2b34a3e0181da525ea36897be7525d1aca3e3f454`; both renders were byte-identical.
+- The prior approved C-large PNG remains unchanged at SHA-256 `a0571db7b97235f956f9c08dfa038e33da9bd25f3526a53c30e8bfc5fbf6b725`. Mechanical image comparison reported a bounded 172x379 changed area. No subjective visual evaluation was performed.
+- No release branch, APK/signing, Web build, main website, gameplay balance, projectile sizing or photo composition code was changed by this capture commit.
+
+## Enlarged-projectile second pass
 
 ## Candidate C large-projectile second pass
 
