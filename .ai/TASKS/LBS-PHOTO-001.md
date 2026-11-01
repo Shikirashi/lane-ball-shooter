@@ -1,6 +1,6 @@
-# LBS-PHOTO-001 — Portfolio gameplay hero screenshot (QUEUED; NOT ACTIVE)
+# LBS-PHOTO-001 — Portfolio gameplay hero screenshot (ACTIVE ON PHOTO BRANCH ONLY)
 
-**Status:** QUEUED. Do not replace or execute the current `.ai/TASK.md` (LBS-P040) until ChatGPT explicitly activates this task. Screenshot work is portfolio-only and must not alter production gameplay or shipping Android builds.
+**Status:** ACTIVE ONLY on isolated branch `portfolio/lbs-photo-001`, with branch-local `.ai/TASK.md` explicitly authorizing photography. The **master** branch retains LBS-P040 as sole active Android release task. Screenshot work is portfolio-only and must not alter production gameplay or shipping Android builds.
 
 
 ## Mandatory Git-tracked screenshot review handoff — updated 1 November 2026
