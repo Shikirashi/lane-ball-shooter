@@ -1,3 +1,40 @@
+# LBS-PHOTO-001 — deterministic portfolio gameplay screenshots
+
+**Status:** COMPLETE — draft images pushed for user/ChatGPT review; none selected or published
+
+**Implementation commit / branch:** `7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b` on `portfolio/lbs-photo-001`
+
+## Delivered
+
+- Added an opt-in Godot 4.7.2 Compatibility-renderer capture tool that instantiates the unchanged real `scenes/main.tscn` in a 1600x900 `SubViewport`.
+- Stages a deterministic static conveyor, all four real defenders, fixed real enemy sprites in every lane, readable HUD and the real loaded/next shooter visuals. Battlefield, lane, chain, shooter and root processing are disabled before capture, so no enemy movement, attacks, damage, spawning, conveyor motion or timed input occurs.
+- Places one authentic `ShooterView` projectile at a fixed ratio of its real 0.20-second upward path and adds a capture-only 64-pixel localized vertical trail beneath it. Production scenes/scripts do not reference the fixture.
+- Kept `scenes/main.tscn`, `scripts/main.gd`, `project.godot`, `export_presets.cfg`, Android version/signing/release files, Web build and portfolio website unchanged.
+
+## Review images
+
+- [Candidate A — GitHub blob](https://github.com/Shikirashi/lane-ball-shooter/blob/7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_a.png) / [raw](https://raw.githubusercontent.com/Shikirashi/lane-ball-shooter/7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_a.png) — 1600x900 RGBA, 91,651 bytes, SHA-256 `aa39b427c2f3d1bea2518ddecbab6378678b97d8cf8c5ff8ce1743d9cd712997`.
+- [Candidate B — GitHub blob](https://github.com/Shikirashi/lane-ball-shooter/blob/7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_b.png) / [raw](https://raw.githubusercontent.com/Shikirashi/lane-ball-shooter/7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_b.png) — 1600x900 RGBA, 91,477 bytes, SHA-256 `bb4d5990d5203814e7d28030fbce957053fe8e751a822f3b43125aa22b0738d7`.
+- [Candidate C — GitHub blob](https://github.com/Shikirashi/lane-ball-shooter/blob/7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c.png) / [raw](https://raw.githubusercontent.com/Shikirashi/lane-ball-shooter/7fad40238d3c3a6d4ec1a6ffb4d09ca17a50160b/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c.png) — 1600x900 RGBA, 91,125 bytes, SHA-256 `e709b91c04a7fbd241dfd78275b140d3979bfef71ab7bd96f57ce2b0df645a07`.
+
+Source render and pushed review paths are the same tracked PNGs under `docs/portfolio/review/lbs_photo_001/`. Exact method and fixture details are in `docs/portfolio/LBS_PHOTO_001_CAPTURE.md`.
+
+## Verification
+
+- `godot --headless --path . --script res://tests/lbs_photo_001_capture_test.gd`: **PASS, 11 checks**.
+- `scripts/ci/run_regression_tests.sh`: **PASS, all 37 suites**, including P040's 183 touch-layout checks and P011's 16,485-check stress suite.
+- `scripts/capture_lbs_photo_001.sh`: **PASS**, real graphical Godot 4.7.2 Compatibility renderer on AMD Radeon RX 6700 XT; three native 1600x900 screenshots.
+- Mechanical image validation with `file`, ImageMagick `identify` and `sha256sum`: all decode as non-interlaced RGBA PNG, have 16:9 dimensions, sensible nonzero size, 6,867–6,911 colors and nonzero pixel variance. A second full render was byte-identical for all three hashes.
+- `bash -n scripts/capture_lbs_photo_001.sh` and `git diff --check`: **PASS**.
+
+## Review / limitations
+
+- Only mechanical image validation was performed. No composition ranking, artistic assessment or hero selection was made.
+- Open the GitHub blob/raw links above and choose a candidate or request a fixture adjustment. The images remain draft/unapproved.
+- No website publication, APK build/release, Android signing access or physical-device test was performed. P040/master release work is untouched.
+
+---
+
 # LBS-P040 — Android touch-first Controls layout
 
 **Status:** COMPLETE — implementation, same-signer Android r4 release, portfolio update and public verification delivered
