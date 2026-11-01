@@ -16,6 +16,21 @@ Create 2–3 **genuine Godot 4.7.2 Compatibility-renderer** screenshots of the c
 4. Codex MUST commit **actual image files** to `docs/portfolio/review/lbs_photo_001/` (preferred), and may keep large originals in an ignored local folder. All 2–3 image files must be accessible via GitHub blob/raw links after push so ChatGPT can review the actual visuals directly.
 5. Codex should perform ONLY **mechanical image checks** (file existence, native resolution, PNG/JPG/WebP decode, sensible byte count, no accidental black/blank frames, paths). **Do not spend Codex usage assessing artistic composition** or picking the hero. ChatGPT and the user will do visual evaluation. Do not publish to the website without explicit user approval.
 
+## Second-pass human direction — Candidate C, larger green flying ball (1 November 2026)
+
+**User's feedback after actual screenshot review:** **Candidate C is the preferred composition** because the **green** ball contrasts well against the black stage. However the green ball **being shot is too small to read**. Candidate C is **not approved as final** until we review a larger projectile version.
+
+**Make one or two additional real Godot screenshots**, starting from the exact **C** staging (same conveyor, score, enemies, defenders, loaded/next balls, shooter horizontal position, green projectile mid-flight and original 1600×900 frame). Do not regenerate A/B or change the background/theme.
+
+- The actual runtime `scripts/ui/shooter_view.gd` renders the airborne `_shots` ball at **12 px radius**, smaller than the loaded ball's 19 px. To improve *photo readability only*, make an authentic green ball with the **same circle+diamond symbol and game palette** appear at ~**22–26 px radius** in the existing static airborne location; use an **opt-in capture-only overlay/drawing hook in `tools/`** rather than editing runtime ShooterView or changing real projectile mechanics/scale. If necessary, photo-stage drawing may cover the existing 12-px depiction exactly. Do not mistakenly enlarge the ball remaining in the launcher instead of the actual airborne green shot.
+- Retain a **short, localized vertical green trail beneath the airborne ball**. Increase trail visibility modestly if needed; no long screen-wide glow, global motion blur, or new projectile particle behavior in production.
+- Keep the ball at roughly the same mid-flight y/x as C, clearly separated from conveyor, defender/enemy sprites, lane markers and UI. Preserve existing green's contrast against black and the authentic **diamond** symbol.
+- Produce `ball_battalion_photo_001_c_large_01.png` and optionally `ball_battalion_photo_001_c_large_02.png` at **native 1600×900** using the real Godot Compatibility renderer; keep A/B/C originals unchanged.
+- **Commit and push the new screenshot binaries** to `docs/portfolio/review/lbs_photo_001/` with the fixture-only code/report changes on `portfolio/lbs-photo-001`. No user manual PNG upload or real-time screenshot timing.
+- Codex does **mechanical validation only**, including actual image presence, 1600×900, nonblank PNG decode, and existing regression suite. **No visual/artistic ranking or analysis by Codex.** User and ChatGPT will compare and approve. Do not publish to website yet.
+
+**Required isolation:** Preserve `master` and release work P040, `scenes/main.tscn`, `scripts/ui/shooter_view.gd`, existing release/config files and normal loaded/shooting visuals; no runtime size changes. Only `tools/capture_lbs_photo_001.gd`, its photo-only auxiliary script(s) if needed, `docs/portfolio/review/lbs_photo_001/` and capture report/handoff should change.
+
 ## Project preservation / verification
 
 - Strictly preserve all LBS-P040 accepted Controls layout, haptics, Android permission/build/signing/versionCode and pinned tested release commit. `master` remains unchanged and independently usable for the release task. This branch is photography-only.
