@@ -36,7 +36,7 @@ const ORIGINAL_CANDIDATES := [
 ]
 const SECOND_PASS_CANDIDATES := [
 	{
-		"name": "ball_battalion_photo_001_c_large_01.png",
+		"name": "ball_battalion_photo_001_c_large_clean_01.png",
 		"shot_identity": TeamData.Identity.GREEN,
 		"next_identity": TeamData.Identity.RED,
 		"shooter_ratio": 0.39,
