@@ -54,3 +54,7 @@ scripts/ci/run_regression_tests.sh
 - Physical Android/device QA: not applicable to this capture-only branch; P040 release work was not touched.
 
 The portfolio website was not modified or published.
+
+## Human review / second-pass request — 1 November 2026
+
+The user prefers existing `ball_battalion_photo_001_c.png` (green shot / black background), but the **in-flight ball is too small**. That is consistent with production `ShooterView` drawing airborne shots at 12-px radius vs 19-px loaded balls. The follow-up is a capture-only visual enlargement (~22–26-px radius) with the same green diamond, short green trail, unchanged original C staging. Never change runtime shot mechanics/size. Make 1–2 new `c_large_` real renders, push tracked binary PNGs and await user/ChatGPT approval; no changes to `master` or publication.
