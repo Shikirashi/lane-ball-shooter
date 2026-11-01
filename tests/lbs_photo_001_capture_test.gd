@@ -31,7 +31,7 @@ func _run() -> void:
 	_check(capture_source.contains("Vector2i(1600, 900)"), "capture uses native 16:9 1600x900 output")
 	_check(capture_source.count("ball_battalion_photo_001_") == 4, "capture retains three originals and declares one bounded second-pass candidate")
 	_check(capture_source.contains("SECOND_PASS_CANDIDATES") and capture_source.contains("--originals"), "default capture isolates second pass while retaining opt-in original reproducibility")
-	_check(capture_source.contains("ball_battalion_photo_001_c_large_01.png") and capture_source.contains("\"photo_projectile_radius\": 24.0"), "second pass uses candidate C staging with a 24px photo-only projectile")
+	_check(capture_source.contains("ball_battalion_photo_001_c_large_clean_01.png") and capture_source.contains("\"photo_projectile_radius\": 24.0"), "clean second pass uses candidate C staging with a 24px photo-only projectile")
 	_check(shooter_source.contains("draw_circle(shot_position, 12.0"), "normal gameplay projectile remains 12px")
 
 	var trail: LbsPhotoProjectileTrail = TrailScript.new()
