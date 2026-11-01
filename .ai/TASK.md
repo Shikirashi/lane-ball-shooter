@@ -4,6 +4,15 @@
 
 Read `AGENTS.md`, `.ai/PROTOCOL.md`, the relevant decisions and `.ai/TASKS/LBS-PHOTO-001.md`, then execute only this photo task. The active task authorization is this `.ai/TASK.md` branch copy; ignore the QUEUED heading in the unchanged master copy of the source photo-task document.
 
+## FINAL HUMAN PHOTO APPROVAL — 1 November 2026
+
+**APPROVED by the user for portfolio use.** Exact image: **[ball_battalion_photo_001_c_large_01.png](https://github.com/Shikirashi/lane-ball-shooter/blob/9fedd062b11d8186c68015df7cedcf301c9f6815/docs/portfolio/review/lbs_photo_001/ball_battalion_photo_001_c_large_01.png)** from commit `9fedd062b11d8186c68015df7cedcf301c9f6815`. This is the photo-only 24-px airborne **GREEN** ball with diamond shape and short vertical trail, based on Candidate C, genuine Godot capture 1600×900.
+
+**Photo work complete.** Do not request further photo changes or rerender a different ball/color without new user instructions. It is authorized to feature **this exact approved screenshot** on the portfolio Projects page. **Approval of the image does not authorize merging the isolated fixture into `master`, changing regular projectile size/gameplay, republishing signed Android builds, or deploying unrelated website changes.** Leave `LBS-P040` active on production `master`.
+
+**Known truthful detail:** HUD title within approved screenshot still says "LANE BALL SHOOTER". User explicitly approved the screenshot in that form; keep the pixels untouched and let portfolio caption/title say "Ball Battalion". Do not surreptitiously retouch title or alter actual gameplay UI.
+
+
 ## Photograph goal — real 2D game screenshot, no timing
 
 Create 2–3 **genuine Godot 4.7.2 Compatibility-renderer** screenshots of the current 2D **Ball Battalion** gameplay. The scene must show the existing horizontal ball conveyor, four defense lanes, shooter with current/next balls, placed defenders, a plausible enemy threat and readable gameplay HUD. A clearly identifiable colored/symbol ball should be held roughly **midway along the upward shot path**, with a **short localized vertical motion trail / afterimage**. The ball and its trail must be STATIC so the user can take all the time needed to review/recompose — **no requirement to capture a live flying ball at exactly the right frame**.
